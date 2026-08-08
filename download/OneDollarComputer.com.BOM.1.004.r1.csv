@@ -1,0 +1,15 @@
+Reference Designators;Quantity;Description;Package;Value;Manufacturer;Manufacturer Part Number;Vendor;Vendor Part Number;Top/Bottom;LCSC;
+;1;PCB Board;Board;;;;;;;;
+J1, J2;2;Through-Hole Pad;2.54/1.0;RJ45CONNECTOR;;;;;-;;
+JP1, JP2;2;8 C350306;1X10;Pin Header 1x10 2.54mm;HOAUC;;;;Top;C350306;
+R_USB_PU;1;9 C22843;RES5.1K_0603;1.5kΩ ±1%;UNI-ROYAL;;;;Top;C22843;
+S1;1;Ultra-small Tactile Switch Contact form : SPST-NO;B3U-1000P(M);Tactile 4x3mm;XUNPU;B3U-1000PM;;;Top;C720477;
+U$1;1;12 C5446;XC6206P332MR-G;3.3V LDO;TOREX;;;;Top;C5446;
+U$2;1;11 C2765186;CONN_TYPE-C-16P;USB-C 16Pin;SHOU HAN;;;;Top;C2765186;
+U$3;1;10 C21190;RESC2208X45;1kΩ ±1%;UNI-ROYAL;;;;Top;C21190;
+U$4;1;IPN: 7;LEDC1507X40;Yellow 0603;XINGLIGHT;;;;Top;C965803;
+U$5;1;5 C15849;WE-VS_0603;1uF 50V X5R;Samsung Electro-Mechanics;;;;Top;C15849;
+U$6;1;4 C15850;CAP0603;10uF 25V X5R;Samsung Electro-Mechanics;;;;Top;C15850;
+U$7;1;6 C5299908;CH32V003F4U6;CH32V003F4U6;WCH;;;;Top;C5299908;
+U$8, U$9;2;Resistor 5.1kΩ ±1% 100mW;RES1.5K_0603;5.1kΩ ±1%;UNI-ROYAL;;;;Top;C23186;
+U$10;1;3 C30926;CAP0603;100nF 50V X7R;FH;;;;Top;;

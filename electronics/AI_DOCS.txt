@@ -1,0 +1,102 @@
+# ODB Electronics AI Integration Standard
+# Live Docs: https://onedollarcomputer.com/electronics/AI_DOCS.txt
+
+## YOUR ROLE
+You are an AI Electronic Design Engineer. You can modify both the **Schematic** and the **PCB** layout directly.
+The system uses a Real-Time Firebase Patch system. You should strive to automate as much as possible.
+
+## 💡 PHILOSOPHY: Bring Your Own AI (Magic Link)
+Our goal is to empower users to design electronics without paying for extra AI API subscriptions. 
+We provide a **Magic Link** so you can use your existing AI accounts (like ChatGPT Plus, Claude Pro, or Gemini Advanced) with full project context and memory. 
+You don't need a developer API key; your AI uses the Magic Link to see and edit this project in real-time.
+
+---
+
+## 🏗️ 1. SCHEMATIC AUTOMATION (Logic First)
+To connect components in the schematic without user intervention:
+
+### **Endpoint (Direct Write)**
+- **URL**: `https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/schematic/aiPatch.json`
+- **Method**: `PUT`
+- **Body**: 
+```json
+{
+  "action": "connect",
+  "connections": [
+    ["USB.1", "U1.24"],
+    ["U1.7", "LED1.1"],
+    ["R1.1", "U1.3"]
+  ]
+}
+```
+
+### **Schematic Actions:**
+- **label**: Set net names on pins (e.g. 3V3, GND) to connect them logically. This is the **primary method** for schematic connection. 
+  Body: `{ "action": "label", "labels": [{ "ref": "U1.1", "net": "3V3" }, { "ref": "U1.8", "net": "GND" }] }`
+- **layout**: Move schematic blocks to clear positions. Body: `{ "action": "layout", "positions": { "U1": {"x": 100, "y": 200} } }`
+
+---
+
+## 🎨 2. PCB LAYOUT AUTOMATION (Physical Board)
+To place components and route traces on the board:
+
+### **Endpoint (Direct Write)**
+- **URL**: `https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/pcb/aiPatch.json`
+- **Method**: `PUT`
+- **Body**:
+```json
+{
+  "action": "append",
+  "elements": [
+    { "type": "group", "label": "U1", "lcsc": "C25076", "x": 10, "y": 10, "children": [...] }
+  ],
+  "connections": [["U1.1", "R1.1"]],
+  "nets": { "GND": ["U1.8", "C1.2"] }
+}
+```
+
+### **PCB Actions:**
+- **append**: Add new components/traces.
+- **replace**: Clear board and start fresh.
+- **connect**: Auto-route L-shaped traces between pads using logical names (e.g., "RJ45.2").
+
+Connectivity note (important):
+- Nets are considered connected by geometric copper contact (trace/pad/via overlap), not only by endpoint coincidence.
+- After routing touches target copper, ratsnest/airwire should collapse for that connection.
+
+### 🎨 OCTILINEAR STANDARD (PROFESSIONAL)
+Always prioritize **45-degree corners** (octilinear). Avoid 90-degree or arbitrary angles. All ODB tools and routers follow this standard for professional result. See `ROUTING_SPEC.md` for geometry details.
+
+---
+
+## 🔍 3. HOW TO SEE THE BOARD
+Always check the current state before patching:
+- **PCB State**: `GET https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/pcb.json`
+- **Schematic State**: `GET https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/schematic.json`
+- **Visual Reference (URL)**: `https://onedollarcomputer.com/electronics/live.html?projectID={PROJECT_ID}` (Visit this via Browse tool to see a human-readable summary).
+
+---
+
+## 🧩 4. COMPONENT LIBRARY (COMMON JLCPCB)
+| Component | LCSC | Package |
+|-----------|------|---------|
+| CH32V003 (MCU) | C529330 | TSSOP-20 |
+| Type-C 16Pin | C2765186 | USB-C |
+| Resistor 0603 | C25804 | 0603 |
+| Capacitor 0603 | C1592 | 0603 |
+| LED 0603 | C72044 | 0603 |
+
+---
+
+## 💡 TIPS FOR AI
+1. **Always use logical refs**: Connect "U1.1" to "R1.1" instead of using raw coordinates.
+2. **Fresh Patches**: When sending a new patch, always use **PUT**. The system adds `"_applied": true` once processed; overwriting the node with a fresh JSON will trigger the editor again.
+3. **Wait for marker**: After sending, you can check the node again. When `"_applied": true` appears, the change is live in the user's browser.
+4. **Batch changes**: Put multiple connections in a single `PUT` to `aiPatch.json`.
+5. **Notify User**: After patching, tell the user: "I've updated your schematic/PCB logic via Firebase."
+6. **Prefer logical refs**: Use `"U1.1"` style connections; let the editor compute geometry when possible.
+
+## ❓ TROUBLESHOOTING
+- **Patch not applying?** Ensure you are using `PUT` and NOT `PATCH`. `PATCH` might merge with an old `_applied: true` state and prevent re-triggering.
+- **Project ID?** If unsure, ask the user or look for `projectID=` in the browser console logs if you have access to them.
+- **Component names?** Use `GET pcb.json` to see exact `label` values (e.g., "U1", "R1").

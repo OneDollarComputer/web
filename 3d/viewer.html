@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One Dollar Computer 3D Viewer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0d1117; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #e6edf3;
+  }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  /* ---------- Loading ---------- */
+  #loader {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 40%, #1b2330 0%, #0d1117 70%);
+    transition: opacity .6s ease;
+  }
+  #loader.hidden { opacity: 0; pointer-events: none; }
+  .spinner {
+    width: 56px; height: 56px;
+    border: 4px solid rgba(255,191,0,.18);
+    border-top-color: #ffbf00;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loader .title { font-size: 18px; font-weight: 600; letter-spacing: .5px; }
+  #loader .sub { margin-top: 6px; font-size: 13px; color: #8b949e; }
+  #progress {
+    margin-top: 14px; width: 260px; height: 6px;
+    background: #21262d; border-radius: 4px; overflow: hidden;
+  }
+  #progress > div { height: 100%; width: 0%; background: #ffbf00; transition: width .2s; }
+
+  /* ---------- Top bar ---------- */
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 14px;
+    background: linear-gradient(180deg, rgba(13,17,23,.85), rgba(13,17,23,0));
+    pointer-events: none;
+  }
+  #brand { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+  #brand .logo {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #ffbf00, #ff8a00);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #1b1300; font-size: 16px;
+    box-shadow: 0 2px 10px rgba(255,160,0,.35);
+  }
+  #brand .name { font-weight: 700; font-size: 15px; }
+  #brand .name small { display: block; font-weight: 400; font-size: 11px; color: #8b949e; }
+
+  /* ---------- Side panel ---------- */
+  #panel {
+    position: fixed; top: 64px; right: 14px; z-index: 20;
+    width: 250px; max-width: calc(100vw - 28px);
+    background: rgba(22,27,34,.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+  }
+  #panel h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+    color: #8b949e; margin-bottom: 10px;
+  }
+  .seg {
+    display: flex; gap: 6px; background: #0d1117;
+    border: 1px solid #30363d; border-radius: 8px; padding: 3px; margin-bottom: 12px;
+  }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: #c9d1d9;
+    padding: 7px 6px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    transition: all .15s;
+  }
+  .seg button.active { background: #ffbf00; color: #1b1300; font-weight: 600; }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .row label { color: #c9d1d9; }
+  .toggle {
+    position: relative; width: 38px; height: 21px;
+    background: #30363d; border-radius: 11px; cursor: pointer; transition: background .2s;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 17px; height: 17px; background: #fff; border-radius: 50%; transition: transform .2s;
+  }
+  .toggle.on { background: #ffbf00; }
+  .toggle.on::after { transform: translateX(17px); }
+  .hint { font-size: 11px; color: #6e7681; line-height: 1.5; }
+
+  /* ---------- Bottom hint ---------- */
+  #hint {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 20;
+    font-size: 12px; color: #8b949e; background: rgba(22,27,34,.8);
+    padding: 7px 14px; border-radius: 20px; border: 1px solid #30363d;
+    backdrop-filter: blur(8px); white-space: nowrap;
+  }
+  #hint b { color: #c9d1d9; }
+
+  /* ---------- Error ---------- */
+  #error {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    align-items: center; justify-content: center; text-align: center; padding: 20px;
+    background: #0d1117;
+  }
+  #error .box { max-width: 460px; }
+  #error h2 { color: #f85149; margin-bottom: 10px; }
+  #error p { color: #c9d1d9; line-height: 1.6; }
+  #error code { background: #161b22; padding: 2px 6px; border-radius: 4px; color: #ffbf00; }
+  
+  /* ---------- Slider ---------- */
+  .slider { margin-bottom: 12px; }
+  .slider label { display: flex; justify-content: space-between; color: #8b949e; font-size: 12px; margin-bottom: 4px; }
+  .slider label span { color: #ffbf00; font-weight: 600; }
+  .slider input[type="range"] {
+    width: 100%; -webkit-appearance: none; background: #30363d; height: 5px; border-radius: 3px; outline: none;
+  }
+  .slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #ffbf00; cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .slider input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  #topbar, #panel, #hint { display: none !important; }
+
+  /* ---------- Fullscreen toggle (top-right) ---------- */
+  #btnFullscreen {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    border: 1px solid #30363d;
+    background: rgba(22,27,34,.92);
+    color: #e6edf3;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .45s ease, background .15s, border-color .15s, color .15s;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 0;
+  }
+  #btnFullscreen.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #btnFullscreen:hover,
+  #btnFullscreen:active {
+    background: rgba(255,191,0,.18);
+    border-color: rgba(255,191,0,.55);
+    color: #ffbf00;
+  }
+  #btnFullscreen svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+    pointer-events: none;
+  }
+  #btnFullscreen .icon-exit { display: none; }
+  #btnFullscreen.is-fullscreen .icon-enter { display: none; }
+  #btnFullscreen.is-fullscreen .icon-exit { display: block; }
+  @media (max-width: 767px) {
+    #btnFullscreen {
+      top: 12px;
+      right: 12px;
+      width: 46px;
+      height: 46px;
+    }
+  }
+
+  /* ---------- Simple mode dock: Rotate (gimbal) / Move (hand on canvas) ---------- */
+  #dock {
+    position: fixed;
+    right: 16px;
+    bottom: 18px;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .45s ease;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: none;
+  }
+  #dock.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #dock.mode-move #gimbalBlock { display: none; }
+  #dock.mode-move #btnHand { display: none; }
+  #dock.mode-rotate #btnGimbal { display: none; }
+  #dock.mode-rotate #moveHint { display: none; }
+
+  #gimbalBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .gimbal-orbit-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  .orbit-arrow {
+    width: 40px;
+    height: 72px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,191,0,.4);
+    background: rgba(22,27,34,.92);
+    color: #ffbf00;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    transition: background .15s, border-color .15s, color .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 0;
+  }
+  .orbit-arrow svg {
+    width: 22px;
+    height: 36px;
+    display: block;
+    pointer-events: none;
+  }
+  .orbit-arrow:hover,
+  .orbit-arrow:active {
+    background: rgba(255,191,0,.18);
+    border-color: rgba(255,191,0,.7);
+    color: #ffd24a;
+    transform: scale(1.04);
+  }
+  .orbit-arrow:active {
+    transform: scale(0.97);
+  }
+  .gimbal-pad {
+    position: relative;
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,191,0,.08) 0%, transparent 55%),
+      radial-gradient(circle at 50% 50%, rgba(22,27,34,.92) 0%, rgba(13,17,23,.95) 100%);
+    border: 1px solid rgba(255,191,0,.35);
+    box-shadow:
+      0 8px 28px rgba(0,0,0,.45),
+      inset 0 0 0 1px rgba(255,255,255,.04);
+    backdrop-filter: blur(10px);
+  }
+  .gimbal-ring {
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 1px dashed rgba(139,148,158,.45);
+    pointer-events: none;
+  }
+  .gimbal-ring-inner {
+    position: absolute;
+    inset: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,191,0,.22);
+    pointer-events: none;
+  }
+  .gimbal-cross { position: absolute; inset: 0; pointer-events: none; }
+  .gimbal-cross::before,
+  .gimbal-cross::after {
+    content: "";
+    position: absolute;
+    background: rgba(139,148,158,.28);
+  }
+  .gimbal-cross::before {
+    left: 50%; top: 14px; bottom: 14px; width: 1px; transform: translateX(-50%);
+  }
+  .gimbal-cross::after {
+    top: 50%; left: 14px; right: 14px; height: 1px; transform: translateY(-50%);
+  }
+  .gimbal-knob {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 36px; height: 36px;
+    margin: -18px 0 0 -18px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ffd24a, #ff8a00);
+    box-shadow:
+      0 2px 10px rgba(255,160,0,.45),
+      inset 0 1px 0 rgba(255,255,255,.35);
+    border: 2px solid rgba(27,19,0,.35);
+    transition: transform .08s linear, box-shadow .15s;
+    will-change: transform;
+  }
+  .gimbal-pad.active .gimbal-knob {
+    box-shadow:
+      0 0 0 4px rgba(255,191,0,.18),
+      0 4px 16px rgba(255,160,0,.55),
+      inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .gimbal-arrow {
+    position: absolute;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: #8b949e;
+    font-size: 11px;
+    pointer-events: none;
+  }
+  .gimbal-arrow.up { top: 4px; left: 50%; transform: translateX(-50%); }
+  .gimbal-arrow.down { bottom: 4px; left: 50%; transform: translateX(-50%); }
+  .gimbal-arrow.left { left: 4px; top: 50%; transform: translateY(-50%); }
+  .gimbal-arrow.right { right: 4px; top: 50%; transform: translateY(-50%); }
+
+  .dock-tools {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .gimbal-btn,
+  .mode-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid #30363d;
+    background: rgba(22,27,34,.92);
+    color: #e6edf3;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    transition: background .15s, border-color .15s, color .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 0;
+  }
+  .gimbal-btn:hover,
+  .gimbal-btn:active,
+  .mode-btn:hover,
+  .mode-btn:active {
+    background: rgba(255,191,0,.18);
+    border-color: rgba(255,191,0,.55);
+    color: #ffbf00;
+    transform: scale(1.05);
+  }
+  .mode-btn svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+    pointer-events: none;
+  }
+  #btnHand {
+    width: 52px;
+    height: 52px;
+    border-color: rgba(143,176,232,.55);
+    background: linear-gradient(145deg, rgba(215,230,255,.95), rgba(143,176,232,.9));
+    color: #1a2740;
+    box-shadow: 0 4px 16px rgba(120,160,220,.35);
+  }
+  #btnHand:hover,
+  #btnHand:active {
+    background: linear-gradient(145deg, #e8f0ff, #9dbceb);
+    border-color: rgba(143,176,232,.8);
+    color: #122038;
+  }
+  #btnGimbal {
+    width: 52px;
+    height: 52px;
+    border-color: rgba(255,191,0,.55);
+    background: linear-gradient(145deg, #ffd24a, #ff8a00);
+    color: #1b1300;
+    box-shadow: 0 4px 16px rgba(255,160,0,.35);
+  }
+  #btnGimbal:hover,
+  #btnGimbal:active {
+    background: linear-gradient(145deg, #ffe07a, #ff9a20);
+    border-color: rgba(255,191,0,.8);
+    color: #1b1300;
+  }
+  .dock-label {
+    font-size: 10px;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: #8b949e;
+    text-align: center;
+  }
+  #moveHint {
+    font-size: 12px;
+    color: #c9d1d9;
+    background: rgba(22,27,34,.88);
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 8px 12px;
+    backdrop-filter: blur(8px);
+    text-align: center;
+    max-width: 160px;
+    line-height: 1.35;
+  }
+  #moveHint strong { color: #8fb0e8; }
+  body.mode-move #app canvas {
+    cursor: grab;
+  }
+  body.mode-move #app canvas:active {
+    cursor: grabbing;
+  }
+  @media (max-width: 767px) {
+    #dock {
+      right: 12px;
+      bottom: 14px;
+    }
+    .gimbal-pad {
+      width: 124px;
+      height: 124px;
+    }
+    .orbit-arrow {
+      width: 44px;
+      height: 80px;
+    }
+    .gimbal-btn,
+    .mode-btn {
+      width: 46px;
+      height: 46px;
+    }
+    #btnHand,
+    #btnGimbal {
+      width: 54px;
+      height: 54px;
+    }
+  }
+  @media (min-width: 768px) {
+    #dock {
+      right: 20px;
+      bottom: 22px;
+    }
+  }
+  #app canvas {
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Loading -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="title">Loading One Dollar Computer</div>
+    <div class="sub" id="status">Reading files…</div>
+    <div id="progress"><div></div></div>
+  </div>
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div id="brand">
+      <div class="logo">$1</div>
+      <div class="name">One Dollar Computer<small>3D Viewer</small></div>
+    </div>
+  </div>
+
+  <!-- Control panel -->
+  <div id="panel">
+    <h3>Texture</h3>
+    <div class="seg" id="texSeg">
+      <button data-tex="none">Color</button>
+      <button data-tex="both" class="active">Photo</button>
+      <button data-tex="top">Top</button>
+      <button data-tex="button">Bottom</button>
+    </div>
+
+    <div id="fitControls" style="display:none">
+      <h3 style="margin-top: 8px; margin-bottom: 8px;">Texture Fit</h3>
+      <div class="seg" id="fitLayerSeg" style="margin-bottom: 12px;">
+        <button data-layer="top" class="active">Top</button>
+        <button data-layer="button">Bottom</button>
+      </div>
+
+      <div class="slider">
+        <label>Scale <span id="vScale">1.000</span></label>
+        <input id="sScale" type="range" min="0.3" max="4.0" step="0.001" value="1.0" />
+      </div>
+      <div class="slider">
+        <label>Offset X <span id="vOffX">0.000</span></label>
+        <input id="sOffX" type="range" min="-2.0" max="2.0" step="0.001" value="0.0" />
+      </div>
+      <div class="slider">
+        <label>Offset Y <span id="vOffZ">0.000</span></label>
+        <input id="sOffZ" type="range" min="-2.0" max="2.0" step="0.001" value="0.0" />
+      </div>
+      <div class="slider">
+        <label>Rotation <span id="vRot">0.0°</span></label>
+        <input id="sRot" type="range" min="-180" max="180" step="0.1" value="0.0" />
+      </div>
+      <div class="slider" style="margin-bottom:2px">
+        <label><span style="display:flex;align-items:center;gap:8px"><span class="toggle on" id="tFlipV"></span> Flip V</span></label>
+      </div>
+    </div>
+
+    <h3>Display</h3>
+    <div class="row">
+      <label>Grid</label>
+      <div class="toggle" id="tGrid"></div>
+    </div>
+    <div class="row">
+      <label>Axes</label>
+      <div class="toggle" id="tAxes"></div>
+    </div>
+    <div class="row">
+      <label>Auto-rotate</label>
+      <div class="toggle" id="tSpin"></div>
+    </div>
+
+    <h3>Background</h3>
+    <div class="seg" id="bgSeg">
+      <button data-bg="dark" class="active">Dark</button>
+      <button data-bg="light">Light</button>
+      <button data-bg="studio">Studio</button>
+    </div>
+
+    <div class="hint">Drag to rotate • Scroll to zoom • Right-click to pan</div>
+  </div>
+
+  <div id="hint"><b>Mouse:</b> rotate &nbsp;•&nbsp; <b>Scroll:</b> zoom &nbsp;•&nbsp; <b>Right-click:</b> pan</div>
+
+  <button type="button" id="btnFullscreen" title="Full screen" aria-label="Enter full screen">
+    <svg class="icon-enter" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>
+    </svg>
+    <svg class="icon-exit" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        d="M3 8h5V3M16 3v5h5M3 16h5v5M16 21v-5h5"/>
+    </svg>
+  </button>
+
+  <!-- Dock: Rotate (gimbal) or Move (hand on 3D) -->
+  <div id="dock" class="mode-rotate" aria-label="3D viewer controls">
+    <div id="moveHint">Move mode on — <strong>drag on the board</strong><br><span style="opacity:.85">Pinch to zoom · twist two fingers to rotate</span></div>
+
+    <div id="gimbalBlock">
+      <div class="gimbal-orbit-row">
+        <button type="button" class="orbit-arrow" id="btnOrbitCCW" title="Rotate sheet counter-clockwise" aria-label="Rotate sheet counter-clockwise">
+          <svg viewBox="0 0 24 40" aria-hidden="true" focusable="false">
+            <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+              d="M16 6c-5.5 2.2-9 7-9 14s3.5 11.8 9 14"/>
+            <path fill="currentColor" d="M16 4.2l-5.2 3.6 5.2 1.2V4.2z"/>
+          </svg>
+        </button>
+        <div class="gimbal-pad" id="gimbalPad" role="application" aria-label="Rotation gimbal">
+          <div class="gimbal-ring"></div>
+          <div class="gimbal-ring-inner"></div>
+          <div class="gimbal-cross"></div>
+          <div class="gimbal-arrow up">▲</div>
+          <div class="gimbal-arrow down">▼</div>
+          <div class="gimbal-arrow left">◀</div>
+          <div class="gimbal-arrow right">▶</div>
+          <div class="gimbal-knob" id="gimbalKnob"></div>
+        </div>
+        <button type="button" class="orbit-arrow" id="btnOrbitCW" title="Rotate sheet clockwise" aria-label="Rotate sheet clockwise">
+          <svg viewBox="0 0 24 40" aria-hidden="true" focusable="false">
+            <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+              d="M8 6c5.5 2.2 9 7 9 14s-3.5 11.8-9 14"/>
+            <path fill="currentColor" d="M8 4.2l5.2 3.6L8 9V4.2z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="dock-label">Rotate</div>
+    </div>
+
+    <div class="dock-tools">
+      <button type="button" class="mode-btn" id="btnHand" title="Move without rotating" aria-label="Enable hand tool to move">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M9.5 2.75a1.25 1.25 0 0 1 2.5 0v7.5h.25V4.5a1.25 1.25 0 1 1 2.5 0v5.75h.25V5.75a1.25 1.25 0 1 1 2.5 0v5.75h.25V8.5a1.25 1.25 0 1 1 2.5 0v7.25c0 3.45-2.55 6-6 6h-.5c-2.9 0-5.25-2.1-5.25-5.25V9.5a1.25 1.25 0 1 1 2.5 0v1.25V2.75z"/>
+        </svg>
+      </button>
+      <button type="button" class="mode-btn" id="btnGimbal" title="Back to rotate" aria-label="Enable gimbal to rotate">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+        </svg>
+      </button>
+      <button type="button" class="gimbal-btn" id="gimbalZoomIn" title="Zoom in" aria-label="Zoom in">+</button>
+      <button type="button" class="gimbal-btn" id="gimbalZoomOut" title="Zoom out" aria-label="Zoom out">−</button>
+      <button type="button" class="gimbal-btn" id="gimbalReset" title="Reset view" aria-label="Reset view">↺</button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="error">
+    <div class="box">
+      <h2>Could not open the model</h2>
+      <p id="errMsg"></p>
+    </div>
+  </div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/addons/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const FILES = {
+  pcbGlb: 'OneDollarBoard.com.1.004_pcb.glb',
+  compGlb: 'OneDollarBoard.com.1.004_components.glb',
+  top:    'OneDollarBoard.com.1.004_top.png',
+  button: 'OneDollarBoard.com.1.004_button.png',
+};
+
+let isLoaded = false;
+
+const $ = (id) => document.getElementById(id);
+const setStatus = (t) => $('status').textContent = t;
+const setProgress = (p) => $('progress').firstElementChild.style.width = (p * 100) + '%';
+const fail = (msg) => {
+  $('loader').classList.add('hidden');
+  $('errMsg').textContent = msg;
+  $('error').style.display = 'flex';
+  throw new Error(msg);
+};
+
+// ---------- Renderer ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('app').appendChild(renderer.domElement);
+
+// ---------- Scene ----------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1117);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.5;
+controls.maxDistance = 40;
+controls.enablePan = true;
+// Rotation is handled by free trackball on the model (no polar lock).
+controls.enableRotate = false;
+controls.minAzimuthAngle = -Infinity;
+controls.maxAzimuthAngle = Infinity;
+controls.mouseButtons = {
+  LEFT: THREE.MOUSE.PAN, // overridden per mode; rotate mode uses custom drag
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+};
+controls.touches = {
+  ONE: THREE.TOUCH.PAN,
+  // Two-finger pinch+twist is handled by our custom gesture (not OrbitControls)
+  TWO: -1,
+};
+
+// Remember default framing for reset
+let defaultCameraPos = null;
+let defaultTarget = null;
+let defaultModelPos = null;
+let defaultModelQuat = null;
+const offsetVec = new THREE.Vector3();
+const _rotAxis = new THREE.Vector3();
+const _rotQuat = new THREE.Quaternion();
+
+// ---------- Mode dock: Rotate (gimbal) <-> Move (hand on canvas) ----------
+const dockEl = $('dock');
+const gimbalPad = $('gimbalPad');
+const gimbalKnob = $('gimbalKnob');
+const btnHand = $('btnHand');
+const btnGimbal = $('btnGimbal');
+const btnFullscreen = $('btnFullscreen');
+let viewMode = 'rotate'; // 'rotate' | 'move'
+const gimbalState = {
+  active: false,
+  pointerId: null,
+  nx: 0,
+  ny: 0,
+  maxTravel: 34,
+  rotateSpeed: 2.8,
+};
+const canvasDrag = {
+  active: false,
+  pointerId: null,
+  x: 0,
+  y: 0,
+  sens: 0.005,
+};
+const pointerPos = new Map(); // pointerId -> { x, y }
+let pinchGesture = null; // { dist, angle } for two-finger zoom + twist
+
+function setKnob(nx, ny) {
+  gimbalKnob.style.transform = `translate(${nx * gimbalState.maxTravel}px, ${ny * gimbalState.maxTravel}px)`;
+}
+
+function resetKnob() {
+  gimbalState.nx = 0;
+  gimbalState.ny = 0;
+  setKnob(0, 0);
+  gimbalPad.classList.remove('active');
+}
+
+function readPadOffset(clientX, clientY) {
+  const rect = gimbalPad.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  let dx = clientX - cx;
+  let dy = clientY - cy;
+  const max = Math.min(rect.width, rect.height) * 0.38;
+  const len = Math.hypot(dx, dy) || 1;
+  if (len > max) {
+    dx = (dx / len) * max;
+    dy = (dy / len) * max;
+  }
+  return { nx: dx / max, ny: dy / max };
+}
+
+/** Rotate model around a world point — unlimited tumble, no polar lock. */
+function rotateRootAroundPoint(point, axis, angle) {
+  if (!modelRoot || !angle) return;
+  _rotQuat.setFromAxisAngle(axis, angle);
+  modelRoot.position.sub(point);
+  modelRoot.position.applyQuaternion(_rotQuat);
+  modelRoot.quaternion.premultiply(_rotQuat);
+  modelRoot.position.add(point);
+}
+
+/** Free trackball rotation (radians). No clamp — keeps spinning past top/bottom. */
+function orbitBy(deltaTheta, deltaPhi) {
+  if (!modelRoot) return;
+  const pivot = controls.target;
+  if (deltaTheta) {
+    _rotAxis.set(0, 1, 0);
+    rotateRootAroundPoint(pivot, _rotAxis, deltaTheta);
+  }
+  if (deltaPhi) {
+    _rotAxis.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+    rotateRootAroundPoint(pivot, _rotAxis, deltaPhi);
+  }
+}
+
+/** Roll around the view axis — like spinning a sheet of paper facing you. */
+function orbitRoll(angle) {
+  if (!modelRoot || !angle) return;
+  // Axis from board toward camera (out of the screen)
+  _rotAxis.copy(camera.position).sub(controls.target).normalize();
+  rotateRootAroundPoint(controls.target, _rotAxis, angle);
+}
+
+function dollyBy(factor) {
+  offsetVec.copy(camera.position).sub(controls.target);
+  const dist = offsetVec.length();
+  const next = THREE.MathUtils.clamp(dist * factor, controls.minDistance, controls.maxDistance);
+  offsetVec.setLength(next);
+  camera.position.copy(controls.target).add(offsetVec);
+  controls.update();
+}
+
+function resetView() {
+  if (!defaultCameraPos || !defaultTarget) return;
+  camera.position.copy(defaultCameraPos);
+  controls.target.copy(defaultTarget);
+  if (modelRoot && defaultModelPos && defaultModelQuat) {
+    modelRoot.position.copy(defaultModelPos);
+    modelRoot.quaternion.copy(defaultModelQuat);
+  }
+  controls.update();
+}
+
+function stopAutoRotateIfNeeded() {
+  if (controls.autoRotate) $('tSpin').click();
+}
+
+function applyViewMode(mode) {
+  viewMode = mode;
+  const isMove = mode === 'move';
+  dockEl.classList.toggle('mode-move', isMove);
+  dockEl.classList.toggle('mode-rotate', !isMove);
+  document.body.classList.toggle('mode-move', isMove);
+
+  // Move mode: one-finger pans. Rotate mode: one-finger free spin.
+  // Two-finger pinch+twist is always our custom gesture.
+  controls.enableRotate = false;
+  controls.enablePan = isMove;
+  controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+  controls.touches.ONE = THREE.TOUCH.PAN;
+  controls.touches.TWO = -1;
+
+  if (!isMove) resetKnob();
+  else {
+    stopAutoRotateIfNeeded();
+    canvasDrag.active = false;
+  }
+}
+
+function onGimbalPointerDown(e) {
+  if (viewMode !== 'rotate') return;
+  e.preventDefault();
+  e.stopPropagation();
+  gimbalState.active = true;
+  gimbalState.pointerId = e.pointerId;
+  stopAutoRotateIfNeeded();
+  gimbalPad.classList.add('active');
+  gimbalPad.setPointerCapture?.(e.pointerId);
+  const o = readPadOffset(e.clientX, e.clientY);
+  gimbalState.nx = o.nx;
+  gimbalState.ny = o.ny;
+  setKnob(o.nx, o.ny);
+}
+
+function onGimbalPointerMove(e) {
+  if (!gimbalState.active || e.pointerId !== gimbalState.pointerId) return;
+  e.preventDefault();
+  const o = readPadOffset(e.clientX, e.clientY);
+  gimbalState.nx = o.nx;
+  gimbalState.ny = o.ny;
+  setKnob(o.nx, o.ny);
+}
+
+function onGimbalPointerUp(e) {
+  if (e.pointerId !== gimbalState.pointerId) return;
+  e.preventDefault();
+  gimbalState.active = false;
+  gimbalState.pointerId = null;
+  resetKnob();
+}
+
+gimbalPad.addEventListener('pointerdown', onGimbalPointerDown);
+gimbalPad.addEventListener('pointermove', onGimbalPointerMove);
+gimbalPad.addEventListener('pointerup', onGimbalPointerUp);
+gimbalPad.addEventListener('pointercancel', onGimbalPointerUp);
+gimbalPad.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+gimbalPad.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+function twoFingerMetrics() {
+  if (pointerPos.size < 2) return null;
+  const pts = Array.from(pointerPos.values());
+  const a = pts[0];
+  const b = pts[1];
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  return {
+    dist: Math.hypot(dx, dy) || 1,
+    angle: Math.atan2(dy, dx),
+  };
+}
+
+function onCanvasPointerDown(e) {
+  pointerPos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  // Two fingers: pinch zoom + twist rotate (mobile-standard)
+  if (pointerPos.size >= 2) {
+    if (canvasDrag.pointerId != null) {
+      try { renderer.domElement.releasePointerCapture?.(canvasDrag.pointerId); } catch (_) {}
+    }
+    canvasDrag.active = false;
+    canvasDrag.pointerId = null;
+    pinchGesture = twoFingerMetrics();
+    stopAutoRotateIfNeeded();
+    return;
+  }
+
+  // One finger trackball only in rotate mode
+  if (viewMode !== 'rotate' || !modelRoot) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  canvasDrag.active = true;
+  canvasDrag.pointerId = e.pointerId;
+  canvasDrag.x = e.clientX;
+  canvasDrag.y = e.clientY;
+  stopAutoRotateIfNeeded();
+  renderer.domElement.setPointerCapture?.(e.pointerId);
+}
+
+function onCanvasPointerMove(e) {
+  if (!pointerPos.has(e.pointerId)) return;
+  pointerPos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (pointerPos.size >= 2) {
+    e.preventDefault();
+    const m = twoFingerMetrics();
+    if (!pinchGesture || !m) return;
+
+    // Pinch → zoom (spread out = zoom in)
+    const zoomFactor = pinchGesture.dist / m.dist;
+    if (Number.isFinite(zoomFactor) && zoomFactor > 0.01 && zoomFactor < 100) {
+      dollyBy(zoomFactor);
+    }
+
+    // Twist → roll like spinning a sheet
+    let dAngle = m.angle - pinchGesture.angle;
+    while (dAngle > Math.PI) dAngle -= Math.PI * 2;
+    while (dAngle < -Math.PI) dAngle += Math.PI * 2;
+    if (Math.abs(dAngle) > 0.0005) orbitRoll(-dAngle);
+
+    pinchGesture = m;
+    return;
+  }
+
+  if (!canvasDrag.active || e.pointerId !== canvasDrag.pointerId) return;
+  if (viewMode !== 'rotate') return;
+  const dx = e.clientX - canvasDrag.x;
+  const dy = e.clientY - canvasDrag.y;
+  canvasDrag.x = e.clientX;
+  canvasDrag.y = e.clientY;
+  orbitBy(dx * canvasDrag.sens, dy * canvasDrag.sens);
+}
+
+function onCanvasPointerUp(e) {
+  pointerPos.delete(e.pointerId);
+  if (pointerPos.size < 2) pinchGesture = null;
+  if (e.pointerId !== canvasDrag.pointerId) return;
+  canvasDrag.active = false;
+  canvasDrag.pointerId = null;
+}
+
+renderer.domElement.addEventListener('pointerdown', onCanvasPointerDown);
+renderer.domElement.addEventListener('pointermove', onCanvasPointerMove);
+renderer.domElement.addEventListener('pointerup', onCanvasPointerUp);
+renderer.domElement.addEventListener('pointercancel', onCanvasPointerUp);
+
+btnHand.addEventListener('click', (e) => {
+  e.preventDefault();
+  applyViewMode('move');
+});
+btnGimbal.addEventListener('click', (e) => {
+  e.preventDefault();
+  applyViewMode('rotate');
+});
+
+// Fusion-style sheet roll arrows: spin like turning a sheet of paper (view-axis roll)
+const ORBIT_SNAP = Math.PI / 2;
+let orbitAnim = null;
+let orbitHoldTimer = null;
+
+function animateOrbitRoll(totalAngle, durationMs = 280) {
+  if (!modelRoot || !totalAngle) return;
+  if (orbitAnim) cancelAnimationFrame(orbitAnim.raf);
+  stopAutoRotateIfNeeded();
+  const start = performance.now();
+  let applied = 0;
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / durationMs);
+    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const target = totalAngle * eased;
+    orbitRoll(target - applied);
+    applied = target;
+    if (t < 1) {
+      orbitAnim = { raf: requestAnimationFrame(tick) };
+    } else {
+      orbitAnim = null;
+    }
+  };
+  orbitAnim = { raf: requestAnimationFrame(tick) };
+}
+
+function bindOrbitArrow(btn, sign) {
+  const nudge = () => orbitRoll(sign * 0.12);
+  const start = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (viewMode !== 'rotate') return;
+    stopAutoRotateIfNeeded();
+    animateOrbitRoll(sign * ORBIT_SNAP);
+    clearInterval(orbitHoldTimer);
+    orbitHoldTimer = setInterval(() => {
+      if (orbitAnim) return;
+      nudge();
+    }, 40);
+  };
+  const stop = () => clearInterval(orbitHoldTimer);
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('pointercancel', stop);
+}
+bindOrbitArrow($('btnOrbitCCW'), 1);
+bindOrbitArrow($('btnOrbitCW'), -1);
+
+let zoomHoldTimer = null;
+function bindZoomHold(btn, factor) {
+  const step = () => dollyBy(factor);
+  const start = (e) => {
+    e.preventDefault();
+    step();
+    clearInterval(zoomHoldTimer);
+    zoomHoldTimer = setInterval(step, 90);
+  };
+  const stop = () => clearInterval(zoomHoldTimer);
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('pointercancel', stop);
+}
+bindZoomHold($('gimbalZoomIn'), 0.94);
+bindZoomHold($('gimbalZoomOut'), 1.06);
+$('gimbalReset').addEventListener('click', (e) => {
+  e.preventDefault();
+  resetView();
+});
+
+function showGimbal() {
+  dockEl.classList.add('visible');
+  btnFullscreen.classList.add('visible');
+  applyViewMode('rotate');
+}
+
+// ---------- Fullscreen toggle ----------
+function getFullscreenElement() {
+  return document.fullscreenElement
+    || document.webkitFullscreenElement
+    || document.msFullscreenElement
+    || null;
+}
+
+function isIOSSafari() {
+  const ua = navigator.userAgent || '';
+  const iOS = /iPad|iPhone|iPod/.test(ua)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const webkit = /WebKit/.test(ua);
+  return iOS && webkit;
+}
+
+function isInIframe() {
+  try { return window.self !== window.top; } catch (_) { return true; }
+}
+
+function canUseNativeFullscreen() {
+  if (isIOSSafari()) return false; // iOS Safari: API missing/unreliable for this content
+  const el = document.documentElement;
+  return !!(el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen);
+}
+
+function isFullscreen() {
+  return !!getFullscreenElement() || document.body.classList.contains('pseudo-fullscreen');
+}
+
+function syncFullscreenButton() {
+  const on = isFullscreen();
+  btnFullscreen.classList.toggle('is-fullscreen', on);
+  btnFullscreen.title = on ? 'Exit full screen' : 'Full screen';
+  btnFullscreen.setAttribute('aria-label', on ? 'Exit full screen' : 'Enter full screen');
+}
+
+function notifyParentFullscreen(action) {
+  if (!isInIframe()) return false;
+  try {
+    window.parent.postMessage({
+      source: 'onedollar-viewer',
+      type: 'fullscreen',
+      action: action,
+    }, '*');
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function enterPseudoFullscreen() {
+  document.body.classList.add('pseudo-fullscreen');
+  notifyParentFullscreen('enter');
+  syncFullscreenButton();
+  window.dispatchEvent(new Event('resize'));
+}
+
+function exitPseudoFullscreen() {
+  document.body.classList.remove('pseudo-fullscreen');
+  notifyParentFullscreen('exit');
+  syncFullscreenButton();
+  window.dispatchEvent(new Event('resize'));
+}
+
+async function enterFullscreen() {
+  // Prefer native FS on desktop browsers; Safari/iOS uses parent-iframe fallback
+  if (canUseNativeFullscreen()) {
+    const el = document.documentElement;
+    try {
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
+      else {
+        enterPseudoFullscreen();
+        return;
+      }
+      // If still not fullscreen shortly after (Safari no-op), fall back
+      setTimeout(() => {
+        if (!getFullscreenElement()) enterPseudoFullscreen();
+        else {
+          syncFullscreenButton();
+          window.dispatchEvent(new Event('resize'));
+        }
+      }, 120);
+      return;
+    } catch (_) {
+      enterPseudoFullscreen();
+      return;
+    }
+  }
+  enterPseudoFullscreen();
+}
+
+async function exitFullscreen() {
+  try {
+    if (getFullscreenElement()) {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+  } catch (_) {}
+  exitPseudoFullscreen();
+}
+
+btnFullscreen.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (isFullscreen()) exitFullscreen();
+  else enterFullscreen();
+});
+
+['fullscreenchange', 'webkitfullscreenchange', 'MSFullscreenChange'].forEach((evt) => {
+  document.addEventListener(evt, () => {
+    if (!getFullscreenElement()) {
+      // Native exited — also clear parent/pseudo state
+      document.body.classList.remove('pseudo-fullscreen');
+      notifyParentFullscreen('exit');
+    }
+    syncFullscreenButton();
+    window.dispatchEvent(new Event('resize'));
+  });
+});
+
+window.addEventListener('message', (e) => {
+  const data = e.data;
+  if (!data || data.source !== 'onedollar-parent' || data.type !== 'fullscreen') return;
+  document.body.classList.toggle('pseudo-fullscreen', !!data.active);
+  syncFullscreenButton();
+  window.dispatchEvent(new Event('resize'));
+});
+
+function updateGimbal(dt) {
+  if (viewMode !== 'rotate' || !gimbalState.active) return;
+  const dead = 0.08;
+  const nx = Math.abs(gimbalState.nx) < dead ? 0 : gimbalState.nx;
+  const ny = Math.abs(gimbalState.ny) < dead ? 0 : gimbalState.ny;
+  if (!nx && !ny) return;
+  orbitBy(nx * gimbalState.rotateSpeed * dt, ny * gimbalState.rotateSpeed * dt);
+}
+
+// ---------- Lights ----------
+const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+scene.add(hemi);
+
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(5, 8, 6);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.near = 0.5;
+key.shadow.camera.far = 50;
+key.shadow.camera.left = -6;
+key.shadow.camera.right = 6;
+key.shadow.camera.top = 6;
+key.shadow.camera.bottom = -6;
+key.shadow.bias = -0.0005;
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xbfd4ff, 0.6);
+fill.position.set(-6, 3, -4);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0xffbf00, 0.5);
+rim.position.set(0, -4, -8);
+scene.add(rim);
+
+// ---------- Ground / helpers ----------
+const grid = new THREE.GridHelper(20, 40, 0x30363d, 0x21262d);
+grid.material.transparent = true;
+grid.material.opacity = 0.5;
+grid.visible = false;
+scene.add(grid);
+
+const axes = new THREE.AxesHelper(2);
+axes.visible = false;
+scene.add(axes);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(60, 60),
+  new THREE.ShadowMaterial({ opacity: 0.35 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.01;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- Backgrounds ----------
+const BG = {
+  dark:   { color: 0x0d1117, hemi: 0x444444, key: 2.2, fog: false },
+  light:  { color: 0xeeeeee, hemi: 0xcccccc, key: 1.6, fog: false },
+  studio: { color: 0x10141c, hemi: 0x222a36, key: 2.0, fog: true  },
+};
+function applyBg(name) {
+  const b = BG[name];
+  scene.background = new THREE.Color(b.color);
+  hemi.groundColor.setHex(b.hemi);
+  key.intensity = b.key;
+  if (b.fog) scene.fog = new THREE.Fog(b.color, 8, 30);
+  else scene.fog = null;
+}
+
+// ---------- Load ----------
+const texLoader = new THREE.TextureLoader();
+const textures = {};
+function loadTexture(name) {
+  return new Promise((resolve, reject) => {
+    texLoader.load(FILES[name],
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        textures[name] = tex;
+        resolve(tex);
+      },
+      undefined, reject);
+  });
+}
+
+// Calibration parameters
+const calibration = {
+  top: { scale: 1.0, offsetX: 0.0, offsetY: 0.0, rotation: 0.0, flipV: false },
+  button: { scale: 1.0, offsetX: 0.0, offsetY: 0.0, rotation: 0.0, flipV: false },
+};
+let activeFitLayer = 'top';
+
+// PCB Materials
+const frontMaterial = new THREE.MeshStandardMaterial({
+  color: 0x0c5c30, // deep green PCB
+  roughness: 0.25,
+  metalness: 0.1,
+});
+const backMaterial = new THREE.MeshStandardMaterial({
+  color: 0x0c5c30,
+  roughness: 0.25,
+  metalness: 0.1,
+});
+const sideMaterial = new THREE.MeshStandardMaterial({
+  color: 0x063b1e, // darker green substrate
+  roughness: 0.5,
+  metalness: 0.05,
+});
+
+function updateTextureTransforms() {
+  ['top', 'button'].forEach((key) => {
+    const tex = textures[key];
+    if (!tex) return;
+    
+    const cal = calibration[key];
+    
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.center.set(0.5, 0.5);
+    tex.rotation = (cal.rotation * Math.PI) / 180;
+    
+    let repX = 1 / cal.scale;
+    let repY = 1 / cal.scale;
+    if (cal.flipV) {
+      repY = -repY;
+    }
+    tex.repeat.set(repX, repY);
+    
+    let offX = cal.offsetX;
+    let offY = cal.offsetY;
+    if (cal.flipV) {
+      offY = 1.0 - offY;
+    }
+    tex.offset.set(offX, offY);
+    
+    tex.needsUpdate = true;
+  });
+}
+
+function logCalibration() {
+  console.log("CALIBRATION:", JSON.stringify(calibration, null, 2));
+}
+
+function splitPCBGeometry(pcbMesh, pcbBBox) {
+  const originalGeometry = pcbMesh.geometry;
+  const geometry = originalGeometry.index ? originalGeometry.toNonIndexed() : originalGeometry.clone();
+  
+  if (!geometry.attributes.normal) {
+    geometry.computeVertexNormals();
+  }
+  
+  const posAttr = geometry.attributes.position;
+  const normAttr = geometry.attributes.normal;
+  const count = posAttr.count;
+  
+  const minX = pcbBBox.min.x;
+  const maxX = pcbBBox.max.x;
+  const minY = pcbBBox.min.y;
+  const maxY = pcbBBox.max.y;
+  const sizeX = maxX - minX;
+  const sizeY = maxY - minY;
+  
+  const frontVertices = [];
+  const frontNormals = [];
+  const frontUVs = [];
+  
+  const backVertices = [];
+  const backNormals = [];
+  const backUVs = [];
+  
+  const sideVertices = [];
+  const sideNormals = [];
+  const sideUVs = [];
+  
+  const tempV1 = new THREE.Vector3();
+  const tempV2 = new THREE.Vector3();
+  const tempV3 = new THREE.Vector3();
+  
+  const tempN1 = new THREE.Vector3();
+  const tempN2 = new THREE.Vector3();
+  const tempN3 = new THREE.Vector3();
+  
+  for (let i = 0; i < count; i += 3) {
+    tempV1.fromBufferAttribute(posAttr, i);
+    tempV2.fromBufferAttribute(posAttr, i + 1);
+    tempV3.fromBufferAttribute(posAttr, i + 2);
+    
+    tempN1.fromBufferAttribute(normAttr, i);
+    tempN2.fromBufferAttribute(normAttr, i + 1);
+    tempN3.fromBufferAttribute(normAttr, i + 2);
+    
+    const avgNormalZ = (tempN1.z + tempN2.z + tempN3.z) / 3;
+    
+    let targetVertices, targetNormals, targetUVs;
+    let isFront = false;
+    let isBack = false;
+    
+    if (avgNormalZ > 0.5) {
+      targetVertices = frontVertices;
+      targetNormals = frontNormals;
+      targetUVs = frontUVs;
+      isFront = true;
+    } else if (avgNormalZ < -0.5) {
+      targetVertices = backVertices;
+      targetNormals = backNormals;
+      targetUVs = backUVs;
+      isBack = true;
+    } else {
+      targetVertices = sideVertices;
+      targetNormals = sideNormals;
+      targetUVs = sideUVs;
+    }
+    
+    targetVertices.push(
+      tempV1.x, tempV1.y, tempV1.z,
+      tempV2.x, tempV2.y, tempV2.z,
+      tempV3.x, tempV3.y, tempV3.z
+    );
+    
+    targetNormals.push(
+      tempN1.x, tempN1.y, tempN1.z,
+      tempN2.x, tempN2.y, tempN2.z,
+      tempN3.x, tempN3.y, tempN3.z
+    );
+    
+    if (isFront) {
+      targetUVs.push(
+        341/2880 + ((tempV1.x - minX) / sizeX) * (2198/2880), 66/1466 + ((tempV1.y - minY) / sizeY) * (1335/1466),
+        341/2880 + ((tempV2.x - minX) / sizeX) * (2198/2880), 66/1466 + ((tempV2.y - minY) / sizeY) * (1335/1466),
+        341/2880 + ((tempV3.x - minX) / sizeX) * (2198/2880), 66/1466 + ((tempV3.y - minY) / sizeY) * (1335/1466)
+      );
+    } else if (isBack) {
+      targetUVs.push(
+        341/2880 + ((tempV1.x - minX) / sizeX) * (2198/2880), 66/1466 + ((maxY - tempV1.y) / sizeY) * (1335/1466),
+        341/2880 + ((tempV2.x - minX) / sizeX) * (2198/2880), 66/1466 + ((maxY - tempV2.y) / sizeY) * (1335/1466),
+        341/2880 + ((tempV3.x - minX) / sizeX) * (2198/2880), 66/1466 + ((maxY - tempV3.y) / sizeY) * (1335/1466)
+      );
+    } else {
+      targetUVs.push(0, 0, 0, 0, 0, 0);
+    }
+  }
+  
+  function createGeometry(vertices, normals, uvs) {
+    if (vertices.length === 0) return null;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    return geo;
+  }
+  
+  return {
+    frontGeo: createGeometry(frontVertices, frontNormals, frontUVs),
+    backGeo: createGeometry(backVertices, backNormals, backUVs),
+    sideGeo: createGeometry(sideVertices, sideNormals, sideUVs),
+  };
+}
+
+// Clone original colors so we can restore from "Color"
+const originalMaterials = new WeakMap();
+
+let modelRoot = null;
+
+function centerAndFrame(object) {
+  const box = new THREE.Box3().setFromObject(object);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  // Place center at origin, sit on the ground (min.y = 0)
+  object.position.sub(center);
+  object.position.y -= box.min.y - center.y; // bring min.y to 0
+  // Wait: after sub(center), min.y = box.min.y - center.y. We want min.y = 0.
+  // Recompute: simpler approach below.
+  return { size, center };
+}
+// Pre-cache textures and GLB models in parallel
+setStatus('Loading assets…');
+setProgress(0.05);
+
+const gltfLoader = new GLTFLoader();
+const loadGlb = (url) => new Promise((res, rej) => gltfLoader.load(url, res, undefined, rej));
+
+let loadedCount = 0;
+const totalAssets = 4;
+const onAssetLoaded = () => {
+  loadedCount++;
+  setProgress(0.05 + (loadedCount / totalAssets) * 0.85);
+};
+
+const loadTextureWithProgress = (name) => loadTexture(name).then((res) => { onAssetLoaded(); return res; });
+const loadGlbWithProgress = (url) => loadGlb(url).then((res) => { onAssetLoaded(); return res; });
+
+Promise.all([
+  loadTextureWithProgress('top'),
+  loadTextureWithProgress('button'),
+  loadGlbWithProgress(FILES.pcbGlb),
+  loadGlbWithProgress(FILES.compGlb)
+])
+  .then(([topTex, buttonTex, pcbGltf, compGltf]) => {
+    setProgress(0.96);
+    setStatus('Preparing scene…');
+
+    const pcbObj = pcbGltf.scene;
+    const compObj = compGltf.scene;
+
+    const modelGroup = new THREE.Group();
+    modelGroup.name = "Model_Group";
+    modelGroup.add(pcbObj);
+    modelGroup.add(compObj);
+    
+    modelRoot = modelGroup;
+
+    // Enable shadows for components + cache originals
+    compObj.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach((m) => {
+            if (!originalMaterials.has(m)) {
+              originalMaterials.set(m, {
+                map: m.map,
+                color: m.color ? m.color.clone() : null,
+                roughness: m.roughness,
+                metalness: m.metalness,
+              });
+            }
+          });
+        }
+      }
+    });
+
+    // Bounding box for PCB OBJ
+    const pcbBBox = new THREE.Box3().setFromObject(pcbObj);
+
+    // Split PCB geometries
+    const meshesToSplit = [];
+    pcbObj.traverse((child) => {
+      if (child.isMesh) {
+        meshesToSplit.push(child);
+      }
+    });
+
+    meshesToSplit.forEach((child) => {
+      const parent = child.parent;
+      if (!parent) return;
+
+      const { frontGeo, backGeo, sideGeo } = splitPCBGeometry(child, pcbBBox);
+      
+      if (frontGeo) {
+        const frontMesh = new THREE.Mesh(frontGeo, frontMaterial);
+        frontMesh.name = child.name + "_Front";
+        frontMesh.castShadow = true;
+        frontMesh.receiveShadow = true;
+        parent.add(frontMesh);
+      }
+      if (backGeo) {
+        const backMesh = new THREE.Mesh(backGeo, backMaterial);
+        backMesh.name = child.name + "_Back";
+        backMesh.castShadow = true;
+        backMesh.receiveShadow = true;
+        parent.add(backMesh);
+      }
+      if (sideGeo) {
+        const sideMesh = new THREE.Mesh(sideGeo, sideMaterial);
+        sideMesh.name = child.name + "_Sides";
+        sideMesh.castShadow = true;
+        sideMesh.receiveShadow = true;
+        parent.add(sideMesh);
+      }
+      parent.remove(child);
+    });
+
+    // Rotate the entire group to stand vertically upright (90 degrees counter-clockwise)
+    // This rotates both the PCB and components perfectly in sync without distorting UV mappings
+    modelGroup.rotation.z = Math.PI / 2;
+
+    // Force Three.js to update transform matrices for the group and its children
+    modelGroup.updateMatrixWorld(true);
+
+    // Normalize and scale the entire group (PCB + components) based ONLY on the PCB's bounding box.
+    // This prevents outlier component geometries from skewing the centering/zoom.
+    const box = new THREE.Box3().setFromObject(pcbObj);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 4 / maxDim;
+    
+    modelGroup.scale.setScalar(scale);
+    modelGroup.position.x = -center.x * scale;
+    modelGroup.position.z = -center.z * scale;
+    modelGroup.position.y = -box.min.y * scale; // base on ground
+
+    scene.add(modelGroup);
+
+    // Camera framing
+    const radius = (maxDim * scale) / 2;
+    camera.position.set(radius * 2.4, radius * 1.7, radius * 2.4);
+    // Focus camera on the center of the vertical board (y = radius) instead of bottom (radius * 0.5)
+    controls.target.set(0, radius, 0);
+    controls.update();
+
+    defaultCameraPos = camera.position.clone();
+    defaultTarget = controls.target.clone();
+    defaultModelPos = modelRoot.position.clone();
+    defaultModelQuat = modelRoot.quaternion.clone();
+
+    setProgress(1);
+    applyTexture('both');
+    isLoaded = true;
+    window.dispatchEvent(new CustomEvent('viewerLoaded'));
+    setTimeout(() => {
+      $('loader').classList.add('hidden');
+      showGimbal();
+    }, 400);
+  })
+  .catch((err) => {
+    console.error(err);
+    fail('Make sure the PCB and components .glb files are in the same folder and served over http.');
+  });
+
+// ---------- Texture application ----------
+function applyTexture(kind) {
+  if (!modelRoot) return;
+  
+  if (kind === 'none') {
+    frontMaterial.map = null;
+    frontMaterial.color.setHex(0x0c5c30);
+    frontMaterial.needsUpdate = true;
+    
+    backMaterial.map = null;
+    backMaterial.color.setHex(0x0c5c30);
+    backMaterial.needsUpdate = true;
+    
+    $('fitControls').style.display = 'none';
+  } else if (kind === 'top') {
+    frontMaterial.map = textures.top || null;
+    frontMaterial.color.setHex(0xffffff);
+    frontMaterial.needsUpdate = true;
+    
+    backMaterial.map = null;
+    backMaterial.color.setHex(0x0c5c30);
+    backMaterial.needsUpdate = true;
+    
+    updateTextureTransforms();
+    updateUIFromCalibration();
+    $('fitControls').style.display = 'block';
+  } else if (kind === 'button') {
+    frontMaterial.map = null;
+    frontMaterial.color.setHex(0x0c5c30);
+    frontMaterial.needsUpdate = true;
+    
+    backMaterial.map = textures.button || null;
+    backMaterial.color.setHex(0xffffff);
+    backMaterial.needsUpdate = true;
+    
+    updateTextureTransforms();
+    updateUIFromCalibration();
+    $('fitControls').style.display = 'block';
+  } else if (kind === 'both') {
+    frontMaterial.map = textures.top || null;
+    frontMaterial.color.setHex(0xffffff);
+    frontMaterial.needsUpdate = true;
+    
+    backMaterial.map = textures.button || null;
+    backMaterial.color.setHex(0xffffff);
+    backMaterial.needsUpdate = true;
+    
+    updateTextureTransforms();
+    updateUIFromCalibration();
+    $('fitControls').style.display = 'block';
+  }
+}
+
+function updateUIFromCalibration() {
+  const cal = calibration[activeFitLayer];
+  $('sScale').value = cal.scale;
+  $('vScale').textContent = cal.scale.toFixed(3);
+  
+  $('sOffX').value = cal.offsetX;
+  $('vOffX').textContent = cal.offsetX.toFixed(3);
+  
+  $('sOffZ').value = cal.offsetY;
+  $('vOffZ').textContent = cal.offsetY.toFixed(3);
+  
+  $('sRot').value = cal.rotation;
+  $('vRot').textContent = cal.rotation.toFixed(1) + '°';
+  
+  $('tFlipV').classList.toggle('on', cal.flipV);
+}
+
+// ---------- UI bindings ----------
+$('texSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  [...e.currentTarget.children].forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  applyTexture(b.dataset.tex);
+});
+
+$('bgSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  [...e.currentTarget.children].forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  applyBg(b.dataset.bg);
+});
+
+// Bind layer selector
+$('fitLayerSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  [...e.currentTarget.children].forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  activeFitLayer = b.dataset.layer;
+  updateUIFromCalibration();
+});
+
+// Bind sliders
+$('sScale').addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  calibration[activeFitLayer].scale = val;
+  $('vScale').textContent = val.toFixed(3);
+  updateTextureTransforms();
+  logCalibration();
+});
+
+$('sOffX').addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  calibration[activeFitLayer].offsetX = val;
+  $('vOffX').textContent = val.toFixed(3);
+  updateTextureTransforms();
+  logCalibration();
+});
+
+$('sOffZ').addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  calibration[activeFitLayer].offsetY = val;
+  $('vOffZ').textContent = val.toFixed(3);
+  updateTextureTransforms();
+  logCalibration();
+});
+
+$('sRot').addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  calibration[activeFitLayer].rotation = val;
+  $('vRot').textContent = val.toFixed(1) + '°';
+  updateTextureTransforms();
+  logCalibration();
+});
+
+$('tFlipV').addEventListener('click', () => {
+  calibration[activeFitLayer].flipV = !calibration[activeFitLayer].flipV;
+  $('tFlipV').classList.toggle('on', calibration[activeFitLayer].flipV);
+  updateTextureTransforms();
+  logCalibration();
+});
+
+function bindToggle(id, fn, initial) {
+  const el = $(id);
+  let state = !!initial;
+  const apply = () => { el.classList.toggle('on', state); fn(state); };
+  el.addEventListener('click', () => { state = !state; apply(); });
+  apply();
+}
+bindToggle('tGrid',  (v) => grid.visible = v);
+bindToggle('tAxes',  (v) => axes.visible = v);
+bindToggle('tSpin',  (v) => controls.autoRotate = v);
+
+function stopAutoRotate() {
+  if (controls.autoRotate) {
+    $('tSpin').click();
+  }
+}
+
+// Stop spin when the user takes manual control on the canvas
+controls.addEventListener('start', stopAutoRotate);
+
+// ---------- Resize ----------
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------- Render loop ----------
+let lastFrame = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, (now - lastFrame) / 1000);
+  lastFrame = now;
+  updateGimbal(dt);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate(performance.now());
+
+// Expose global API for external interaction
+window.viewerAPI = {
+  applyTexture: (kind) => {
+    const button = document.querySelector(`#texSeg button[data-tex="${kind}"]`);
+    if (button) {
+      button.click();
+    } else {
+      applyTexture(kind);
+    }
+  },
+  
+  setCalibration: (layer, params) => {
+    if (!calibration[layer]) return;
+    const cal = calibration[layer];
+    if (params.scale !== undefined) cal.scale = params.scale;
+    if (params.offsetX !== undefined) cal.offsetX = params.offsetX;
+    if (params.offsetY !== undefined) cal.offsetY = params.offsetY;
+    if (params.rotation !== undefined) cal.rotation = params.rotation;
+    if (params.flipV !== undefined) cal.flipV = params.flipV;
+    
+    updateTextureTransforms();
+    updateUIFromCalibration();
+  },
+  
+  getCalibration: () => JSON.parse(JSON.stringify(calibration)),
+
+  toggleGrid: (visible) => {
+    const el = $('tGrid');
+    const isCurrentlyOn = el.classList.contains('on');
+    if (!!visible !== isCurrentlyOn) {
+      el.click();
+    }
+  },
+  toggleAxes: (visible) => {
+    const el = $('tAxes');
+    const isCurrentlyOn = el.classList.contains('on');
+    if (!!visible !== isCurrentlyOn) {
+      el.click();
+    }
+  },
+  toggleSpin: (active) => {
+    const el = $('tSpin');
+    const isCurrentlyOn = el.classList.contains('on');
+    if (!!active !== isCurrentlyOn) {
+      el.click();
+    }
+  },
+  
+  applyBg: (theme) => {
+    const button = document.querySelector(`#bgSeg button[data-bg="${theme}"]`);
+    if (button) {
+      button.click();
+    } else {
+      applyBg(theme);
+    }
+  },
+
+  resetView,
+  orbitBy,
+  orbitRoll,
+  dollyBy,
+
+  onLoad: (callback) => {
+    if (isLoaded) {
+      callback();
+    } else {
+      window.addEventListener('viewerLoaded', callback, { once: true });
+    }
+  }
+};
+</script>
+</body>
+</html>
