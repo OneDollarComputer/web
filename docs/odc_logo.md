@@ -94,9 +94,9 @@ Default browser favicon is the **black monogram** (`odc_logo_black.svg` — “1
 |------|--------|
 | `odc_logo_black.svg` | Primary SVG favicon (linked from `index.html`) |
 | `icon.svg` | Copy of the black monogram (fallback path for older pages) |
-| `favicon.ico` | 16 / 32 / 48 ICO (black mark on white chip for tab contrast) |
-| `favicon.png` | 32×32 PNG |
-| `apple-touch-icon.png` | 180×180 PNG |
+| `favicon.ico` | 16 / 32 / 48 ICO (black mark, **transparent** background) |
+| `favicon.png` | 32×32 PNG, transparent |
+| `apple-touch-icon.png` | 180×180 PNG, transparent |
 
 **Do not** revive pixel board recreations of `odc.png` for the tab icon unless product asks. Keep product photos (`odc.png`, face/hero) for marketing; monogram for chrome icons.
 
