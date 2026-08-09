@@ -4,11 +4,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Favicons (early so browser shows icon in tab) -->
-  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+  <!-- Favicons: monogram (odc_logo_black) -->
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
-  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
   <title>One Dollar Computer — Awakening New Inventors</title>
   <meta name="description"
     content="A $1 computer to awaken new inventors. Simple, friendly, and made for classrooms, clubs, and curious minds. Designed in Austin, TX — to change the WORLD." />
@@ -35,7 +35,7 @@
   <meta property="og:description"
     content="A $1 computer to awaken new inventors. Simple, friendly, and made for classrooms, clubs, and curious minds." />
   <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
-  <meta property="og:image:alt" content="One Dollar Computer - Green PCB with friendly face" />
+  <meta property="og:image:alt" content="One Dollar Computer - green computer with friendly face" />
   <meta property="og:site_name" content="One Dollar Computer" />
   <meta property="og:locale" content="en_US" />
 
@@ -44,7 +44,7 @@
   <meta name="twitter:description"
     content="A $1 computer to awaken new inventors. Simple, friendly, and made for classrooms, clubs, and curious minds." />
   <meta name="twitter:image" content="https://onedollarcomputer.com/odc.png" />
-  <meta name="twitter:image:alt" content="One Dollar Computer - Green PCB with friendly face" />
+  <meta name="twitter:image:alt" content="One Dollar Computer - green computer with friendly face" />
   <meta name="twitter:creator" content="@onedollarcomputer" />
   <meta name="twitter:site" content="@onedollarcomputer" />
 
@@ -88,7 +88,7 @@
           "brand": {
             "@id": "https://onedollarcomputer.com/#brand"
           },
-          "description": "A $1 RISC-V based open-source educational microcontroller board designed to awaken new inventors. Single-sided SMD design, ultra-minimal BOM, WebHID programmable, and community-fabricatable.",
+          "description": "A $1 RISC-V based open-source educational computer designed to awaken new inventors. Single-sided SMD design, ultra-minimal BOM, WebHID programmable, and community-fabricatable.",
           "category": "Educational Technology",
           "manufacturer": {
             "@id": "https://onedollarcomputer.com/#organization"
@@ -215,7 +215,14 @@
 
     .nav-link {
       position: relative;
-      transition: color .25s
+      transition: color .25s;
+      cursor: pointer;
+      color: #A9B4C7
+    }
+
+    .nav-link:hover,
+    .nav-link:focus-visible {
+      color: #E8EEF8
     }
 
     .nav-link::after {
@@ -230,7 +237,8 @@
       transition: width .3s cubic-bezier(.16, 1, .3, 1)
     }
 
-    .nav-link:hover::after {
+    .nav-link:hover::after,
+    .nav-link:focus-visible::after {
       width: 100%
     }
 
@@ -274,18 +282,51 @@
       display: block
     }
 
+    /* Static panels — look calm, no “button” hover affordance */
     .card-glass {
       background: rgba(13, 18, 32, .65);
       backdrop-filter: blur(12px) saturate(1.4);
       -webkit-backdrop-filter: blur(12px) saturate(1.4);
-      border: 1px solid rgba(29, 40, 67, .6);
-      transition: transform .35s cubic-bezier(.16, 1, .3, 1), box-shadow .35s, border-color .35s
+      border: 1px solid rgba(29, 40, 67, .6)
     }
 
-    .card-glass:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(72, 225, 167, .08), 0 2px 12px rgba(0, 0, 0, .3);
-      border-color: rgba(72, 225, 167, .25)
+    /* Only true controls: FAQ rows, primary/nav actions */
+    .card-interactive {
+      background: rgba(13, 18, 32, .65);
+      backdrop-filter: blur(12px) saturate(1.4);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+      border: 1px solid rgba(72, 225, 167, .22);
+      cursor: pointer;
+      transition: border-color .25s, box-shadow .25s, background .25s, transform .2s
+    }
+
+    .card-interactive:hover {
+      border-color: rgba(72, 225, 167, .5);
+      box-shadow: 0 0 0 1px rgba(72, 225, 167, .12), 0 8px 28px rgba(0, 0, 0, .28);
+      background: rgba(19, 28, 48, .85)
+    }
+
+    .card-interactive:focus-within {
+      outline: 2px solid rgba(72, 225, 167, .55);
+      outline-offset: 2px
+    }
+
+    .card-interactive[open] {
+      border-color: rgba(72, 225, 167, .45);
+      background: rgba(19, 28, 48, .9)
+    }
+
+    .card-interactive summary {
+      cursor: pointer;
+      user-select: none
+    }
+
+    .card-interactive summary:focus {
+      outline: none
+    }
+
+    .card-interactive summary:focus-visible {
+      outline: none
     }
 
     .gradient-border {
@@ -372,15 +413,23 @@
       right: 0;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 1.25rem;
-      font-weight: 300;
-      color: #48E1A7;
-      transition: transform .3s
+      width: 1.5rem;
+      height: 1.5rem;
+      display: grid;
+      place-items: center;
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1;
+      color: #07090F;
+      background: #48E1A7;
+      border-radius: 999px;
+      transition: transform .25s, background .25s
     }
 
     details[open] summary::after {
       content: '−';
-      transform: translateY(-50%)
+      transform: translateY(-50%) rotate(0deg);
+      background: #8AB4FF
     }
 
     details[open] summary {
@@ -424,18 +473,6 @@
       100% {
         transform: translate(-20px, 20px) scale(.9)
       }
-    }
-
-    .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, rgba(72, 225, 167, .15), rgba(138, 180, 255, .1));
-      flex-shrink: 0;
-      margin-bottom: .75rem
     }
 
     .quote-highlight {
@@ -535,7 +572,10 @@
       align-items: center;
       gap: .35rem;
       position: relative;
-      z-index: 1
+      z-index: 1;
+      cursor: default;
+      pointer-events: none;
+      user-select: none
     }
 
     .timeline-item-dot {
@@ -627,7 +667,7 @@
       }
     }
 
-    /* 3D board viewer (from claudioolmedo.com) */
+    /* 3D computer viewer */
     .viewer-container {
       position: relative;
       overflow: hidden;
@@ -688,24 +728,16 @@
 
   <header id="site-nav" class="fixed top-0 left-0 right-0 z-50 nav-glass">
     <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a class="nav-brand-link flex items-center group" href="/">
-        <span
-          class="inline-flex h-9 w-9 rounded-xl bg-base-soft items-center justify-center border border-base-line/40 group-hover:border-base-accent/40 transition-colors"
-          aria-hidden="true">
-          <svg viewBox="0 0 24 24" class="h-5 w-5 text-base-accent" fill="none" stroke="currentColor"
-            aria-hidden="true">
-            <rect x="4" y="4" width="16" height="16" rx="3" stroke-width="1.5" />
-            <path d="M9 9h6v6H9z" stroke-width="1.5" />
-          </svg>
-        </span>
+      <a class="nav-brand-link flex items-center group" href="/" aria-label="One Dollar Computer home">
+        <img src="/odc_logo_white.svg" width="36" height="36" alt="" class="h-9 w-9" decoding="async" />
         <span class="nav-brand-text text-lg tracking-tight font-semibold">One Dollar Computer</span>
       </a>
       <div class="hidden md:flex items-center gap-7 text-sm text-base-sub font-medium">
-        <a href="#philosophy" class="nav-link hover:text-base-text">Philosophy</a>
-        <a href="#vision" class="nav-link hover:text-base-text">Vision</a>
-        <a href="#hardware" class="nav-link hover:text-base-text">Hardware</a>
-        <a href="#talent" class="nav-link hover:text-base-text">Awaken Talent</a>
-        <a href="#faq" class="nav-link hover:text-base-text">FAQ</a>
+        <a href="#philosophy" class="nav-link">Philosophy</a>
+        <a href="#vision" class="nav-link">Vision</a>
+        <a href="#hardware" class="nav-link">Hardware</a>
+        <a href="#talent" class="nav-link">Awaken Talent</a>
+        <a href="#faq" class="nav-link">FAQ</a>
       </div>
     </nav>
   </header>
@@ -713,7 +745,7 @@
 
   <main id="main">
     <section class="relative w-full bg-black overflow-hidden h-[60vh] md:h-[70vh]" aria-label="One Dollar Computer">
-      <img src="/one_dollar_computer_face.jpeg" alt="One Dollar Computer — main board"
+      <img src="/one_dollar_computer_face.jpeg" alt="One Dollar Computer — friendly face"
         class="absolute inset-0 w-full h-full object-cover object-[68%_center] md:object-center" loading="eager" />
       <div class="hero-overlay absolute inset-0"></div>
       <div class="ambient-orb w-[400px] h-[400px] bg-[#48E1A7] top-[10%] right-[10%]"></div>
@@ -769,7 +801,7 @@
           <div class="reveal">
             <h2 class="text-3xl md:text-4xl font-bold mb-5 leading-tight">Start small · Dream big</h2>
             <p class="text-base-sub text-lg prose-max leading-relaxed">With a single dollar, anyone can begin. This
-              board lowers the barrier and lights the path for the inventors of tomorrow.</p>
+              computer lowers the barrier and lights the path for the inventors of tomorrow.</p>
           </div>
           <div class="relative reveal reveal-delay-1">
             <div class="rounded-2xl gradient-border card-glass p-8">
@@ -790,42 +822,21 @@
       <div class="max-w-7xl mx-auto px-6">
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           <article class="rounded-2xl card-glass p-6 reveal">
-            <div class="feature-icon"><svg viewBox="0 0 24 24" class="w-5 h-5 text-base-accent" fill="none"
-                stroke="currentColor" stroke-width="1.5">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg></div>
             <h3 class="font-semibold text-lg">Accessible</h3>
             <p class="mt-2 text-base-sub text-sm leading-relaxed">A price anyone can reach, so opportunity spreads
               further than ever.</p>
           </article>
           <article class="rounded-2xl card-glass p-6 reveal reveal-delay-1">
-            <div class="feature-icon"><svg viewBox="0 0 24 24" class="w-5 h-5 text-base-accent" fill="none"
-                stroke="currentColor" stroke-width="1.5">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg></div>
             <h3 class="font-semibold text-lg">Easy to begin</h3>
             <p class="mt-2 text-base-sub text-sm leading-relaxed">No steep learning curve — plug in and start
               discovering.</p>
           </article>
           <article class="rounded-2xl card-glass p-6 reveal reveal-delay-2">
-            <div class="feature-icon"><svg viewBox="0 0 24 24" class="w-5 h-5 text-base-accent" fill="none"
-                stroke="currentColor" stroke-width="1.5">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg></div>
             <h3 class="font-semibold text-lg">Learning by doing</h3>
             <p class="mt-2 text-base-sub text-sm leading-relaxed">Confidence grows with action. Small projects lead to
               breakthroughs.</p>
           </article>
           <article class="rounded-2xl card-glass p-6 reveal reveal-delay-3">
-            <div class="feature-icon"><svg viewBox="0 0 24 24" class="w-5 h-5 text-base-accent" fill="none"
-                stroke="currentColor" stroke-width="1.5">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg></div>
             <h3 class="font-semibold text-lg">Open to everyone</h3>
             <p class="mt-2 text-base-sub text-sm leading-relaxed">Resources are shared freely, so knowledge can grow
               everywhere.</p>
@@ -840,9 +851,9 @@
         <h2 class="text-3xl md:text-4xl font-bold">Awakening talent everywhere</h2>
         <p class="mt-5 text-base-sub text-lg leading-relaxed prose-max mx-auto">The One Dollar Computer is a symbol of
           possibility. It gives anyone — students, teachers, or curious dreamers — the chance to invent. Talent is
-          everywhere, but often hidden. This board is the invitation to bring it forward.</p>
+          everywhere, but often hidden. This computer is the invitation to bring it forward.</p>
         <p class="mt-6 text-base-sub text-lg leading-relaxed prose-max mx-auto">Our mission is simple: lower the
-          barrier, open the door, and light the spark. With every board in someone's hands, a new inventor can rise —
+          barrier, open the door, and light the spark. With every computer in someone's hands, a new inventor can rise —
           carrying ideas that may one day change the world.</p>
       </div>
     </section>
@@ -902,7 +913,7 @@
         <div class="rounded-2xl gradient-border card-glass p-10 reveal">
           <h3 class="text-2xl font-bold mb-8 text-center">The Path Forward</h3>
           <div class="space-y-6">
-            <p class="text-base-sub text-lg leading-relaxed prose-max mx-auto">The journey begins with a single board —
+            <p class="text-base-sub text-lg leading-relaxed prose-max mx-auto">The journey begins with a single computer —
               but the vision goes far beyond it. We see a world where technology is not limited to experts or companies,
               but belongs to everyone who wants to create.</p>
             <p class="text-base-sub text-lg leading-relaxed prose-max mx-auto">From classrooms to makerspaces, from
@@ -940,7 +951,7 @@
           </div>
           <div class="reveal reveal-delay-1">
             <h3 class="text-2xl font-bold mb-6">Simple. Friendly. Powerful enough to start.</h3>
-            <p class="text-base-sub text-lg leading-relaxed mb-6 prose-max">The board is intentionally minimal so the
+            <p class="text-base-sub text-lg leading-relaxed mb-6 prose-max">The computer is intentionally minimal so the
               focus stays on learning by making. It's a gentle first step that leads to big possibilities.</p>
             <div class="grid md:grid-cols-2 gap-4">
               <div class="rounded-xl card-glass p-4">
@@ -964,12 +975,13 @@
         </div>
 
         <!-- 3D loads while the visitor scrolls; shown after the static product photo -->
-        <div id="board-3d" class="max-w-4xl mx-auto">
-          <div class="viewer-container">
+        <div id="computer-3d" class="max-w-4xl mx-auto">
+          <div class="viewer-container" role="region" aria-label="Interactive 3D model of the One Dollar Computer">
             <iframe id="viewer-iframe" data-src="3d/viewer.html?v=3" src="about:blank"
               allow="autoplay; fullscreen" allowfullscreen webkitallowfullscreen playsinline
-              title="One Dollar Computer 3D Viewer" loading="lazy"></iframe>
+              title="One Dollar Computer 3D Viewer — drag to rotate" loading="lazy"></iframe>
           </div>
+          <p class="mt-4 text-center text-sm text-base-sub">Drag to rotate · Scroll to zoom · Explore the hardware in 3D</p>
         </div>
       </div>
     </section>
@@ -979,24 +991,25 @@
         <div class="text-center mb-10 reveal">
           <div class="section-accent"></div>
           <h3 class="text-3xl md:text-4xl font-bold">FAQ</h3>
+          <p class="mt-4 text-base-sub text-sm">Tap a question to expand</p>
         </div>
         <div class="grid md:grid-cols-2 gap-5">
-          <details class="rounded-xl card-glass p-5 reveal">
-            <summary class="cursor-pointer font-semibold">What is it?</summary>
-            <p class="mt-3 text-base-sub leading-relaxed">A tiny $1 board that awakens creativity and helps people
+          <details class="rounded-xl card-interactive p-5 reveal">
+            <summary class="font-semibold">What is it?</summary>
+            <p class="mt-3 text-base-sub leading-relaxed">A tiny $1 computer that awakens creativity and helps people
               become inventors.</p>
           </details>
-          <details class="rounded-xl card-glass p-5 reveal reveal-delay-1">
-            <summary class="cursor-pointer font-semibold">Who is it for?</summary>
+          <details class="rounded-xl card-interactive p-5 reveal reveal-delay-1">
+            <summary class="font-semibold">Who is it for?</summary>
             <p class="mt-3 text-base-sub leading-relaxed">Beginners, students, teachers — anyone ready to turn curiosity
               into invention.</p>
           </details>
-          <details class="rounded-xl card-glass p-5 reveal">
-            <summary class="cursor-pointer font-semibold">Do I need experience?</summary>
+          <details class="rounded-xl card-interactive p-5 reveal">
+            <summary class="font-semibold">Do I need experience?</summary>
             <p class="mt-3 text-base-sub leading-relaxed">No. Your first step can be small and easy, yet powerful.</p>
           </details>
-          <details class="rounded-xl card-glass p-5 reveal reveal-delay-1">
-            <summary class="cursor-pointer font-semibold">Is it open?</summary>
+          <details class="rounded-xl card-interactive p-5 reveal reveal-delay-1">
+            <summary class="font-semibold">Is it open?</summary>
             <p class="mt-3 text-base-sub leading-relaxed">Yes. We believe sharing knowledge is the best way to multiply
               invention. Open design files, docs, and tools will be published here as they are ready.</p>
           </details>
