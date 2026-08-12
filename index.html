@@ -9,17 +9,25 @@
   <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-  <title>One Dollar Computer — Awakening New Inventors</title>
+  <title>One Dollar Computer | Official Site — $1 RISC-V Educational Computer</title>
   <meta name="description"
-    content="A $1 computer to awaken new inventors. Simple, friendly, and made for classrooms, clubs, and curious minds. Designed in Austin, TX — to change the WORLD." />
+    content="One Dollar Computer (ODC) — official site onedollarcomputer.com. A ~$1 open RISC-V educational computer to awaken inventors. Classrooms, clubs, makers. Designed in Austin, TX." />
   <link rel="canonical" href="https://onedollarcomputer.com/" />
+  <link rel="alternate" type="text/plain" href="https://onedollarcomputer.com/llms.txt" title="LLM brief" />
+  <link rel="alternate" type="application/json" href="https://onedollarcomputer.com/seo/entity.json" title="Brand entity JSON" />
   <meta name="theme-color" content="#07090F" />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large" />
   <meta name="author" content="One Dollar Computer" />
+  <meta name="publisher" content="One Dollar Computer Project" />
   <meta name="keywords"
-    content="one dollar computer, $1 computer, RISC-V, education, STEM, programming, electronics, Austin, inventors, students, teachers, affordable technology" />
+    content="One Dollar Computer, one dollar computer, onedollarcomputer, onedollarcomputer.com, OneDollarComputer, ODC, $1 computer, RISC-V educational computer, open hardware STEM, Austin inventors" />
   <meta name="language" content="en" />
-  <meta name="revisit-after" content="7 days" />
+  <meta name="revisit-after" content="3 days" />
+  <meta name="application-name" content="One Dollar Computer" />
+  <link rel="author" href="/humans.txt" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+  <script defer src="/js/analytics.js"></script>
 
   <!-- Additional SEO -->
   <meta name="format-detection" content="telephone=no" />
@@ -31,18 +39,18 @@
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://onedollarcomputer.com/" />
-  <meta property="og:title" content="One Dollar Computer — Awakening New Inventors" />
+  <meta property="og:title" content="One Dollar Computer | Official Site — $1 RISC-V Educational Computer" />
   <meta property="og:description"
-    content="A $1 computer to awaken new inventors. Simple, friendly, and made for classrooms, clubs, and curious minds." />
+    content="Official site of One Dollar Computer (onedollarcomputer.com). A ~$1 open RISC-V educational computer to awaken inventors worldwide." />
   <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
   <meta property="og:image:alt" content="One Dollar Computer - green computer with friendly face" />
   <meta property="og:site_name" content="One Dollar Computer" />
   <meta property="og:locale" content="en_US" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="One Dollar Computer — Awakening New Inventors" />
+  <meta name="twitter:title" content="One Dollar Computer | Official Site" />
   <meta name="twitter:description"
-    content="A $1 computer to awaken new inventors. Simple, friendly, and made for classrooms, clubs, and curious minds." />
+    content="Official site of One Dollar Computer (onedollarcomputer.com). A ~$1 open RISC-V educational computer to awaken inventors." />
   <meta name="twitter:image" content="https://onedollarcomputer.com/odc.png" />
   <meta name="twitter:image:alt" content="One Dollar Computer - green computer with friendly face" />
   <meta name="twitter:creator" content="@onedollarcomputer" />
@@ -54,82 +62,135 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
 
-  <!-- Structured Data (Schema.org) -->
+  <!-- Structured Data (Schema.org) — brand entity for Google / Gemini -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@graph": [
-    
+        {
+          "@type": "WebSite",
+          "@id": "https://onedollarcomputer.com/#website",
+          "url": "https://onedollarcomputer.com/",
+          "name": "One Dollar Computer",
+          "alternateName": ["OneDollarComputer", "ODC", "onedollarcomputer.com"],
+          "description": "Official website of One Dollar Computer — ultra-affordable open educational RISC-V computer.",
+          "inLanguage": "en-US",
+          "publisher": { "@id": "https://onedollarcomputer.com/#organization" },
+          "about": { "@id": "https://onedollarcomputer.com/#brand" }
+        },
         {
           "@type": "Brand",
           "@id": "https://onedollarcomputer.com/#brand",
           "name": "One Dollar Computer",
-          "url": "https://onedollarcomputer.com",
-          "logo": "https://onedollarcomputer.com/odc.png",
-          "description": "Ultra-affordable open hardware platform designed to awaken inventors worldwide."
+          "alternateName": ["OneDollarComputer", "ODC", "$1 Computer", "One Dollar Computer V1.004"],
+          "url": "https://onedollarcomputer.com/",
+          "logo": "https://onedollarcomputer.com/odc_logo_black.svg",
+          "image": "https://onedollarcomputer.com/odc.png",
+          "slogan": "Awakening New Inventors",
+          "description": "Ultra-affordable open hardware educational computer designed to awaken inventors worldwide. Official site: https://onedollarcomputer.com/"
         },
-    
         {
           "@type": "Organization",
           "@id": "https://onedollarcomputer.com/#organization",
           "name": "One Dollar Computer Project",
-          "url": "https://onedollarcomputer.com",
-          "logo": "https://onedollarcomputer.com/odc.png",
+          "legalName": "One Dollar Computer",
+          "url": "https://onedollarcomputer.com/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://onedollarcomputer.com/odc.png"
+          },
+          "foundingLocation": {
+            "@type": "Place",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Austin",
+              "addressRegion": "TX",
+              "addressCountry": "US"
+            }
+          },
           "sameAs": [
+            "https://github.com/OneDollarComputer",
             "https://github.com/OneDollarComputer/web"
-          ]
+          ],
+          "brand": { "@id": "https://onedollarcomputer.com/#brand" }
         },
-    
         {
           "@type": ["Product", "HardwareDevice"],
           "@id": "https://onedollarcomputer.com/#product",
-          "name": "One Dollar Computer V1.004",
+          "name": "One Dollar Computer",
+          "alternateName": "One Dollar Computer V1.004",
           "image": "https://onedollarcomputer.com/odc.png",
-          "brand": {
-            "@id": "https://onedollarcomputer.com/#brand"
-          },
-          "description": "A $1 RISC-V based open-source educational computer designed to awaken new inventors. Single-sided SMD design, ultra-minimal BOM, WebHID programmable, and community-fabricatable.",
+          "brand": { "@id": "https://onedollarcomputer.com/#brand" },
+          "description": "A ~$1 RISC-V open-source educational computer designed to awaken new inventors. Single-sided SMD design, ultra-minimal BOM, WebHID programmable, community-fabricatable. Official: https://onedollarcomputer.com/",
           "category": "Educational Technology",
-          "manufacturer": {
-            "@id": "https://onedollarcomputer.com/#organization"
-          },
+          "sku": "ODC-V1.004",
+          "mpn": "ODC-V1.004",
+          "manufacturer": { "@id": "https://onedollarcomputer.com/#organization" },
           "material": "FR4 PCB",
           "isAccessibleForFree": true,
           "audience": {
             "@type": "EducationalAudience",
-            "educationalRole": [
-              "Student",
-              "Teacher",
-              "Inventor",
-              "Maker",
-              "Engineer"
-            ]
+            "educationalRole": ["Student", "Teacher", "Inventor", "Maker", "Engineer"]
           },
           "offers": {
             "@type": "Offer",
-            "url": "https://onedollarcomputer.com",
+            "url": "https://onedollarcomputer.com/",
             "price": "1.00",
             "priceCurrency": "USD",
             "availability": "https://schema.org/PreOrder",
-            "priceValidUntil": "2026-12-31"
+            "priceValidUntil": "2027-12-31"
           }
         },
-    
         {
           "@type": "CreativeWork",
           "@id": "https://onedollarcomputer.com/#opensource",
           "name": "One Dollar Computer Open Project",
-          "creator": {
-            "@id": "https://onedollarcomputer.com/#organization"
-          },
+          "creator": { "@id": "https://onedollarcomputer.com/#organization" },
           "license": "https://opensource.org/licenses/MIT",
-          "url": "https://onedollarcomputer.com",
-          "description": "Open hardware and education project designed to awaken inventors worldwide. Design files, documentation, and tools are being prepared."
+          "url": "https://onedollarcomputer.com/",
+          "description": "Open hardware and education project designed to awaken inventors worldwide."
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://onedollarcomputer.com/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is One Dollar Computer?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "One Dollar Computer is a tiny ~$1 open RISC-V educational computer that awakens creativity and helps people become inventors. Official website: https://onedollarcomputer.com/"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Who is One Dollar Computer for?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Beginners, students, teachers — anyone ready to turn curiosity into invention."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Do I need experience to use One Dollar Computer?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Your first step can be small and easy, yet powerful."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is One Dollar Computer open source?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Sharing knowledge multiplies invention. Open design files, docs, and tools are published on onedollarcomputer.com as they are ready."
+              }
+            }
+          ]
         }
-    
       ]
     }
-    </script>
+  </script>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -1020,7 +1081,9 @@
 
   <footer class="relative border-t border-base-line/40 footer-glow">
     <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-4">
-      <p class="text-base-sub text-sm">© <span id="y"></span> One Dollar Computer</p>
+      <p class="text-base-sub text-sm">© <span id="y"></span> One Dollar Computer · <a href="/brand/"
+          class="hover:text-base-text">Brand</a> · <a href="/about/" class="hover:text-base-text">About</a> · <a
+          href="/llms.txt" class="hover:text-base-text">llms.txt</a></p>
       <p class="text-sm font-semibold">Designed in Austin, TX — <span
           class="text-transparent bg-clip-text bg-gradient-to-r from-base-accent to-base-sky">to change the WORLD</span>
       </p>

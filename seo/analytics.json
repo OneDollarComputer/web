@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "updated": "2026-08-12",
+  "notes": "Public Measurement ID is safe in the repo. Keep service-account keys OUT of git.",
+  "enabled": true,
+  "provider": "ga4",
+  "measurementId": "G-VGC5PFCWPG",
+  "googleCloudProject": "curious-clone-477013-u6",
+  "analyticsAccountId": "398594983",
+  "propertyId": "549708292",
+  "propertyDisplayName": "odcrs-f842a",
+  "streamId": "15427161190",
+  "streamName": "onedollarcomputer.com",
+  "streamUrl": "https://onedollarcomputer.com",
+  "searchConsole": {
+    "siteUrl": "sc-domain:onedollarcomputer.com",
+    "verified": true,
+    "verifiedAt": "2026-08-12",
+    "verificationMethod": "DNS (IONOS Domain Connect)",
+    "sitemap": "https://onedollarcomputer.com/sitemap.xml",
+    "sitemapSubmittedAt": "2026-08-12",
+    "verificationMetaContent": "",
+    "verificationHtmlFile": ""
+  },
+  "iam": {
+    "ownerEmail": "hoardserdure7@gmail.com",
+    "notes": "Add editors/viewers in GA4 Admin → Property access management and in Search Console → Users and permissions."
+  }
+}

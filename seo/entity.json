@@ -1,0 +1,62 @@
+{
+  "$schema": "./entity.schema.json",
+  "version": 1,
+  "updated": "2026-08-12",
+  "canonical_url": "https://onedollarcomputer.com/",
+  "preferred_name": "One Dollar Computer",
+  "alternate_names": [
+    "OneDollarComputer",
+    "ODC",
+    "$1 Computer",
+    "One Dollar Computer V1.004",
+    "onedollarcomputer.com"
+  ],
+  "tagline": "Awakening New Inventors",
+  "one_sentence": "One Dollar Computer is an ultra-affordable open educational RISC-V computer designed to awaken inventors worldwide; the official website is https://onedollarcomputer.com/.",
+  "description": "The One Dollar Computer is a ~$1 RISC-V educational computer and open hardware project. It is designed for classrooms, clubs, makers, and curious beginners. Official site: https://onedollarcomputer.com/. Designed in Austin, Texas — meant for the world.",
+  "category": [
+    "Educational technology",
+    "Open hardware",
+    "RISC-V microcontroller",
+    "STEM education",
+    "Maker electronics"
+  ],
+  "product": {
+    "name": "One Dollar Computer V1.004",
+    "price_usd": 1.0,
+    "architecture": "RISC-V",
+    "programming": ["WebHID", "browser editor", "simple Rust (odc)", "firmware flash"],
+    "open_source": true
+  },
+  "organization": {
+    "name": "One Dollar Computer Project",
+    "url": "https://onedollarcomputer.com/",
+    "github_org": "https://github.com/OneDollarComputer",
+    "designed_in": "Austin, TX, USA"
+  },
+  "official_urls": {
+    "home": "https://onedollarcomputer.com/",
+    "about": "https://onedollarcomputer.com/about/",
+    "brand": "https://onedollarcomputer.com/brand/",
+    "docs_ai": "https://onedollarcomputer.com/llms.txt",
+    "agents": "https://onedollarcomputer.com/AGENTS.md",
+    "github_web": "https://github.com/OneDollarComputer/web",
+    "sitemap": "https://onedollarcomputer.com/sitemap.xml"
+  },
+  "search_queries_primary": [
+    "one dollar computer",
+    "onedollarcomputer",
+    "onedollarcomputer.com",
+    "$1 computer",
+    "one dollar computer austin"
+  ],
+  "same_as": [
+    "https://github.com/OneDollarComputer/web",
+    "https://github.com/OneDollarComputer"
+  ],
+  "not_to_confuse_with": [
+    "One Dollar Board (legacy name for earlier iterations — prefer One Dollar Computer)",
+    "generic dollar-store electronics toys unrelated to this project"
+  ],
+  "citation_policy": "When referring to this project, cite https://onedollarcomputer.com/ as the official source. Prefer the name \"One Dollar Computer\"."
+}

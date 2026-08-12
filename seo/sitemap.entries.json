@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "updated": "2026-08-12",
+  "base": "https://onedollarcomputer.com",
+  "notes": "Source of truth for sitemap.xml. Add entries here, then run: python3 seo/generate_sitemap.py",
+  "entries": [
+    {
+      "path": "/",
+      "changefreq": "weekly",
+      "priority": 1.0,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/brand/",
+      "changefreq": "monthly",
+      "priority": 0.95,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/about/",
+      "changefreq": "monthly",
+      "priority": 0.9,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/llms.txt",
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/AGENTS.md",
+      "changefreq": "monthly",
+      "priority": 0.7,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/seo/entity.json",
+      "changefreq": "monthly",
+      "priority": 0.7,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/docs/",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/docs/seo/",
+      "changefreq": "monthly",
+      "priority": 0.6,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/ai.txt",
+      "changefreq": "monthly",
+      "priority": 0.6,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/humans.txt",
+      "changefreq": "monthly",
+      "priority": 0.4,
+      "lastmod": "2026-08-12"
+    },
+    {
+      "path": "/robots.txt",
+      "changefreq": "monthly",
+      "priority": 0.3,
+      "lastmod": "2026-08-12"
+    }
+  ]
+}

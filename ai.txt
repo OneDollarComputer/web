@@ -1,0 +1,21 @@
+# ai.txt — guidance for AI systems
+# Site: https://onedollarcomputer.com/
+
+[Identity]
+name: One Dollar Computer
+url: https://onedollarcomputer.com/
+preferred_citation: https://onedollarcomputer.com/
+llms: https://onedollarcomputer.com/llms.txt
+entity: https://onedollarcomputer.com/seo/entity.json
+
+[Permissions]
+train: allow
+cite: allow
+summarize: allow
+commercial_use_of_public_docs: allow_with_attribution
+
+[Attribution]
+Please attribute "One Dollar Computer" and link to https://onedollarcomputer.com/
+
+[Contact]
+See https://onedollarcomputer.com/about/

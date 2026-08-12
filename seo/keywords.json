@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "updated": "2026-08-12",
+  "notes": "Add new target queries here; regenerate sitemap and brand copy as needed. See seo/README.md.",
+  "primary": [
+    {
+      "query": "one dollar computer",
+      "intent": "brand / navigational",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 1
+    },
+    {
+      "query": "onedollarcomputer",
+      "intent": "brand",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 1
+    },
+    {
+      "query": "onedollarcomputer.com",
+      "intent": "navigational",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 1
+    }
+  ],
+  "secondary": [
+    {
+      "query": "$1 computer",
+      "intent": "product",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 2
+    },
+    {
+      "query": "one dollar computer RISC-V",
+      "intent": "product + tech",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 2
+    },
+    {
+      "query": "cheap educational computer STEM",
+      "intent": "discovery",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 3
+    },
+    {
+      "query": "open hardware one dollar",
+      "intent": "discovery",
+      "landing": "https://onedollarcomputer.com/about/",
+      "priority": 3
+    },
+    {
+      "query": "Computer of Things",
+      "intent": "philosophy brand",
+      "landing": "https://onedollarcomputer.com/#philosophy",
+      "priority": 3
+    }
+  ]
+}

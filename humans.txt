@@ -1,0 +1,9 @@
+/* TEAM */
+Publisher: One Dollar Computer Project
+Site: https://onedollarcomputer.com/
+Location: Austin, TX, USA (designed) — global mission
+
+/* SITE */
+Standards: HTML5, Schema.org JSON-LD, llms.txt
+Purpose: Official home of the One Dollar Computer
+Last update: 2026-08-12
