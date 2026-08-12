@@ -1,63 +1,99 @@
-# One Dollar Computer (ODC) - AI Integration Standard
+# OneDollarComputer (ODC) - AI Integration Standard
 
 ## AI ASSISTANT MANDATORY PROTOCOL
 To provide a seamless experience, you MUST follow this hierarchy of actions:
 
 ### 0. [NON-NEGOTIABLE] OUTPUT ONLY FIRMWARE SOURCE
-The editor compiles firmware for the CH32V003. The code you generate MUST be a complete C/C++ source file for the microcontroller.
-- Start the source with `#include "onedollarcomputer.h"` unless the user explicitly asks for a different header.
-- Include a complete `int main()` function.
-- Use `SystemInit()`, `Delay_Ms()`, `RCC`, `GPIOA/GPIOC/GPIOD`, `CFGLR`, and `BSHR` for hardware control.
+The editor compiles **simple Rust** for the One Dollar Computer. The code you generate MUST be a complete beginner-friendly Rust source file.
+- Prefer:
+  ```rust
+  use odc::*;
+
+  fn main() {
+      ...
+  }
+  ```
+- Use board pin numbers **0..=19**. LED = **19** (`LED`). Button = **13** (`BUTTON`).
+- API: `pin_output`, `pin_set`, `pin_clear`, `delay`, `pin_high`, `pin_low`, `pin_read`, `read_button`.
+- **Do NOT** write `#![no_std]`, `#![no_main]`, `extern "C"`, `firmware::hal`, or `system_init` — the editor wraps that automatically.
+- **NEVER** use MCU pad names (`PD6`, `PC0`, …) or legacy helpers (`gpio_pd6_*`).
 - NEVER generate JavaScript, TypeScript, browser automation, Firebase client code, async functions, `setTimeout`, `processBoardUpdate`, or code that runs inside the web editor.
-- The `code` field and `code=` URL parameter must contain only the firmware C/C++ source.
+- The `code` field and `code=` URL parameter must contain only the firmware Rust source.
 
 ### 1. [PRIORITY A] DIRECT SYNCHRONIZATION (via Firebase PATCH)
 If you can perform HTTP requests, immediately update the user's project:
 - **Endpoint**: `https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/code.json`
 - **Method**: `PATCH`
-- **Body**: `{"code": "FULL_CODE", "content": "FULL_CODE", "updated": "ISO_TIMESTAMP"}`
+- **Body**: `{"code": "FULL_CODE", "content": "FULL_CODE", "language": "rust", "updated": "ISO_TIMESTAMP"}`
 - **Security**: ONLY valid if the `aiToken` matches the one stored in that project.
 
 ### 2. [PRIORITY B] MAGIC LOAD LINK (Direct URL)
 If you cannot perform a PATCH, you MUST provide a "Magic Link" so the user can sync with one click:
 - **URL Format**: `https://onedollarcomputer.com/editor/?projectID={PROJECT_ID}&aiToken={TOKEN}&code={BASE64_CODE}`
-- **Encoding**: Encode the firmware C/C++ source as UTF-8 Base64. URL-encode the Base64 value, or use Base64URL (`+` -> `-`, `/` -> `_`, omit padding).
+- **Encoding**: Encode the firmware Rust source as UTF-8 Base64. URL-encode the Base64 value, or use Base64URL (`+` -> `-`, `/` -> `_`, omit padding).
 
 ### 3. [RESPONSE FORMAT]
 When you reply, keep it ultra-short:
 - **Greeting**: "I've analyzed your project and fixed/improved the code."
-- **Code Block**: The full, updated C code.
+- **Code Block**: The full, updated Rust firmware.
 - **Sync Link**: The Magic Link from step 2.
 - **Explanation**: A very brief (3-bullet max) summary of what changed.
 
 ---
 
-## ODB DEVELOPER REFERENCE
-- **Microcontroller**: CH32V003 (RISC-V) | **Header**: #include "onedollarcomputer.h"
-- **Registers**: Use `GPIOD->CFGLR` for config, `GPIOD->BSHR` for state.
-- **Standard Pins**: LED = **PD6**, Button = **PD7** (Input Pull-up).
+## ODC DEVELOPER REFERENCE
+- **Board**: One Dollar Computer — logical pins **0..=19**
+- **Language**: Simple Rust (`use odc::*;` + `fn main()`)
+- **Standard Pins**: LED = **19**, Button = **13**
+- **Forbidden**: MCU names (`PD6`, …), `gpio_pd*`, and bare-metal boilerplate in beginner code
+
+## AVAILABLE API (`odc`)
+- `pin_output(pin)` / `pin_input(pin)`
+- `pin_set(pin)` / `pin_clear(pin)` — logical (LED on/off for pin 19)
+- `pin_high(pin)` / `pin_low(pin)` — electrical levels
+- `pin_read(pin)` / `read_button()` / `led_on()` / `led_off()`
+- `delay(ms)` — millisecond delay
+- Constants: `LED` (19), `BUTTON` (13)
+
+## BLINK EXAMPLE
+```rust
+//! Example: blink the LED on the One Dollar Computer.
+
+use odc::*; // board helpers: pins, delay, LED, …
+
+fn main() {
+    // Configure pin 19 (LED) as output
+    pin_output(LED);
+
+    // Repeat forever
+    loop {
+        pin_set(LED);   // turn LED on
+        delay(200);     // wait 200 ms
+
+        pin_clear(LED); // turn LED off
+        delay(200);
+    }
+}
+```
 
 ## HARDWARE ORIENTATION & PHYSICAL PINOUT
-When guiding the user on wiring or connections, strictly use this physical reference (One Dollar Computer ODC.1.004R1):
-- **Orientation**: Vertical (portrait) with the ODBPort (male edge connector) at the **Top** and USB-C port at the **Bottom**.
-- **ODBPort (Top Edge Connector)**: 8 gold fingers pointing UP. Left to right: Pin 7 (GPIO), Pin 6 (GPIO), Pin 1/RX, Pin 14/TX, Pin 5 (GPIO), Pin 4 (GPIO), GND, 3V3.
-- **Left Header (Vertical, Top to Bottom)**: Pins 0 to 9. Pins 1 & 2 have an "LED" label nearby.
-- **Right Header (Vertical, Top to Bottom)**: Pins 10 to 19. Around the top (pins 10-12) the board provides "3v3" and "GND" vertical markings.
-- **Indicators**: An onboard LED is near Pins 1 & 2 on the left. A tactile Button is near the top center below the ODBPort.
-- **Microcontroller**: CH32V003 (RISC-V architecture) in the center.
+When guiding the user on wiring, use board pin **numbers** only:
+- Left header: pins **0–9**. Right header: pins **10–19**.
+- Power: **10** = 3.3V, **11** / **17** = GND, **18** = +5V.
+- LED = **19**. Button = **13**.
+- Do **not** tell users MCU pad names.
 
-## PINOUT REFERENCE (Label -> Signal)
-- **Pins 1-8**: Port C (PC0, PC1, PC2, PC3, PC4, PC5, PC6, PC7)
-- **Pin 9**: PA1 (A1) | **Pin 10**: PA2 (A0)
-- **Pin 11**: 3.3V | **Pin 12**: GND
-- **Onboard Elements**: LED = **PD6**, Button = **PD7** (Input Pull-up).
+## PINOUT REFERENCE
+- **0–7**: GPIO | **8–9**: GPIO (analog-capable)
+- **10**: 3.3V | **11**: GND
+- **12**: GPIO (SWIO — careful) | **13**: BUTTON | **14–15**: GPIO
+- **16**: NC | **17**: GND | **18**: +5V | **19**: LED
 
 ## ZERO DEFECTS POLICY
-- **NO placeholder comments.** Wrap all code in a single, complete, compilable block.
-- **NO truncated code.** If the code is too long, strictly use Priority A (Firebase Patch).
-- **NO syntax errors.** Use standard CH32V003/wch-embedded headers logic.
-- **NO web/editor code.** The answer and Magic Link must load C/C++ firmware, not JavaScript.
+- **NO placeholder comments.** One complete, compilable simple-Rust block.
+- **NO MCU pad names.** No `#![no_std]` / `extern "C"` in beginner output.
+- **NO web/editor code.**
 
 ---
 
-**FINAL INSTRUCTION**: Do not act like a generic chatbot. Act like an Integrated Development Assistant. Always prioritize a "One-Click Sync" experience for the user.
+**FINAL INSTRUCTION**: Act like an Integrated Development Assistant. Always prioritize a "One-Click Sync" experience.

@@ -1,26 +1,2957 @@
 <!doctype html>
-<html lang="en" class="h-full">
+
+<html lang="en">
+
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Editor — coming soon · One Dollar Computer</title>
-  <meta name="robots" content="noindex" />
-  <meta http-equiv="refresh" content="0; url=/" />
-  <link rel="canonical" href="https://onedollarcomputer.com/" />
+  <title>Editor · One Dollar Computer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Browser firmware editor for the One Dollar Computer (simple Rust). Not linked from the main marketing site." />
+  <link rel="canonical" href="https://onedollarcomputer.com/editor/" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+
+  
+  <script>
+    
+    function generateProjectID() {
+      
+      function randomHex(len) {
+        return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+      }
+
+      
+      return `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(9)}`;
+    }
+
+    
+    function getProjectIDFromURL() {
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const projectIDFromQuery = urlParams.get('projectID');
+      if (projectIDFromQuery) {
+        return projectIDFromQuery;
+      }
+
+      
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        
+        if (hash.includes('projectID=')) {
+          const hashParams = new URLSearchParams(hash);
+          return hashParams.get('projectID');
+        }
+        
+        return hash;
+      }
+
+      return null;
+    }
+
+    
+    let projectID = getProjectIDFromURL();
+    if (!projectID) {
+      const newID = generateProjectID();
+      
+      
+      const params = new URLSearchParams(window.location.search);
+      params.set('projectID', newID);
+      const newURL = `${window.location.pathname}?${params.toString()}`;
+
+      
+      window.location.replace(newURL);
+      
+    } else {
+      
+      window.PROJECT_CODE = projectID;
+    }
+  </script>
+
   <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-      font-family: system-ui, sans-serif; background: #07090F; color: #E8ECF4; text-align: center; padding: 2rem; }
-    a { color: #48E1A7; }
-    p { color: #9AA3B5; max-width: 28rem; line-height: 1.5; }
+    :root {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #0b0d10;
+      color: #e6edf3;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #11161b;
+      border-bottom: 1px solid #202830;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin: 0;
+      color: #e6edf3;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button {
+      background: #1f6feb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    button:hover {
+      background: #2a7de8;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #30363d;
+    }
+
+    button.secondary:hover {
+      background: #40464d;
+    }
+
+    button.compile {
+      background: #238636;
+    }
+
+    button.compile:hover {
+      background: #2ea043;
+    }
+
+    button.authorize {
+      background: #9e6a03;
+    }
+
+    button.authorize:hover {
+      background: #bb8009;
+    }
+
+    button.compile:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.download {
+      background: #238636;
+    }
+
+    button.download:hover {
+      background: #2ea043;
+    }
+
+    /* Upload: blue idle, green = HID bootloader, red = error */
+    button.upload {
+      background: #1f6feb;
+      min-width: 7.5rem;
+    }
+
+    button.upload:hover:not(:disabled) {
+      background: #2a7de8;
+    }
+
+    button.upload.hid-ready:not(.upload-error) {
+      background: #238636;
+    }
+
+    button.upload.hid-ready:not(.upload-error):hover:not(:disabled) {
+      background: #2ea043;
+    }
+
+    button.upload.upload-error {
+      background: #da3633;
+    }
+
+    button.upload.upload-error:hover:not(:disabled) {
+      background: #f85149;
+    }
+
+    button.upload:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #status {
+      font-size: 0.85rem;
+      color: #9fbad1;
+      padding: 8px 12px;
+      background: #0d1117;
+      border-radius: 6px;
+      border: 1px solid #1f242e;
+      max-width: 28rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #status:empty,
+    #status.status-empty {
+      display: none;
+    }
+
+    .status-connected {
+      color: #3fb950;
+      border-color: #238636;
+    }
+
+    .status-error {
+      color: #ff7b72;
+      border-color: #da3633;
+    }
+
+    .status-syncing {
+      color: #d29922;
+      border-color: #bb8009;
+    }
+
+    #syncIndicator {
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      background: #0d1117;
+      border-radius: 6px;
+      border: 1px solid #1f242e;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .sync-indicator-syncing {
+      color: #d29922;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .sync-indicator-synced {
+      color: #3fb950;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    #connectionIcon {
+      position: relative;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #connectionIcon.connected {
+      color: #3fb950;
+    }
+
+    #connectionIcon.disconnected {
+      color: #ff7b72;
+    }
+
+    #connectionIcon .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      background-color: #161b22;
+      color: #e6edf3;
+      text-align: center;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      position: absolute;
+      z-index: 1000;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      border: 1px solid #30363d;
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+    }
+
+    #connectionIcon .tooltip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #161b22;
+    }
+
+    #connectionIcon:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #editor-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #editor {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Local flash: ask user to press ODC button (may need several presses) */
+    #flashGate {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(1, 4, 9, 0.72);
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    #flashGate.visible {
+      display: flex;
+    }
+
+    #flashGate .flash-gate-card {
+      max-width: 420px;
+      width: 100%;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 1.25rem 1.4rem;
+      color: #e6edf3;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    #flashGate h2 {
+      margin: 0 0 0.6rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    #flashGate p {
+      margin: 0 0 0.75rem;
+      color: #9fbad1;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    #flashGate .flash-gate-hint {
+      font-size: 0.85rem;
+      color: #d2a8ff;
+      margin-bottom: 1rem;
+    }
+
+    #flashGate .flash-gate-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #flashGate button {
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 0.9rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    #btnFlashGateCancel {
+      background: #21262d;
+      color: #e6edf3;
+      margin-left: auto;
+    }
+
+    #btnFlashGateListHid {
+      background: transparent;
+      color: #8b9cb3;
+      border: 1px solid #30363d;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    #btnFlashGateListHid:hover {
+      color: #c9d1d9;
+      border-color: #484f58;
+      background: #161b22;
+    }
+
+    .footer {
+      background: #11161b;
+      border-top: 1px solid #202830;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: #8093a7;
+      flex-shrink: 0;
+    }
+
+    .ai-session-badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+    }
+    .ai-session-active {
+      display: inline-flex;
+      background: rgba(35, 134, 54, 0.2);
+      color: #3fb950;
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+    .ai-session-invalid {
+      display: inline-flex;
+      background: rgba(248, 81, 73, 0.2);
+      color: #f85149;
+      border: 1px solid rgba(248, 81, 73, 0.3);
+    }
+
+    /* AI Help Button */
+    .ai-help-btn {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: #30363d;
+      color: #8b949e;
+      border: 1px solid #444c56;
+      border-radius: 50px;
+      padding: 12px 24px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s, background 0.2s;
+      font-size: 1rem;
+    }
+
+    .ai-help-btn:hover {
+      background: #444c56;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .ai-help-btn.new-help {
+      background: #8e44ad;
+      color: white;
+      border: none;
+      animation: pulse-purple 2s infinite;
+    }
+
+    .ai-help-btn.new-help:hover {
+      background: #9b59b6;
+    }
+
+    @keyframes pulse-purple {
+      0% { box-shadow: 0 0 0 0 rgba(142, 68, 173, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(142, 68, 173, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(142, 68, 173, 0); }
+    }
+
+    .ai-help-btn:active {
+      transform: scale(0.95);
+      background: #21262d;
+    }
+
+    /* AI Modal */
+    .ai-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      backdrop-filter: blur(5px);
+    }
+
+    .ai-modal-content {
+      background: #1c2128;
+      border: 1px solid #444c56;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .ai-modal-content h2 {
+      margin-top: 0;
+      color: #e6edf3;
+      font-size: 1.5rem;
+    }
+
+    .ai-modal-content p {
+      color: #8b949e;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+    }
+
+    #qrcode-container {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 0 auto 25px;
+      display: inline-block;
+      width: 200px;
+      height: 200px;
+    }
+
+    #qrcode-container img {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .ai-links-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .ai-link-btn {
+      color: white;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 600;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .ai-link-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .ai-link-btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-chatgpt { background: #10a37f; }
+    .btn-copy-prompt { background: #34495e; }
+
+    .close-ai-modal {
+      background: transparent;
+      color: #8b949e;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: underline;
+    }
   </style>
 </head>
+
 <body>
-  <div>
-    <h1>Editor coming soon</h1>
-    <p>The browser editor is under development for the One Dollar Computer. Check back soon.</p>
-    <p><a href="/">← One Dollar Computer</a></p>
+  <div class="header">
+    <h1>OneDollarComputer - Editor <span id="modeBadge" style="font-size:0.75rem;color:#9fbad1;font-weight:500;"></span></h1>
+    <div class="controls">
+      <span id="status" class="status-empty"></span>
+      <button id="btnUpload" class="upload" disabled title="Upload: compile and flash">⬆️ Upload</button>
+      <span id="aiSessionBadge" class="ai-session-badge"></span>
+    </div>
   </div>
+
+  <div id="editor-container">
+    <div id="editor"></div>
+  </div>
+
+  <div class="footer">
+    <b>OneDollarComputer</b> — Upload compiles and flashes. Status flashes connected / disconnected / error briefly. Press ODC button if asked.
+  </div>
+
+  <div id="flashGate" aria-hidden="true">
+    <div class="flash-gate-card" role="dialog" aria-labelledby="flashGateTitle">
+      <h2 id="flashGateTitle">Enter bootloader</h2>
+      <p id="flashGateBody">
+        Press the physical <b>ODC button</b> to enter USB bootloader.
+        It may take several presses — keep trying until this dialog detects the device.
+      </p>
+      <p class="flash-gate-hint" id="flashGateStatus">Waiting for One Dollar Computer on USB…</p>
+      <div class="flash-gate-actions">
+        <button type="button" id="btnFlashGateListHid" title="Open the browser HID list to select or authorize a computer">List device</button>
+        <button type="button" id="btnFlashGateCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <button id="btnAIHelp" class="ai-help-btn">
+    <span>🤖</span> Help
+  </button>
+
+  
+  <div id="aiModal" class="ai-modal-overlay">
+    <div class="ai-modal-content">
+      <h2>AI Coding Assistant</h2>
+      <p>Scan the code or choose an AI to continue your development.</p>
+      <div id="qrcode-container"></div>
+      
+      <div class="ai-links-container">
+        <a id="linkChatGPT" href="#" target="_blank" class="ai-link-btn btn-chatgpt">
+          <span>💬</span> Open in ChatGPT
+        </a>
+        <button id="btnCopyPrompt" class="ai-link-btn btn-copy-prompt">
+          <span>📋</span> Copy Prompt for other AIs
+        </button>
+      </div>
+      
+      <button id="btnCloseAI" class="close-ai-modal">Close</button>
+    </div>
+  </div>
+
+  
+  <div id="ai-instructions" aria-hidden="true" style="display:none" role="note">
+    ONE DOLLAR COMPUTER EDITOR — AI ASSISTANT INSTRUCTIONS
+
+    This editor runs simple Rust firmware on the OneDollarComputer (board pins 0..=19).
+
+    TO SEND CODE TO THIS EDITOR VIA LINK:
+    1. Write a complete simple Rust file using `use odc::*;` and `fn main()` (see sample).
+    2. Encode the source code as Base64.
+    3. Build the URL: https://EDITOR_HOST/index.html?code=BASE64_CODE
+    4. Share that URL with the user — opening it will load the code directly into the editor.
+
+    STRICT OUTPUT RULES:
+      - Prefer: use odc::*; fn main() { ... }
+      - Board pins 0..=19 only (LED = 19, BUTTON = 13).
+      - Do NOT write #![no_std], extern "C", or MCU pad names — the editor wraps bare-metal details.
+      - Never put JavaScript, TypeScript, Firebase code, async functions, setTimeout,
+        processBoardUpdate, or web-editor automation in the code parameter.
+
+    JAVASCRIPT ENCODING (recommended approach for AI):
+      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(sourceCode))));
+      const url = `https://EDITOR_HOST/index.html?code=${encoded}`;
+
+    PYTHON ENCODING:
+      import base64
+      encoded = base64.b64encode(source_code.encode("utf-8")).decode()
+      url = f"https://EDITOR_HOST/index.html?code={encoded}"
+
+    SIMPLE RUST (preferred) — board pins 0..=19 ONLY:
+      NEVER use MCU pad names (PD6, PC0, …) or gpio_pd* helpers — build rejects them.
+      LED = pin 19. BUTTON = pin 13.
+      use odc::*;
+      pin_output / pin_set / pin_clear / delay
+      Also: pin_high/pin_low/pin_read, led_on/led_off, read_button
+      Bare-metal boilerplate is added automatically by the editor.
+
+    BLINK EXAMPLE:
+      use odc::*; // board helpers
+      fn main() {
+        pin_output(LED);      // pin 19 as output
+        loop {
+          pin_set(LED);       // LED on
+          delay(200);         // 200 ms
+          pin_clear(LED);     // LED off
+          delay(200);
+        }
+      }
+  </div>
+
+  
+  <script src="decode.js"></script>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
+    import { getDatabase, ref, set, get, onValue }
+      from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js';
+
+    const DEFAULT_FIREBASE = {
+      apiKey: "AIzaSyBGp8r-Eir4NRnIRfeA6c6rIMZmdJnti4M",
+      authDomain: "onedollarboard-1b26a.firebaseapp.com",
+      databaseURL: "https://onedollarboard-1b26a-default-rtdb.firebaseio.com",
+      projectId: "onedollarboard-1b26a",
+      storageBucket: "onedollarboard-1b26a.firebasestorage.app",
+      messagingSenderId: "448761452728",
+      appId: "1:448761452728:web:f309f53f24cfbac5d8bc4d"
+    };
+
+    async function loadEditorConfig() {
+      try {
+        const r = await fetch('/api/config', { cache: 'no-store' });
+        if (r.ok) return await r.json();
+      } catch (_) {}
+      // Static hosting / production fallback
+      return { mode: 'firebase', label: 'Firebase', firebase: DEFAULT_FIREBASE };
+    }
+
+    const EDITOR_CONFIG = await loadEditorConfig();
+    const MODE = EDITOR_CONFIG.mode === 'local' ? 'local' : 'firebase';
+    const IS_LOCAL = MODE === 'local';
+    const firebaseConfig = EDITOR_CONFIG.firebase || DEFAULT_FIREBASE;
+
+    let app = null, database = null, codeRef = null;
+
+    const modeBadge = document.getElementById('modeBadge');
+    if (modeBadge) {
+      modeBadge.textContent = IS_LOCAL ? '(local)' : '(firebase)';
+    }
+    document.title = IS_LOCAL
+      ? 'OneDollarComputer - Editor (Local)'
+      : 'OneDollarComputer - Editor';
+
+    if (!IS_LOCAL) {
+      try {
+        app = initializeApp(firebaseConfig);
+        database = getDatabase(app);
+      } catch (error) {
+        console.error('❌ Error initializing Firebase:', error);
+        alert('Error initializing Firebase. Check the console for details.');
+      }
+    } else {
+      console.log('📁 Local mode: JSON projects via /api/projects');
+    }
+
+    
+    const btnUpload = document.getElementById('btnUpload');
+    const status = document.getElementById('status');
+    const syncIndicator = null;
+    const connectionIcon = null;
+    const connectionIconSymbol = null;
+    const connectionTooltip = null;
+
+    let editor = null;
+    let isSyncing = false;
+    let isLocalChange = false; 
+    let saveTimeout = null;
+    let lastSavedContent = '';
+    let isConnected = false; 
+    let reconnectInterval = null;
+    let isReconnecting = false;
+    const DEBOUNCE_DELAY = 1000;
+    // Local/agent: Upload = compile → (press ODC button if needed) → host flash
+    let pendingBinary = null;
+    let pendingBinarySize = 0;
+    let flashInProgress = false;
+    let flashStatusLocked = false;
+    let autoFlashAfterCompile = false;
+    let hidReady = false;
+    let statusMainText = '';
+    let statusMainClass = '';
+    let statusToastTimer = null;
+    let statusToastActive = false;
+    let statusClearTimer = null;
+    let statusDismissedKey = '';
+    let hidReadyInitialized = false;
+    // null until first project snapshot — don't toast pre-existing compile success on reload
+    let compileNoticeKey = null;
+
+    function compilationNoticeKey(data, size) {
+      if (!data || !data.compilationStatus) return '';
+      if (data.compilationStatus === 'success') {
+        // Hash alone — size may differ between project JSON and cache fetch
+        return `success|${data.binaryHash || ''}`;
+      }
+      if (data.compilationStatus === 'error') {
+        return `error|${data.compilationError || ''}`;
+      }
+      if (data.compilationStatus === 'pending') {
+        return 'pending';
+      }
+      return String(data.compilationStatus);
+    }
+
+    /** Toast compile status only on real transitions; silent on first snapshot after reload. */
+    function shouldAnnounceCompilation(data, size) {
+      const key = compilationNoticeKey(data, size);
+      if (!key) return false;
+      const isPending = data.compilationStatus === 'pending';
+      if (compileNoticeKey === null) {
+        compileNoticeKey = key;
+        return isPending; // only resurface an in-progress compile after reload
+      }
+      if (key === compileNoticeKey) return false;
+      compileNoticeKey = key;
+      return true;
+    }
+
+    function markCompilationNoticed(data, size) {
+      const key = compilationNoticeKey(data, size);
+      if (key) compileNoticeKey = key;
+    }
+
+    function setUploadEnabled(enabled) {
+      if (!btnUpload) return;
+      btnUpload.disabled = !enabled;
+    }
+
+    function statusReadMs(text) {
+      return Math.min(7000, Math.max(2800, String(text || '').length * 50));
+    }
+
+    function isStickyStatus(text) {
+      const t = String(text || '');
+      return (
+        t.includes('Compiling') ||
+        (t.includes('compil') && t.includes('…')) ||
+        t.includes('Press the ODC') ||
+        t.includes('waiting') ||
+        t.includes('Waiting') ||
+        t.includes('flashing') ||
+        t.includes('Flashing') ||
+        t.includes('Preparing') ||
+        t.includes('Uploading') ||
+        t.includes('Checking') ||
+        t.includes('Connecting')
+      );
+    }
+
+    function renderStatusBar() {
+      if (!status || statusToastActive) return;
+      const main = (statusMainText || '').trim();
+      status.textContent = main;
+      if (!main) {
+        status.className = 'status-empty';
+      } else {
+        status.className = statusMainClass ? `status-${statusMainClass}` : '';
+      }
+    }
+
+    function clearStatusSoon(ms) {
+      if (statusClearTimer) {
+        clearTimeout(statusClearTimer);
+        statusClearTimer = null;
+      }
+      statusClearTimer = setTimeout(() => {
+        statusClearTimer = null;
+        if (statusToastActive) return;
+        statusDismissedKey = `${statusMainText}|${statusMainClass}`;
+        statusMainText = '';
+        statusMainClass = '';
+        flashStatusLocked = false;
+        renderStatusBar();
+      }, ms);
+    }
+
+    function flashStatusToast(label, className, ms = 2200) {
+      if (!status) return;
+      if (statusToastTimer) {
+        clearTimeout(statusToastTimer);
+        statusToastTimer = null;
+      }
+      if (statusClearTimer) {
+        clearTimeout(statusClearTimer);
+        statusClearTimer = null;
+      }
+      statusToastActive = true;
+      status.classList.remove('status-empty');
+      status.textContent = label;
+      status.className = className ? `status-${className}` : '';
+      statusToastTimer = setTimeout(() => {
+        statusToastActive = false;
+        statusToastTimer = null;
+        renderStatusBar();
+      }, ms);
+    }
+
+    function setUploadError(isError) {
+      if (!btnUpload) return;
+      const wasError = btnUpload.classList.contains('upload-error');
+      btnUpload.classList.toggle('upload-error', !!isError);
+      if (isError) {
+        btnUpload.title = 'Error — fix and try Upload again';
+        if (!wasError) flashStatusToast('error', 'error', 2500);
+      } else {
+        btnUpload.title = hidReady
+          ? 'Bootloader on USB — ready to upload'
+          : 'Upload: compile and flash (press ODC button if asked)';
+      }
+    }
+
+    function setHidReady(present) {
+      const next = !!present;
+      const changed = next !== hidReady;
+      hidReady = next;
+      if (!btnUpload) return;
+      btnUpload.classList.toggle('hid-ready', hidReady);
+      if (!btnUpload.classList.contains('upload-error')) {
+        btnUpload.title = hidReady
+          ? 'Bootloader on USB — ready to upload'
+          : 'Upload: compile and flash (press ODC button if asked)';
+      }
+      if (hidReadyInitialized && changed) {
+        if (hidReady) flashStatusToast('connected', 'connected', 2200);
+        else flashStatusToast('disconnected', '', 2200);
+      }
+      hidReadyInitialized = true;
+    }
+
+    async function probeHidDevice() {
+      const r = await fetch('/api/device', { cache: 'no-store' });
+      return r.json();
+    }
+
+    function startHidPoll() {
+      if (!IS_LOCAL) return;
+      const tick = async () => {
+        if (flashInProgress) return;
+        try {
+          const d = await probeHidDevice();
+          setHidReady(!!(d && d.present));
+        } catch (_) {
+          setHidReady(false);
+        }
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    async function waitForOdBootloader(waitSec = 90) {
+      const flashGate = document.getElementById('flashGate');
+      const flashGateStatus = document.getElementById('flashGateStatus');
+      const btnFlashGateCancel = document.getElementById('btnFlashGateCancel');
+      const btnFlashGateListHid = document.getElementById('btnFlashGateListHid');
+
+      const hideFlashGate = () => {
+        if (!flashGate) return;
+        flashGate.classList.remove('visible');
+        flashGate.setAttribute('aria-hidden', 'true');
+      };
+
+      const showFlashGate = () => {
+        if (!flashGate) return;
+        flashGate.classList.add('visible');
+        flashGate.setAttribute('aria-hidden', 'false');
+        if (flashGateStatus) {
+          flashGateStatus.textContent =
+            'Waiting for One Dollar Computer on USB… press the button (several times if needed).';
+        }
+      };
+
+      try {
+        const d0 = await probeHidDevice();
+        if (d0 && d0.present) {
+          setHidReady(true);
+          return 'ready';
+        }
+      } catch (_) {}
+
+      updateStatus('🔘 Press the ODC button (several times if needed)…', '');
+      showFlashGate();
+
+      let cancelled = false;
+      const onCancel = () => { cancelled = true; };
+
+      const onListHid = async () => {
+        if (flashGateStatus) {
+          flashGateStatus.textContent = 'Opening device list…';
+        }
+        try {
+          if ('hid' in navigator) {
+            const devices = await navigator.hid.requestDevice({
+              filters: [{ vendorId: VENDOR_ID }],
+            });
+            if (devices && devices.length) {
+              const d = devices[0];
+              const name = d.productName || 'One Dollar Computer';
+              const pid = '0x' + (d.productId || 0).toString(16);
+              if (flashGateStatus) {
+                flashGateStatus.textContent =
+                  `Selected: ${name} (${pid}). Checking USB…`;
+              }
+              // Prefer pairing into flashDevice when WebHID flash path is used later.
+              try {
+                await setupOpenedDevice(d, { showIntro: false });
+              } catch (_) {}
+            } else if (flashGateStatus) {
+              flashGateStatus.textContent =
+                'No device selected — use List device again, or press the ODC button.';
+            }
+          } else if (flashGateStatus) {
+            flashGateStatus.textContent =
+              'This browser has no WebHID picker — press the ODC button and wait for detection.';
+          }
+        } catch (e) {
+          if (flashGateStatus) {
+            flashGateStatus.textContent =
+              (e && e.name === 'NotAllowedError')
+                ? 'Device list closed — click List device again if you need to pick a computer.'
+                : ('HID list error: ' + ((e && e.message) || 'unknown'));
+          }
+        }
+
+        // Host probe (local FlashingPro) still decides bootloader readiness.
+        try {
+          const d = await probeHidDevice();
+          if (d && d.present) {
+            setHidReady(true);
+            if (flashGateStatus) flashGateStatus.textContent = '✅ Bootloader detected';
+          }
+        } catch (_) {}
+      };
+
+      if (btnFlashGateCancel) btnFlashGateCancel.addEventListener('click', onCancel);
+      if (btnFlashGateListHid) btnFlashGateListHid.addEventListener('click', onListHid);
+
+      try {
+        const deadline = Date.now() + waitSec * 1000;
+        while (!cancelled && Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 400));
+          try {
+            const d = await probeHidDevice();
+            if (d && d.present) {
+              setHidReady(true);
+              if (flashGateStatus) flashGateStatus.textContent = '✅ Bootloader detected';
+              updateStatus('✅ ODC bootloader detected', 'connected');
+              return 'ready';
+            }
+          } catch (_) {}
+        }
+        if (cancelled) return 'cancelled';
+        return 'timeout';
+      } finally {
+        hideFlashGate();
+        if (btnFlashGateCancel) btnFlashGateCancel.removeEventListener('click', onCancel);
+        if (btnFlashGateListHid) btnFlashGateListHid.removeEventListener('click', onListHid);
+      }
+    }
+
+    function rememberBinary(binary, size) {
+      if (!binary) return;
+      pendingBinary = binary;
+      pendingBinarySize = size || 0;
+    }
+
+    function hideFlashButton() {
+      pendingBinary = null;
+      pendingBinarySize = 0;
+    }
+
+    function showFlashButton(binary, size) {
+      rememberBinary(binary, size);
+    }
+
+    
+    async function isBinaryValidForCode(data, currentContent, firebaseContent) {
+      
+      if (!data.binaryHash) {
+        return false;
+      }
+
+      
+      const currentHash = await getCodeHash(currentContent);
+
+      
+      if (currentHash !== data.binaryHash) {
+        console.log('⚠️ Binary hash mismatch:');
+        console.log(`   - Current code hash: ${currentHash}`);
+        console.log(`   - Binary hash: ${data.binaryHash}`);
+        return false;
+      }
+
+      // Local mode: hash match is enough. Timestamps used to hide Flash after
+      // compile because save bumped project timestamp past binarySavedAt.
+      if (IS_LOCAL) {
+        return true;
+      }
+
+      
+      const codeTimestamp = data.timestamp || (data.lastModified ? new Date(data.lastModified).getTime() : 0);
+      const binaryTimestamp = data.binarySavedAt ? new Date(data.binarySavedAt).getTime() :
+        (data.compilationUpdatedAt ? new Date(data.compilationUpdatedAt).getTime() : 0);
+
+      
+      if (!codeTimestamp || !binaryTimestamp) {
+        console.warn('⚠️ Timestamps not available, using hash comparison only');
+        return true; 
+      }
+
+      
+      
+      const isValid = binaryTimestamp >= (codeTimestamp - 1000);
+
+      if (!isValid) {
+        console.log('⚠️ Binary is not valid: compiled before last code modification');
+        console.log(`   - Code modified: ${new Date(codeTimestamp).toISOString()}`);
+        console.log(`   - Binary compiled: ${new Date(binaryTimestamp).toISOString()}`);
+      }
+
+      return isValid;
+    }
+
+    
+    async function fetchBinaryFromCache(binaryHash, data = null) {
+      if (data && data.binary) {
+        return {
+          binary: data.binary,
+          binarySize: data.binarySize || (data.compilationResult ? data.compilationResult.size : 0)
+        };
+      }
+      if (!binaryHash) {
+        return null;
+      }
+
+      try {
+        if (IS_LOCAL) {
+          const cacheResponse = await fetch(projectApiUrl());
+          if (cacheResponse.ok) {
+            const cacheData = await cacheResponse.json();
+            if (cacheData && cacheData.binary && (!binaryHash || cacheData.binaryHash === binaryHash)) {
+              return {
+                binary: cacheData.binary,
+                binarySize: cacheData.binarySize || 0
+              };
+            }
+          }
+        } else {
+          const cacheResponse = await fetch(`${DATABASE_URL}/cache/${binaryHash}.json`);
+          if (cacheResponse.ok) {
+            const cacheData = await cacheResponse.json();
+            if (cacheData && cacheData.binary) {
+              return {
+                binary: cacheData.binary,
+                binarySize: cacheData.binarySize || 0
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Error fetching binary from cache:', error);
+      }
+
+      if (data && data.compilationResult && data.compilationResult.binary) {
+        return {
+          binary: data.compilationResult.binary,
+          binarySize: data.compilationResult.size || 0
+        };
+      }
+
+      return null;
+    }
+
+    
+    const VENDOR_ID = 0x1209;     
+    const REPORT_ID = 0x00;       
+    const CMD = { PING: 0x01, INFO: 0x02, ERASE64: 0x10, LOAD64: 0x11, PROG64: 0x12, BOOT: 0x20 };
+    const DEFAULT_REPORT_LEN = 64;   
+    let OUT_REPORT_LEN = DEFAULT_REPORT_LEN; 
+
+    const PID_B003FUN = 0xB003;  
+    const PID_MIN = 0xB000, PID_MAX = 0xB00F; 
+    function isB003Fun(pid) { return pid === PID_B003FUN; }
+    function isExpectedPid(pid) { return (pid >= PID_MIN && pid <= PID_MAX) || isB003Fun(pid); }
+
+    let flashDevice = null;
+    let inputReportDevice = null;
+    let inQueue = [];
+    let waiters = [];
+
+    function hex(u8) {
+      return Array.from(u8, b => b.toString(16).padStart(2, '0')).join(' ');
+    }
+
+    function addrBytes(addr) {
+      return [(addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF];
+    }
+
+    function isBoardDevice(hidDevice) {
+      if (!hidDevice) return false;
+      return hidDevice.vendorId === VENDOR_ID && (isExpectedPid(hidDevice.productId) || isB003Fun(hidDevice.productId));
+    }
+
+    async function findKnownBoardDevice() {
+      if (!('hid' in navigator)) return null;
+      const devices = await navigator.hid.getDevices();
+      return devices.find(isBoardDevice) || null;
+    }
+
+    async function waitForBoardPresence({ shouldBePresent, timeoutMs = 20000 } = {}) {
+      const current = await findKnownBoardDevice();
+      if (shouldBePresent) {
+        if (current) return current;
+      } else {
+        if (!current) return null;
+      }
+
+      return new Promise((resolve, reject) => {
+        const eventName = shouldBePresent ? 'connect' : 'disconnect';
+        let handlerRef = null;
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          if (handlerRef) {
+            navigator.hid.removeEventListener(eventName, handlerRef);
+            handlerRef = null;
+          }
+        };
+
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('timeout'));
+        }, timeoutMs);
+
+        handlerRef = (event) => {
+          if (!isBoardDevice(event.device)) return;
+          cleanup();
+          if (shouldBePresent) {
+            resolve(event.device);
+          } else {
+            resolve(null);
+          }
+        };
+
+        navigator.hid.addEventListener(eventName, handlerRef);
+      });
+    }
+
+    function onInputReport(e) {
+      const u8 = new Uint8Array(e.data.buffer);
+      if (OUT_REPORT_LEN === DEFAULT_REPORT_LEN && u8 && u8.length >= 8 && u8.length !== OUT_REPORT_LEN) {
+        OUT_REPORT_LEN = u8.length;
+        console.log('Detected report size: IN=' + u8.length + 'B → OUT=' + OUT_REPORT_LEN + 'B');
+      }
+      if (waiters.length) {
+        const { resolve } = waiters.shift();
+        resolve(u8);
+      } else {
+        inQueue.push(u8);
+      }
+    }
+
+    function detachInputReportListener() {
+      if (inputReportDevice) {
+        try {
+          inputReportDevice.removeEventListener('inputreport', onInputReport);
+        } catch (err) {
+          console.warn('Failed to remove inputreport listener:', err);
+        }
+        inputReportDevice = null;
+      }
+    }
+
+    function recv(timeoutMs = 300) {
+      return new Promise((resolve, reject) => {
+        if (inQueue.length) {
+          return resolve(inQueue.shift());
+        }
+        const timer = setTimeout(() => {
+          const idx = waiters.findIndex(w => w.resolve === resolve);
+          if (idx >= 0) waiters.splice(idx, 1);
+          reject(new Error('timeout'));
+        }, timeoutMs);
+        waiters.push({
+          resolve: (val) => { clearTimeout(timer); resolve(val); },
+          reject
+        });
+      });
+    }
+
+    async function send(bytes, { expect = true, timeout = 300 } = {}) {
+      const raw = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes);
+      const buf = new Uint8Array(OUT_REPORT_LEN);
+      buf.fill(0);
+      buf.set(raw.subarray(0, Math.min(raw.length, OUT_REPORT_LEN)));
+      try {
+        await flashDevice.sendReport(REPORT_ID, buf);
+      } catch (e) {
+        let hint = '';
+        if (!flashDevice || !flashDevice.opened) hint = 'Device disconnected/closed.';
+        else if (!isExpectedPid(flashDevice.productId) && !isB003Fun(flashDevice.productId)) hint = 'Incompatible PID.';
+        else hint = 'Possible bootloader timeout.';
+        throw new Error((e && e.message ? e.message : 'Failed to send report') + ' — ' + hint);
+      }
+      if (!expect) return null;
+      return await recv(timeout);
+    }
+
+    async function txrx(bytes, tries = 3, timeout = 300) {
+      let lastErr = null;
+      for (let i = 0; i < tries; i++) {
+        try {
+          const resp = await send(bytes, { expect: true, timeout });
+          return resp;
+        } catch (e) {
+          lastErr = e;
+          await new Promise(r => setTimeout(r, 50));
+          try { await send([CMD.PING, 0x01, 0, 0, 0, 0, 0, 0], { expect: false }); } catch { }
+        }
+      }
+      throw lastErr || new Error('txrx failure');
+    }
+
+    async function setupOpenedDevice(foundDevice, { showIntro = true } = {}) {
+      if (!foundDevice) return;
+
+      detachInputReportListener();
+      inQueue = [];
+      waiters = [];
+
+      flashDevice = foundDevice;
+      if (!flashDevice.opened) {
+        await flashDevice.open();
+      }
+
+      const productName = flashDevice.productName || 'ODB';
+      if (showIntro) {
+        updateStatus('Connected: ' + productName, 'connected');
+        console.log('Connected: VID=0x' + flashDevice.vendorId.toString(16) + ' PID=0x' + flashDevice.productId.toString(16));
+      }
+
+      if (isB003Fun(flashDevice.productId)) {
+        console.log('Detected B003Fun Bootloader (PID 0xB003). Using Feature Reports.');
+        updateStatus('Connected (B003Fun)', 'connected');
+        return;
+      }
+
+      if (!isExpectedPid(flashDevice.productId)) {
+        console.log('WARNING: PID 0x' + flashDevice.productId.toString(16) + ' not supported.');
+        updateStatus('Connected (incompatible)', 'error');
+        throw new Error('Incompatible PID. Use the correct bootloader (PID 0xB003 or 0xB000–0xB00F).');
+      }
+
+      OUT_REPORT_LEN = DEFAULT_REPORT_LEN;
+      flashDevice.addEventListener('inputreport', onInputReport);
+      inputReportDevice = flashDevice;
+
+      console.log('Using initial OUT report len = ' + OUT_REPORT_LEN + 'B (auto-adjusts on first input).');
+
+      const pong = await txrx([CMD.PING, 0x01, 0, 0, 0, 0, 0, 0]).catch(() => null);
+      if (pong) console.log('PING ok (' + hex(pong) + ')');
+
+      const info = await txrx([CMD.INFO, 0, 0, 0, 0, 0, 0, 0]).catch(() => null);
+      if (info) console.log('INFO: ' + hex(info));
+    }
+
+    async function ensureBootloaderReady() {
+      if (!('hid' in navigator)) {
+        throw new Error('This browser does not support WebHID. Use a recent Chrome/Edge.');
+      }
+
+      if (flashDevice && flashDevice.opened) {
+        return;
+      }
+
+      const knownDevice = await findKnownBoardDevice();
+      if (knownDevice) {
+        await setupOpenedDevice(knownDevice, { showIntro: false });
+        if (flashDevice && flashDevice.opened) return;
+      }
+
+      updateStatus('Selecione o dispositivo ODB no menu HID...', '');
+      console.log('⚡ Abrindo menu WebHID para conectar ao One Dollar Computer...');
+      await connectWebHID();
+      if (!flashDevice || !flashDevice.opened) {
+        throw new Error('Dispositivo não conectado via WebHID.');
+      }
+      console.log('✅ Bootloader conectado com sucesso. Iniciando gravação...');
+    }
+
+    function pagePad64(srcU8, offset) {
+      const page = new Uint8Array(64).fill(0xFF);
+      const len = Math.min(64, srcU8.length - offset);
+      if (len > 0) page.set(srcU8.subarray(offset, offset + len));
+      return page;
+    }
+
+    
+    const word_wise_write_blob = new Uint8Array([
+      0x23, 0xa0, 0x05, 0x00, 0x13, 0x07, 0x45, 0x03, 0x0c, 0x43, 0x50, 0x43, 0x2e, 0x96, 0x21, 0x07,
+      0x14, 0x43, 0x94, 0xc1, 0x91, 0x05, 0x11, 0x07, 0xe3, 0xcc, 0xc5, 0xfe, 0x93, 0x06, 0xf0, 0xff,
+      0x14, 0xc1, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    ]);
+    const word_wise_read_blob = new Uint8Array([
+      0x23, 0xa0, 0x05, 0x00, 0x13, 0x07, 0x45, 0x03, 0x0c, 0x43, 0x50, 0x43, 0x2e, 0x96, 0x21, 0x07,
+      0x94, 0x41, 0x14, 0xc3, 0x91, 0x05, 0x11, 0x07, 0xe3, 0xcc, 0xc5, 0xfe, 0x93, 0x06, 0xf0, 0xff,
+      0x14, 0xc1, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    ]);
+    const write64_flash = new Uint8Array([
+      0x13, 0x07, 0x45, 0x03, 0x0c, 0x43, 0x13, 0x86, 0x05, 0x04, 0x5c, 0x43, 0x8c, 0xc7, 0x14, 0x47,
+      0x94, 0xc1, 0xb7, 0x06, 0x05, 0x00, 0xd4, 0xc3, 0x94, 0x41, 0x91, 0x05, 0x11, 0x07, 0xe3, 0xc8,
+      0xc5, 0xfe, 0xc1, 0x66, 0x93, 0x86, 0x06, 0x04, 0xd4, 0xc3, 0xfd, 0x56, 0x14, 0xc1, 0x82, 0x80
+    ]);
+
+    function resetOp() { const buffer = new Uint8Array(128); buffer.fill(0); buffer[0] = 0xaa; return { buffer, commandplace: 4 }; }
+    function writeOp4(op, v) { const dv = new DataView(op.buffer.buffer); dv.setUint32(op.commandplace, v, true); op.commandplace += 4; }
+    function writeOpArb(op, data) { op.buffer.set(data, op.commandplace); op.commandplace += data.length; }
+
+    async function commitOpFeature(op, { noGetReport = false } = {}) {
+      const dv = new DataView(op.buffer.buffer);
+      dv.setUint32(124, 0x1234abcd, true);
+      op.buffer[0] = 0xaa;
+      await flashDevice.sendFeatureReport(0xaa, op.buffer.subarray(1));
+      if (noGetReport) return null;
+      for (let t = 0; t < 60; t++) {
+        await new Promise(r => setTimeout(r, t ? 10 : 20));
+        try {
+          const view = await flashDevice.receiveFeatureReport(0xaa);
+          const raw = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+          const statusByte = raw.length ? raw[0] : 0;
+          if (statusByte === 0xff) {
+            const normalized = new Uint8Array(128);
+            normalized.fill(0);
+            normalized[0] = 0xaa;
+            const copyLen = Math.min(127, raw.length);
+            if (copyLen > 0) normalized.set(raw.subarray(0, copyLen), 1);
+            return normalized;
+          }
+        } catch (err) {
+          if (t === 0) console.log('Failed to read feature report: ' + (err?.message || err));
+        }
+      }
+      throw new Error('Timeout waiting for bootloader response (feature report)');
+    }
+
+    async function readWordFeature(addr) {
+      const op = resetOp(); writeOpArb(op, word_wise_read_blob); writeOp4(op, addr); writeOp4(op, 4);
+      const resp = await commitOpFeature(op);
+      if (!resp || resp.length < 64) return 0;
+      const dv = new DataView(resp.buffer, (resp.byteOffset || 0) + 60, 4);
+      return dv.getUint32(0, true);
+    }
+    async function writeWordFeature(addr, val) {
+      const op = resetOp(); writeOpArb(op, word_wise_write_blob); writeOp4(op, addr); writeOp4(op, 4);
+      new DataView(op.buffer.buffer).setUint32(60, val, true);
+      await commitOpFeature(op);
+    }
+
+    let flashUnlocked = false;
+    async function unlockFlashFeature() {
+      if (flashUnlocked) return true;
+      const ctlr = await readWordFeature(0x40022010);
+      if (ctlr & 0x8080) {
+        await writeWordFeature(0x40022004, 0x45670123);
+        await writeWordFeature(0x40022004, 0xCDEF89AB);
+        await writeWordFeature(0x40022008, 0x45670123);
+        await writeWordFeature(0x40022008, 0xCDEF89AB);
+        await writeWordFeature(0x40022024, 0x45670123);
+        await writeWordFeature(0x40022024, 0xCDEF89AB);
+        const ctlrAfter = await readWordFeature(0x40022010);
+        if (ctlrAfter & 0x8080) throw new Error('Flash locked');
+      }
+      flashUnlocked = true; return true;
+    }
+    async function isSectorErasedFeature(address) {
+      const first = await readWordFeature(address & (~0x3f));
+      return first === 0xFFFFFFFF;
+    }
+    async function eraseSectorFeature(address) {
+      await unlockFlashFeature();
+      const CR_PAGE_ER = 0x00020000, CR_STRT_Set = 0x00000040;
+      await writeWordFeature(0x40022010, CR_PAGE_ER);
+      await writeWordFeature(0x40022014, address);
+      await writeWordFeature(0x40022010, CR_STRT_Set | CR_PAGE_ER);
+      await new Promise(r => setTimeout(r, 50));
+      await writeWordFeature(0x40022010, 0);
+    }
+    async function blockWrite64Feature(address, data) {
+      if (data.length !== 64) throw new Error('block must be 64 bytes');
+      await unlockFlashFeature();
+      if (!await isSectorErasedFeature(address)) await eraseSectorFeature(address);
+      const CR_PAGE_PG = 0x00010000, CR_BUF_RST = 0x00080000;
+      await writeWordFeature(0x40022010, CR_PAGE_PG);
+      await writeWordFeature(0x40022010, CR_PAGE_PG | CR_BUF_RST);
+      const op = resetOp();
+      writeOpArb(op, write64_flash);
+      writeOp4(op, address);
+      writeOp4(op, 0x4002200c);
+      op.buffer.set(data, 60);
+      await commitOpFeature(op);
+      await new Promise(r => setTimeout(r, 10));
+    }
+    function isAddressFlash(a) { return (a & 0xff000000) === 0x08000000; }
+    async function writeBinaryBlobFeature(startAddress, dataU8) {
+      let address = startAddress; let offset = 0; const data = dataU8;
+      if (isAddressFlash(address)) {
+        let currentAddress = address & (~0x3f);
+        if (currentAddress < address) {
+          const pre = address - currentAddress;
+          const temp = new Uint8Array(64).fill(0xFF);
+          temp.set(data.slice(0, Math.min(64 - pre, data.length)), pre);
+          await blockWrite64Feature(currentAddress, temp);
+          offset = 64 - pre; currentAddress += 64;
+          updateStatus('Flashing… ' + Math.min(100, Math.round((offset / data.length) * 100)) + '%', '');
+        }
+        while ((data.length - offset) >= 64) {
+          const blk = data.slice(offset, offset + 64);
+          await blockWrite64Feature(currentAddress, blk);
+          offset += 64; currentAddress += 64;
+          const pct = Math.round((offset / data.length) * 100);
+          updateStatus('Flashing… ' + pct + '%', '');
+        }
+        if (offset < data.length) {
+          const temp = new Uint8Array(64).fill(0xFF);
+          temp.set(data.slice(offset), 0);
+          await blockWrite64Feature(currentAddress, temp);
+          offset = data.length;
+          updateStatus('Flashing… 100%', '');
+        }
+        return;
+      }
+    }
+    async function flashBinB003Fun(binU8) {
+      try {
+        console.log('B003Fun compatible mode: using Feature Reports (0xaa, 128B).');
+        flashUnlocked = false;
+        const FLASH_BASE = 0x08000000;
+        await writeBinaryBlobFeature(FLASH_BASE, binU8);
+        console.log('Flash completed successfully (B003Fun).');
+        updateStatus('Flash completed successfully! Disconnect and reconnect to run the code.', 'connected');
+      } catch (e) {
+        console.error('B003Fun flash error: ' + e.message);
+        updateStatus('Flash failed', 'error');
+        throw e;
+      }
+    }
+
+    async function flashBinWebHID(binU8) {
+      const totalPages = Math.ceil(binU8.length / 64);
+      let addr = 0, pageIdx = 0;
+
+      for (pageIdx = 0; pageIdx < totalPages; pageIdx++, addr += 64) {
+        const page = pagePad64(binU8, addr);
+        const [a2, a1, a0] = addrBytes(addr);
+
+        await txrx([CMD.ERASE64, 0, a2, a1, a0, 0, 0, 0]).catch(e => {
+          throw new Error('ERASE64 failed at 0x' + addr.toString(16) + ': ' + e.message);
+        });
+
+        for (let i = 0; i < 16; i++) {
+          const b0 = page[i * 4 + 0], b1 = page[i * 4 + 1], b2 = page[i * 4 + 2], b3 = page[i * 4 + 3];
+          await txrx([CMD.LOAD64, i & 0x7F, a2, a1, a0, i & 0x7F, b0, b1]).catch(e => {
+            throw new Error('LOAD64/lo failed idx ' + i + ' @0x' + addr.toString(16) + ': ' + e.message);
+          });
+          await txrx([CMD.LOAD64, (i | 0x80) & 0xFF, a2, a1, a0, i & 0x7F, b2, b3]).catch(e => {
+            throw new Error('LOAD64/hi failed idx ' + i + ' @0x' + addr.toString(16) + ': ' + e.message);
+          });
+        }
+
+        await txrx([CMD.PROG64, 0, a2, a1, a0, 0, 0, 0], 3, 600).catch(e => {
+          throw new Error('PROG64 failed at 0x' + addr.toString(16) + ': ' + e.message);
+        });
+
+        const pct = Math.round(((pageIdx + 1) / totalPages) * 100);
+        updateStatus('Flashing… ' + pct + '%', '');
+      }
+
+      console.log('Flash completed successfully!');
+      updateStatus('Flash completed successfully! Disconnect and reconnect to run the code.', 'connected');
+    }
+
+    
+    async function flashBinary(binaryBase64, size = null) {
+      try {
+        // Local/agent path: wait for physical ODC bootloader on USB, then FlashingPro
+        if (IS_LOCAL) {
+          if (flashInProgress) return;
+          flashInProgress = true;
+          setUploadEnabled(false);
+
+          try {
+            let present = hidReady;
+            if (!present) {
+              try {
+                const d0 = await probeHidDevice();
+                present = !!(d0 && d0.present);
+                setHidReady(present);
+              } catch (_) {}
+            }
+
+            if (!present) {
+              const wait = await waitForOdBootloader(90);
+              if (wait === 'cancelled') {
+                updateStatus('Upload cancelled — press Upload again when ready', '');
+                return;
+              }
+              if (wait !== 'ready') {
+                throw new Error(
+                  'Bootloader not detected. Press the ODC button several times, then click Upload again.'
+                );
+              }
+            }
+
+            updateStatus('✅ ODC bootloader detected — flashing…', 'connected');
+
+            const response = await fetch('/api/flash', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectID: currentProjectCode,
+                waitSec: 5
+              })
+            });
+            const result = await response.json();
+            if (!response.ok || result.ok === false) {
+              throw new Error(result.error || `HTTP ${response.status}`);
+            }
+            updateStatus(
+              `✅ Uploaded (${result.binarySize || size || 0} bytes) — app running. Press ODC button to upload again.`,
+              'connected'
+            );
+            flashStatusLocked = true;
+            setHidReady(false);
+          } finally {
+            /* gate cleaned inside waitForOdBootloader */
+          }
+          return;
+        }
+
+        setUploadEnabled(false);
+        updateStatus('Preparing flash...', '');
+
+        
+        if (!('hid' in navigator)) {
+          throw new Error('This browser does not support WebHID. Use a recent Chrome/Edge.');
+        }
+
+        
+
+        
+        const byteCharacters = atob(binaryBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const binU8 = new Uint8Array(byteNumbers);
+
+        console.log(`Starting flash: ${binU8.length} bytes`);
+
+        await ensureBootloaderReady();
+
+        if (isB003Fun(flashDevice.productId)) {
+          await flashBinB003Fun(binU8);
+        } else {
+          await flashBinWebHID(binU8);
+        }
+
+        console.log(`✅ Flash completed: ${binU8.length} bytes`);
+        updateStatus('Upload OK — new program is running.', 'connected');
+        flashStatusLocked = true;
+      } catch (error) {
+        console.error('❌ Error flashing:', error);
+        updateStatus('❌ Upload error: ' + (error.message || 'Unknown'), 'error');
+        throw error;
+      } finally {
+        flashInProgress = false;
+        setUploadEnabled(true);
+      }
+    }
+
+    async function connectWebHID() {
+      if (!('hid' in navigator)) {
+        throw new Error('This browser does not support WebHID. Use a recent Chrome/Edge.');
+      }
+      try {
+        const devices = await navigator.hid.requestDevice({ filters: [{ vendorId: VENDOR_ID }] });
+        if (!devices || !devices.length) {
+          throw new Error('No device selected. Please select the One Dollar Computer.');
+        }
+        await setupOpenedDevice(devices[0], { showIntro: true });
+        updateStatus('Device connected. Ready to flash.', 'connected');
+        console.log('✅ Device paired successfully');
+      } catch (error) {
+        console.error('Error connecting:', error);
+        updateStatus('Connection error: ' + (error.message || 'Unknown'), 'error');
+        throw error; 
+      }
+    }
+
+    
+    async function tryReconnect() {
+      if (isReconnecting || isConnected) {
+        return;
+      }
+
+      isReconnecting = true;
+      updateStatus('Connecting...', '');
+      console.log('🔄 Trying to reconnect automatically...');
+
+      const connected = await checkConnection();
+      isConnected = connected;
+
+      if (connected) {
+        console.log('✅ Reconnected successfully');
+        updateStatus('', 'connected'); 
+      } else {
+        console.log('❌ Reconnection failed, will try again...');
+      }
+
+      isReconnecting = false;
+      return connected;
+    }
+
+    function updateStatus(text, className = '') {
+      
+      
+      const hideMessages = ['Connected to Firebase', 'Synced', 'Connected', 'Editor ready - Sync active', 'Local server'];
+      const showMessages = ['Connecting...', 'Compiling...', 'Compilation', 'Connect to Internet', 'OFFLINE'];
+      const shouldShow = showMessages.some(msg => text.includes(msg));
+      const shouldHide = className === 'connected' && hideMessages.some(msg => text.includes(msg)) && !shouldShow;
+
+      const key = `${text || ''}|${className || ''}`;
+      const nextText = text || '';
+      const nextClass = className || '';
+      const isError =
+        className === 'error' ||
+        nextText.includes('❌') ||
+        nextText.includes('Error') ||
+        nextText.includes('failed') ||
+        nextText.includes('OFFLINE');
+
+      // Poll (2s) re-sends "Compilation successful" while auto-dismiss (~2.8s) is pending —
+      // same ephemeral text must not restart the clear timer or it never disappears.
+      if (
+        !shouldHide &&
+        nextText &&
+        statusMainText === nextText &&
+        statusMainClass === nextClass &&
+        statusClearTimer &&
+        !isStickyStatus(nextText)
+      ) {
+        setUploadError(isError);
+        return;
+      }
+
+      // Don't resurrect after auto-dismiss
+      if (
+        !shouldHide &&
+        nextText &&
+        statusDismissedKey === key &&
+        !statusMainText &&
+        !isStickyStatus(nextText)
+      ) {
+        setUploadError(isError);
+        renderStatusBar();
+        return;
+      }
+
+      if (statusToastTimer) {
+        clearTimeout(statusToastTimer);
+        statusToastTimer = null;
+        statusToastActive = false;
+      }
+
+      if (shouldHide) {
+        statusMainText = '';
+        statusMainClass = '';
+        if (statusClearTimer) {
+          clearTimeout(statusClearTimer);
+          statusClearTimer = null;
+        }
+      } else {
+        statusMainText = nextText;
+        statusMainClass = nextClass;
+        statusDismissedKey = '';
+      }
+
+      setUploadError(isError);
+      renderStatusBar();
+
+      if (!shouldHide && statusMainText && !isStickyStatus(statusMainText)) {
+        clearStatusSoon(statusReadMs(statusMainText));
+      } else if (isStickyStatus(statusMainText)) {
+        if (statusClearTimer) {
+          clearTimeout(statusClearTimer);
+          statusClearTimer = null;
+        }
+      }
+    }
+
+    function updateSyncIndicator(state) {
+      if (!syncIndicator) return;
+      syncIndicator.className = '';
+      if (state === 'syncing') {
+        syncIndicator.textContent = '⏳ Syncing...';
+        syncIndicator.classList.add('sync-indicator-syncing');
+      } else if (state === 'synced') {
+        syncIndicator.textContent = '✓ Synced';
+        syncIndicator.classList.add('sync-indicator-synced');
+        setTimeout(() => {
+          if (!syncIndicator) return;
+          syncIndicator.textContent = '●';
+          syncIndicator.className = '';
+        }, 2000);
+      } else {
+        syncIndicator.textContent = '●';
+      }
+    }
+
+    
+    const currentProjectCode = window.PROJECT_CODE;
+    const DATABASE_URL = IS_LOCAL
+      ? ''
+      : (firebaseConfig.databaseURL || DEFAULT_FIREBASE.databaseURL);
+    const DATABASE_PATH = IS_LOCAL
+      ? `/api/projects/${currentProjectCode}`
+      : `/projects/${currentProjectCode}`;
+
+    function projectApiUrl() {
+      return IS_LOCAL
+        ? `${DATABASE_PATH}`
+        : `${DATABASE_URL}${DATABASE_PATH}.json`;
+    }
+
+    if (!IS_LOCAL && database && currentProjectCode) {
+      codeRef = ref(database, `${DATABASE_PATH}/code`);
+    }
+
+    
+    async function checkConnection() {
+      try {
+        if (IS_LOCAL) {
+          const readResponse = await fetch('/api/health', { cache: 'no-store' });
+          if (!readResponse.ok) throw new Error(`HTTP ${readResponse.status}`);
+          const data = await readResponse.json();
+          if (!data || !data.ok) throw new Error('Invalid health response');
+          updateStatus('✅ Local server', 'connected');
+          isConnected = true;
+          return true;
+        }
+
+        const testData = {
+          timestamp: Date.now(),
+          test: true,
+          message: 'Connection test'
+        };
+
+        const writeResponse = await fetch(`${DATABASE_URL}${DATABASE_PATH}/test.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testData)
+        });
+
+        if (!writeResponse.ok) {
+          throw new Error(`HTTP ${writeResponse.status}: ${writeResponse.statusText}`);
+        }
+
+        const readResponse = await fetch(`${DATABASE_URL}${DATABASE_PATH}/test.json`);
+        if (!readResponse.ok) {
+          throw new Error(`HTTP ${readResponse.status}: ${readResponse.statusText}`);
+        }
+
+        const data = await readResponse.json();
+
+        if (data && data.test === true) {
+          updateStatus('✅ Connected to Firebase', 'connected');
+          console.log('✅ Connection test successful (Fetch API)');
+          isConnected = true;
+          return true;
+        }
+        throw new Error('Invalid Firebase response');
+      } catch (error) {
+        console.error('❌ Connection error:', error);
+        updateStatus(IS_LOCAL ? 'Start ./serve.py' : 'OFFLINE', 'error');
+        isConnected = false;
+        return false;
+      }
+    }
+
+    
+    async function saveToFirebase(content) {
+      if (isSyncing || content === lastSavedContent) {
+        return; 
+      }
+
+      try {
+        isSyncing = true;
+        updateSyncIndicator('syncing');
+
+        
+        lastSavedContent = content;
+
+        
+        let currentData = {};
+        try {
+          const currentResponse = await fetch(projectApiUrl());
+          if (currentResponse.ok) {
+            currentData = await currentResponse.json() || {};
+          }
+        } catch (e) {
+          
+          console.warn('⚠️ Could not read current data from Firebase:', e);
+        }
+
+        
+        
+        const contentMatchesCompiled = currentData.content === content;
+        const shouldPreserveCompilation = contentMatchesCompiled &&
+          currentData.compilationStatus === 'success' &&
+          currentData.binaryHash;
+
+        
+        const data = {
+          content: content,
+          code: content, 
+          projectID: currentProjectCode, 
+          name: currentData.name || 'Untitled Project', 
+          language: 'rust', 
+          lastModified: new Date().toISOString(),
+          updated: new Date().toISOString(), 
+          created: currentData.created || new Date().toISOString(), 
+          timestamp: Date.now(),
+          size: content.length,
+          aiHelpUsed: currentData.aiHelpUsed || false,
+          aiSessionToken: currentData.aiSessionToken || null,
+          aiSessionActive: currentData.aiSessionActive || false,
+          aiSessionStartedAt: currentData.aiSessionStartedAt || null,
+          
+          ...(shouldPreserveCompilation && {
+            compilationStatus: currentData.compilationStatus,
+            binaryHash: currentData.binaryHash,
+            binarySize: currentData.binarySize,
+            compilationResult: currentData.compilationResult,
+            compilationUpdatedAt: currentData.compilationUpdatedAt,
+            binarySavedAt: currentData.binarySavedAt
+          })
+          
+        };
+
+        const response = await fetch(projectApiUrl(), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        updateSyncIndicator('synced');
+        updateStatus(IS_LOCAL ? 'Saved JSON' : 'Synced', 'connected');
+        console.log(IS_LOCAL ? '✅ Project saved to local JSON' : '✅ Code saved to Firebase');
+      } catch (error) {
+        console.error('❌ Error saving:', error);
+        
+        if (editor) {
+          lastSavedContent = editor.getValue();
+        }
+        
+        const errorMsgLower = (error.message || '').toLowerCase();
+        if (errorMsgLower.includes('failed to fetch') ||
+          errorMsgLower.includes('networkerror') ||
+          errorMsgLower.includes('network request failed') ||
+          errorMsgLower.includes('fetch')) {
+          updateStatus('Connect to Internet', 'error');
+          isConnected = false;
+          
+          setTimeout(() => {
+            if (!isConnected) {
+              tryReconnect();
+            }
+          }, 2000);
+        } else {
+          updateStatus('❌ Sync error: ' + (error.message || 'Unknown'), 'error');
+        }
+        updateSyncIndicator('error');
+      } finally {
+        
+        try {
+          const encoded = btoa(unescape(encodeURIComponent(content)));
+          const url = new URL(window.location.href);
+          url.searchParams.set('code', encoded);
+          window.history.replaceState({}, '', url.toString());
+          console.log('🔗 URL updated with current code');
+        } catch (e) {
+          console.warn('⚠️ Could not update URL:', e);
+        }
+
+        
+        setTimeout(() => {
+          isSyncing = false;
+        }, 100);
+      }
+    }
+
+    
+    function cleanCodeForHash(code) {
+      return code
+        .replace(/\/\/.*$/gm, "")
+        .replace(new RegExp("\\/\\*[\\s\\S]*?\\*\\/", "g"), "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    async function getCodeHash(code) {
+      const cleaned = cleanCodeForHash(code);
+      const buffer = new TextEncoder().encode(cleaned);
+      const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    
+    async function uploadCode() {
+      if (!editor || flashInProgress) return;
+      flashStatusLocked = false;
+      autoFlashAfterCompile = true;
+
+      if (IS_LOCAL) {
+        setUploadEnabled(false);
+        try {
+          if (!hidReady) {
+            const wait = await waitForOdBootloader(90);
+            if (wait === 'cancelled') {
+              autoFlashAfterCompile = false;
+              updateStatus('Upload cancelled — press Upload again when ready', '');
+              return;
+            }
+            if (wait !== 'ready') {
+              autoFlashAfterCompile = false;
+              updateStatus(
+                '❌ Bootloader not detected. Press the ODC button several times, then Upload again.',
+                'error'
+              );
+              return;
+            }
+          }
+
+          const result = await compileCode();
+          if (!result || !result.binary) {
+            autoFlashAfterCompile = false;
+            return;
+          }
+          autoFlashAfterCompile = false;
+          await flashBinary(result.binary, result.binarySize || 0);
+        } finally {
+          setUploadEnabled(true);
+        }
+        return;
+      }
+
+      // Firebase: compile request then flash when binary ready
+      setUploadEnabled(false);
+      try {
+        const result = await compileCode();
+        if (!result) return;
+        if (pendingBinary) {
+          await flashBinary(pendingBinary, pendingBinarySize);
+        } else {
+          updateStatus('Compilation requested — Upload again when binary is ready', 'connected');
+        }
+      } finally {
+        setUploadEnabled(true);
+        autoFlashAfterCompile = false;
+      }
+    }
+
+    async function compileCode() {
+      if (!editor) {
+        updateStatus('❌ Editor not ready', 'error');
+        return null;
+      }
+
+      const content = editor.getValue();
+      if (!content.trim()) {
+        updateStatus('⚠️ No code to compile', 'error');
+        return null;
+      }
+
+      try {
+        setUploadEnabled(false);
+        hideFlashButton();
+        flashStatusLocked = false;
+
+        if (IS_LOCAL) {
+          updateStatus('🔨 Compiling locally (Cargo)...', '');
+          const response = await fetch('/api/compile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectID: currentProjectCode,
+              content,
+              language: 'rust'
+            })
+          });
+          const result = await response.json();
+          if (!response.ok || result.compilationStatus === 'error' || result.ok === false) {
+            const err = result.compilationError || result.error || `HTTP ${response.status}`;
+            updateStatus('❌ Compile failed', 'error');
+            alert('Compile failed:\n\n' + String(err).slice(0, 2000));
+            setUploadEnabled(true);
+            return null;
+          }
+          lastSavedContent = content;
+          updateStatus(`✅ Compiled (${result.binarySize || 0} bytes)`, 'connected');
+          markCompilationNoticed(
+            {
+              compilationStatus: 'success',
+              binaryHash: result.binaryHash,
+              binarySize: result.binarySize || 0,
+            },
+            result.binarySize || 0
+          );
+          if (result.binary) rememberBinary(result.binary, result.binarySize || 0);
+          setUploadEnabled(true);
+          return result;
+        }
+
+        updateStatus('🔨 Compiling...', '');
+        const binaryHash = await getCodeHash(content);
+        const data = {
+          content: content,
+          binaryHash: binaryHash,
+          language: 'rust',
+          lastModified: new Date().toISOString(),
+          timestamp: Date.now(),
+          size: content.length,
+          compilationStatus: 'pending',
+          compilationRequested: true,
+          compilationRequestedAt: new Date().toISOString()
+        };
+
+        const response = await fetch(projectApiUrl(), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        console.log('🧩 Saved binaryHash before compile:', binaryHash);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        updateStatus('✅ Compilation requested', 'connected');
+        console.log('✅ Compilation request sent to Firebase');
+
+        setTimeout(() => {
+          setUploadEnabled(true);
+          updateStatus('Synced', 'connected');
+        }, 1000);
+        return { ok: true, pending: true };
+      } catch (error) {
+        console.error('❌ Compilation error:', error);
+        updateStatus('❌ Compilation error: ' + (error.message || 'Unknown'), 'error');
+        setUploadEnabled(true);
+        return null;
+      }
+    }
+
+
+    require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+    require(['vs/editor/editor.main'], async function () {
+      
+      let initialCode = `//! Example: blink the LED on the One Dollar Computer.
+
+use odc::*; // board helpers: pins, delay, LED, …
+
+fn main() {
+    // Configure pin 19 (LED) as output
+    pin_output(LED);
+
+    // Repeat forever
+    loop {
+        pin_set(LED);   // turn LED on
+        delay(200);     // wait 200 ms
+
+        pin_clear(LED); // turn LED off
+        delay(200);
+    }
+}
+`;
+      let initialData = null;
+
+      
+      
+      const urlCode = window.DECODED_CODE_FROM_URL || null;
+      if (urlCode) {
+        initialCode = urlCode;
+        lastSavedContent = urlCode;
+        console.log('🔗 Code loaded from URL parameter (?code=BASE64)');
+      } else {
+        
+        try {
+          const response = await fetch(projectApiUrl());
+          if (response.ok) {
+            const data = await response.json();
+            initialData = data;
+            if (data && data.content) {
+              initialCode = data.content;
+              lastSavedContent = initialCode;
+              console.log(IS_LOCAL ? '✅ Code loaded from local JSON' : '✅ Code loaded from Firebase');
+
+              
+              if (data.compilationStatus === 'success' && data.binaryHash) {
+                console.log('🔍 Compiled binaryHash found on page load');
+                console.log('   - binaryHash:', data.binaryHash);
+                console.log('   - binarySize:', data.binarySize);
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ Error loading initial code:', error);
+          
+        }
+      }
+
+      editor = monaco.editor.create(document.getElementById('editor'), {
+        value: initialCode,
+        language: 'rust',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 14,
+        minimap: { enabled: true },
+        scrollBeyondLastLine: false,
+        wordWrap: 'on'
+      });
+
+      
+      
+      
+      if (urlCode) {
+        isSyncing = true; 
+        console.log('🔗 Saving URL code to Firebase to prevent listener overwrite...');
+        try {
+          await fetch(projectApiUrl(), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: urlCode,
+              code: urlCode,
+              projectID: currentProjectCode,
+              language: 'rust',
+              lastModified: new Date().toISOString(),
+              updated: new Date().toISOString(),
+              timestamp: Date.now(),
+              size: urlCode.length
+              
+            })
+          });
+          console.log('✅ URL code saved to Firebase');
+        } catch (e) {
+          console.warn('⚠️ Could not save URL code to Firebase:', e.message);
+        } finally {
+          isSyncing = false; 
+        }
+      }
+
+      
+      const connected = await checkConnectionWithFlag();
+      if (connected) {
+        updateStatus('Editor ready - Sync active', 'connected');
+        updateSyncIndicator('synced');
+        setUploadEnabled(true);
+
+        
+        if (!initialData || !initialData.aiHelpUsed) {
+          btnAIHelp.classList.add('new-help');
+          console.log('✨ Project is new for AI help');
+        } else {
+          console.log('🤖 AI help already used for this project');
+        }
+
+        
+        if (initialData && initialData.compilationStatus === 'success' && initialData.binaryHash) {
+          const currentContent = editor.getValue();
+          const firebaseContent = initialData.content || '';
+          markCompilationNoticed(initialData, initialData.binarySize || 0);
+
+          
+          const isValidBinary = await isBinaryValidForCode(initialData, currentContent, firebaseContent);
+
+          if (isValidBinary) {
+            
+            const cacheData = await fetchBinaryFromCache(initialData.binaryHash, initialData);
+
+            if (cacheData && cacheData.binary) {
+              const size = cacheData.binarySize || initialData.binarySize || 0;
+              showFlashButton(cacheData.binary, size);
+              console.log('✅ Flash button shown on page load (valid binary from cache)');
+              console.log('   - binaryHash:', initialData.binaryHash);
+              console.log('   - binarySize:', size, 'bytes');
+            } else {
+              console.log('⚠️ binaryHash found but binary not found in cache');
+              hideFlashButton();
+            }
+          } else {
+            console.log('⚠️ BinaryHash found but not valid for current code');
+            hideFlashButton();
+          }
+        } else if (initialData && initialData.compilationStatus) {
+          markCompilationNoticed(initialData, initialData.binarySize || 0);
+        }
+      } else {
+        updateStatus('Editor ready - Waiting for connection...', '');
+        updateSyncIndicator('');
+      }
+
+      
+      editor.onDidChangeModelContent(() => {
+        const currentContent = editor.getValue();
+
+        
+        if (!isLocalChange && currentContent !== lastSavedContent) {
+          hideFlashButton();
+        }
+
+        
+        if (!isLocalChange) {
+          
+          if (saveTimeout) {
+            clearTimeout(saveTimeout);
+          }
+
+          
+          saveTimeout = setTimeout(() => {
+            saveToFirebase(currentContent);
+          }, DEBOUNCE_DELAY);
+        }
+      });
+
+      
+      
+      btnUpload.addEventListener('click', () => {
+        uploadCode();
+      });
+
+      startHidPoll();
+
+
+      
+      if (codeRef) {
+        console.log('✅ Setting up Firebase listener');
+        console.log('   - codeRef exists:', !!codeRef);
+        console.log('   - database exists:', !!database);
+        
+        try {
+          console.log('🔄 Calling onValue...');
+          onValue(codeRef, async (snapshot) => {
+            console.log('🔥🔥🔥 [LISTENER TRIGGERED] Event received from Firebase!');
+            console.log('   - snapshot.exists():', snapshot.exists());
+            if (!snapshot.exists()) {
+              console.log('   - Snapshot doesn\'t exist, returning');
+              return;
+            }
+
+            const data = snapshot.val();
+            if (!data || (!data.content && !data.code)) {
+              return;
+            }
+
+            const currentContent = editor.getValue();
+            const firebaseContent = data.content || data.code;
+
+            
+            console.log('📡 [LISTENER] Data received from Firebase:');
+            console.log('   - compilationStatus:', data.compilationStatus);
+            console.log('   - binaryHash:', data.binaryHash);
+            console.log('   - binarySize:', data.binarySize);
+            console.log('   - isSyncing:', isSyncing);
+            console.log('   - firebaseContent === lastSavedContent:', firebaseContent === lastSavedContent);
+
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenInUrl = urlParams.get('aiToken');
+            const aiSessionBadge = document.getElementById('aiSessionBadge');
+            
+            if (aiSessionBadge) {
+              if (data.aiSessionActive && data.aiSessionToken) {
+                if (tokenInUrl === data.aiSessionToken) {
+                  aiSessionBadge.innerHTML = '<span>🔒</span> AI Secure';
+                  aiSessionBadge.className = 'ai-session-badge ai-session-active';
+                  aiSessionBadge.title = 'Current AI session is authorized';
+                } else if (tokenInUrl) {
+                  aiSessionBadge.innerHTML = '<span>⚠️</span> AI Expired';
+                  aiSessionBadge.className = 'ai-session-badge ai-session-invalid';
+                  aiSessionBadge.title = 'This AI link is old or invalid. Generate a new one.';
+                } else {
+                  
+                  aiSessionBadge.style.display = 'none';
+                }
+              } else {
+                aiSessionBadge.style.display = 'none';
+              }
+            }
+
+            
+            
+            if (data.compilationStatus === 'success') {
+              
+
+              
+              if (!data.binaryHash) {
+                hideFlashButton();
+                if (shouldAnnounceCompilation(data)) {
+                  updateStatus('✅ Compilation completed (no binaryHash)', 'connected');
+                }
+                setUploadEnabled(true);
+                console.log('⚠️ Status is success but binaryHash doesn\'t exist - button hidden');
+                
+              } else {
+                
+                const cacheData = await fetchBinaryFromCache(data.binaryHash, data);
+
+                if (!cacheData || !cacheData.binary) {
+                  hideFlashButton();
+                  if (shouldAnnounceCompilation(data)) {
+                    updateStatus('✅ Compilation completed (binary not found in cache)', 'connected');
+                  }
+                  setUploadEnabled(true);
+                  console.log('⚠️ binaryHash exists but binary not found in cache');
+                  return;
+                }
+
+                
+                const isValidBinary = await isBinaryValidForCode(data, currentContent, firebaseContent);
+
+                
+                console.log('🔍 [SUCCESS] Data received from Firebase:');
+                console.log('   - compilationStatus:', data.compilationStatus);
+                console.log('   - binaryHash:', data.binaryHash);
+                console.log('   - binarySize:', cacheData.binarySize || data.binarySize);
+                console.log('   - binarySavedAt:', data.binarySavedAt);
+                console.log('   - code timestamp:', data.timestamp || data.lastModified);
+                console.log('   - isValidBinary:', isValidBinary);
+
+                if (isValidBinary) {
+                  
+                  const size = cacheData.binarySize || data.binarySize || 0;
+                  showFlashButton(cacheData.binary, size);
+                  if (shouldAnnounceCompilation(data, size)) {
+                    updateStatus(`✅ Compilation successful! (${size} bytes)`, 'connected');
+                  }
+                  setUploadEnabled(true);
+                  console.log('✅✅✅ Recording button SHOWN!');
+                  console.log('   - Binary valid for current code');
+                } else {
+                  hideFlashButton();
+                  markCompilationNoticed(data, cacheData.binarySize || data.binarySize || 0);
+                  console.log('⚠️ Button hidden: binary is not valid for current code');
+                  if (currentContent !== firebaseContent) {
+                    console.log('   - Reason: editor code doesn\'t match compiled code');
+                    console.log('   - Difference:', Math.abs(currentContent.length - firebaseContent.length), 'chars');
+                  } else {
+                    console.log('   - Reason: binary was compiled before last code modification');
+                    console.log('   - binarySavedAt:', data.binarySavedAt);
+                    console.log('   - code timestamp:', data.timestamp || data.lastModified);
+                  }
+                }
+              }
+            } else if (data.compilationStatus === 'error') {
+              const errorMsg = data.compilationError || 'Unknown error';
+              if (shouldAnnounceCompilation(data)) {
+                updateStatus(`❌ Compilation error: ${errorMsg}`, 'error');
+              }
+              setUploadEnabled(true);
+              hideFlashButton();
+            } else if (data.compilationStatus === 'pending') {
+              if (shouldAnnounceCompilation(data)) {
+                updateStatus('🔨 Compiling...', '');
+              }
+              setUploadEnabled(false);
+              hideFlashButton();
+            } else {
+              
+              
+              if (!data.binaryHash || !data.compilationStatus) {
+                hideFlashButton();
+                console.log('⚠️ Button hidden: no compilation status or binaryHash removed');
+              }
+            }
+
+            
+            
+            if (!data.binaryHash) {
+              hideFlashButton();
+              console.log('⚠️ Final check: binaryHash doesn\'t exist - button hidden');
+            } else if (data.compilationStatus === 'success') {
+              
+              const isValidBinary = await isBinaryValidForCode(data, currentContent, firebaseContent);
+              if (isValidBinary && !pendingBinary) {
+                const cacheData = await fetchBinaryFromCache(data.binaryHash, data);
+                if (cacheData && cacheData.binary) {
+                  const size = cacheData.binarySize || data.binarySize || 0;
+                  showFlashButton(cacheData.binary, size);
+                  console.log('✅✅✅ Recording button SHOWN in final check!');
+                }
+              }
+            }
+
+            
+            
+            
+            if (isSyncing || firebaseContent === lastSavedContent) {
+              
+              
+              return;
+            }
+
+            
+            if (currentContent !== firebaseContent) {
+              isLocalChange = true; 
+
+              
+              if (saveTimeout) {
+                clearTimeout(saveTimeout);
+                saveTimeout = null;
+              }
+
+              
+              editor.setValue(firebaseContent);
+              lastSavedContent = firebaseContent;
+
+              
+              
+              const updatedContent = editor.getValue();
+              const isValidBinary = data.compilationStatus === 'success' &&
+                await isBinaryValidForCode(data, updatedContent, firebaseContent);
+
+              if (isValidBinary && data.binaryHash) {
+                
+                const cacheData = await fetchBinaryFromCache(data.binaryHash, data);
+                if (cacheData && cacheData.binary) {
+                  const size = cacheData.binarySize || data.binarySize || 0;
+                  showFlashButton(cacheData.binary, size);
+                  console.log('✅ Recording button kept after Firebase update (valid binary from cache)');
+                } else {
+                  hideFlashButton();
+                  console.log('⚠️ valid binaryHash but binary not found in cache');
+                }
+              } else {
+                
+                hideFlashButton();
+                console.log('⚠️ Button hidden: code was updated from Firebase and binary is not valid');
+              }
+
+              updateStatus('🔄 Updated from Firebase', 'connected');
+              updateSyncIndicator('synced');
+              console.log('🔄 Code updated from Firebase');
+
+              
+              setTimeout(() => {
+                isLocalChange = false;
+                updateStatus('Synced', 'connected');
+              }, 200);
+            }
+          }, (error) => {
+            console.error('❌ Error in Firebase listener:', error);
+            console.warn('⚠️ Error in Firebase SDK listener, using polling:', error);
+            
+            startPolling();
+          });
+          console.log('✅ Firebase listener configured successfully! Waiting for changes...');
+
+          
+          
+          console.log('🔄 Starting periodic fallback check (every 2 seconds)...');
+          setInterval(async () => {
+            if (isSyncing) return;
+
+            try {
+              const response = await fetch(projectApiUrl());
+              if (response.ok) {
+                const data = await response.json();
+                if (!data || !data.content) return;
+
+                const currentContent = editor.getValue();
+                const firebaseContent = data.content;
+
+                
+                if (data.compilationStatus === 'success' && data.binaryHash) {
+                  
+                  const cacheData = await fetchBinaryFromCache(data.binaryHash, data);
+
+                  if (cacheData && cacheData.binary) {
+                    const isValidBinary = await isBinaryValidForCode(data, currentContent, firebaseContent);
+                    if (isValidBinary && !pendingBinary) {
+                      const size = cacheData.binarySize || data.binarySize || 0;
+                      showFlashButton(cacheData.binary, size);
+                      console.log('✅✅✅ [FALLBACK] Recording button SHOWN by periodic check!');
+                    } else if (!isValidBinary && !!pendingBinary) {
+                      hideFlashButton();
+                      console.log('⚠️ [FALLBACK] Button hidden by periodic check (invalid binary)');
+                    }
+                  } else {
+                    if (!!pendingBinary) {
+                      hideFlashButton();
+                      console.log('⚠️ [FALLBACK] Button hidden by periodic check (binary not found in cache)');
+                    }
+                  }
+                } else if (!data.binaryHash && !!pendingBinary) {
+                  hideFlashButton();
+                  console.log('⚠️ [FALLBACK] Button hidden by periodic check (no binaryHash)');
+                }
+              }
+            } catch (error) {
+              
+            }
+          }, 2000); 
+
+        } catch (error) {
+          console.error('❌ Error configuring listener:', error);
+          console.warn('⚠️ SDK not available, using polling:', error);
+          startPolling();
+        }
+      } else {
+        
+        console.log('⚠️ codeRef doesn\'t exist, using polling');
+        startPolling();
+      }
+
+      
+      function startPolling() {
+        let lastTimestamp = Date.now();
+        setInterval(async () => {
+          if (isSyncing) return; 
+
+          try {
+            const response = await fetch(projectApiUrl());
+            if (response.ok) {
+              const data = await response.json();
+              if (!data) return;
+
+              const currentContent = editor.getValue();
+              const firebaseContent = data.content;
+
+              
+              if (data.compilationStatus) {
+                if (data.compilationStatus === 'success') {
+                  
+                  if (!data.binaryHash) {
+                    hideFlashButton();
+                    if (shouldAnnounceCompilation(data)) {
+                      updateStatus('✅ Compilation completed (no binaryHash)', 'connected');
+                    }
+                    setUploadEnabled(true);
+                    console.log('⚠️ [POLLING] Status is success but binaryHash doesn\'t exist - button hidden');
+                  } else {
+                    
+                    const cacheData = await fetchBinaryFromCache(data.binaryHash, data);
+
+                    if (!cacheData || !cacheData.binary) {
+                      hideFlashButton();
+                      if (shouldAnnounceCompilation(data)) {
+                        updateStatus('✅ Compilation completed (binary not found in cache)', 'connected');
+                      }
+                      setUploadEnabled(true);
+                      console.log('⚠️ [POLLING] binaryHash exists but binary not found in cache');
+                    } else {
+                      
+                      const size = cacheData.binarySize || data.binarySize || 0;
+                      if (shouldAnnounceCompilation(data, size)) {
+                        updateStatus(`✅ Compilation successful! (${size} bytes)`, 'connected');
+                      }
+                      setUploadEnabled(true);
+
+                      
+                      const isValidBinary = await isBinaryValidForCode(data, currentContent, firebaseContent);
+
+                      
+                      console.log('🔍 [POLLING SUCCESS] Data received from Firebase:');
+                      console.log('   - compilationStatus:', data.compilationStatus);
+                      console.log('   - binaryHash:', data.binaryHash);
+                      console.log('   - binarySize:', cacheData.binarySize || data.binarySize);
+                      console.log('   - isValidBinary:', isValidBinary);
+
+                      if (isValidBinary) {
+                        showFlashButton(cacheData.binary, size);
+                        console.log('✅✅✅ [POLLING] Recording button SHOWN!');
+                        console.log('   - Binary valid for current code');
+                      } else {
+                        hideFlashButton();
+                        console.log('⚠️ [POLLING] Button hidden: binary is not valid');
+                      }
+                    }
+                  }
+                } else if (data.compilationStatus === 'error') {
+                  const errorMsg = data.compilationError || 'Unknown error';
+                  if (shouldAnnounceCompilation(data)) {
+                    updateStatus(`❌ Compilation error: ${errorMsg}`, 'error');
+                  }
+                  setUploadEnabled(true);
+                  hideFlashButton();
+                } else if (data.compilationStatus === 'pending') {
+                  if (shouldAnnounceCompilation(data)) {
+                    updateStatus('🔨 Compiling...', '');
+                  }
+                  setUploadEnabled(false);
+                  hideFlashButton();
+                } else {
+                  
+                  if (!data.binaryHash || !data.compilationStatus) {
+                    hideFlashButton();
+                  }
+                }
+
+                
+                if (!data.binaryHash) {
+                  hideFlashButton();
+                  console.log('⚠️ [POLLING] Final check: binaryHash doesn\'t exist - button hidden');
+                }
+              }
+
+              
+              if (data.content && data.timestamp > lastTimestamp) {
+                if (currentContent !== firebaseContent && firebaseContent !== lastSavedContent) {
+                  isLocalChange = true;
+                  editor.setValue(firebaseContent);
+                  lastSavedContent = firebaseContent;
+                  lastTimestamp = data.timestamp;
+
+                  
+                  const updatedContent = editor.getValue();
+                  const isValidBinary = data.compilationStatus === 'success' &&
+                    await isBinaryValidForCode(data, updatedContent, firebaseContent);
+
+                  if (isValidBinary && data.binaryHash) {
+                    
+                    const cacheData = await fetchBinaryFromCache(data.binaryHash, data);
+                    if (cacheData && cacheData.binary) {
+                      const size = cacheData.binarySize || data.binarySize || 0;
+                      showFlashButton(cacheData.binary, size);
+                    } else {
+                      hideFlashButton();
+                    }
+                  } else {
+                    hideFlashButton();
+                  }
+
+                  updateStatus('🔄 Updated from Firebase', 'connected');
+                  setTimeout(() => {
+                    isLocalChange = false;
+                    updateStatus('Synced', 'connected');
+                  }, 200);
+                }
+              }
+            }
+          } catch (error) {
+            
+          }
+        }, 2000); 
+      }
+    });
+
+    
+    function downloadBinary(binaryBase64, size = null) {
+      try {
+        
+        const byteCharacters = atob(binaryBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'code.bin';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log(`✅ Download started: code.bin (${size || byteArray.length} bytes)`);
+        updateStatus(`📥 Download started (${size || byteArray.length} bytes)`, 'connected');
+        setTimeout(() => {
+          updateStatus('Synced', 'connected');
+        }, 2000);
+      } catch (error) {
+        console.error('❌ Error downloading:', error);
+        updateStatus('❌ Error downloading', 'error');
+      }
+    }
+
+    
+    async function checkConnectionWithFlag() {
+      const result = await checkConnection();
+      isConnected = result;
+      return result;
+    }
+
+    
+    window.addEventListener('load', () => {
+      
+      setTimeout(async () => {
+        await checkConnectionWithFlag();
+      }, 1000);
+
+      
+      reconnectInterval = setInterval(async () => {
+        if (!isConnected) {
+          await tryReconnect();
+        }
+      }, 3000);
+
+      
+      const aiModal = document.getElementById('aiModal');
+      const btnAIHelp = document.getElementById('btnAIHelp');
+      const btnCloseAI = document.getElementById('btnCloseAI');
+      const qrcodeContainer = document.getElementById('qrcode-container');
+      const linkChatGPT = document.getElementById('linkChatGPT');
+      const btnCopyPrompt = document.getElementById('btnCopyPrompt');
+
+      let qrcode = null;
+
+      btnAIHelp.addEventListener('click', () => {
+        const currentSource = editor ? editor.getValue() : '';
+
+        
+        const aiToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        
+        
+        const updateData = { 
+          aiHelpUsed: true,
+          aiSessionToken: aiToken,
+          aiSessionActive: true,
+          aiSessionStartedAt: new Date().toISOString()
+        };
+
+        
+        fetch(projectApiUrl(), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData)
+        }).catch(e => console.warn('Error setting AI session token:', e));
+
+        const currentUrl = window.location.href;
+        const urlObj = new URL(currentUrl);
+        const projectID = urlObj.searchParams.get('projectID');
+        
+        
+        const docsUrl = `https://onedollarcomputer.com/editor/AI_DOCS.txt`;
+        
+        
+        const shortUrl = `${window.location.origin}${window.location.pathname}?projectID=${projectID}`;
+        
+        
+        qrcodeContainer.innerHTML = '';
+        
+        
+        const productionProjectUrl = `https://onedollarcomputer.com/editor/?projectID=${projectID}&aiToken=${aiToken}`;
+
+        
+        const prompt = `Help me program the OneDollarComputer.
+
+1. Protocol: Follow the "AI Integration Standard" in ${docsUrl}
+2. Context: projectID ${projectID} | aiToken ${aiToken}
+3. Action: Review the current firmware code below and APPLY improvements.
+
+STRICT OUTPUT RULES:
+- Generate ONLY complete simple Rust firmware source for the editor.
+- Prefer: use odc::*; fn main() { ... } with board pins 0..=19 (LED = 19).
+- Do NOT write #![no_std], extern "C", MCU pad names, or JavaScript/browser code.
+- The Magic Load Link code= parameter must contain Base64 of the Rust firmware source only.
+
+CURRENT FIRMWARE SOURCE:
+\`\`\`rust
+${currentSource}
+\`\`\`
+
+Priority 1: Update via Firebase PATCH if possible.
+Priority 2: Provide the "Magic Load Link" for one-click sync:
+${productionProjectUrl}&code=BASE64_UTF8_CODE
+
+Return updated code first, then the Magic Link, then a brief summary.`;
+
+        const chatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+        const qrPrompt = `Help me program the OneDollarComputer. Follow ${docsUrl}. projectID ${projectID}, aiToken ${aiToken}. Generate only simple Rust: use odc::*; fn main() { ... } with board pins 0..=19 (LED=19). No #![no_std], no extern "C", no MCU pad names, no JavaScript. If you cannot PATCH Firebase, return a Magic Load Link using ${productionProjectUrl}&code=BASE64_UTF8_RUST_FIRMWARE.`;
+        const qrChatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(qrPrompt)}`;
+
+        
+        qrcodeContainer.innerHTML = '';
+        
+        
+        
+        try {
+          qrcode = new QRCode(qrcodeContainer, {
+            text: qrChatGPTUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.L
+          });
+        } catch (e) {
+          console.warn('QR code generation failed, falling back to project link:', e);
+          qrcodeContainer.innerHTML = '';
+          qrcode = new QRCode(qrcodeContainer, {
+            text: productionProjectUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.L
+          });
+        }
+
+        
+        linkChatGPT.href = chatGPTUrl;
+
+        
+        btnCopyPrompt.onclick = () => {
+          navigator.clipboard.writeText(prompt).then(() => {
+            const originalText = btnCopyPrompt.innerHTML;
+            btnCopyPrompt.innerHTML = '<span>✅</span> Copied!';
+            setTimeout(() => {
+              btnCopyPrompt.innerHTML = originalText;
+            }, 2000);
+          }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy prompt to clipboard');
+          });
+        };
+
+        
+        aiModal.style.display = 'flex';
+      });
+
+      btnCloseAI.addEventListener('click', () => {
+        aiModal.style.display = 'none';
+      });
+
+      
+      aiModal.addEventListener('click', (e) => {
+        if (e.target === aiModal) {
+          aiModal.style.display = 'none';
+        }
+      });
+    });
+
+  </script>
 </body>
+
 </html>
