@@ -39,8 +39,11 @@ editor/
 | **static** (GitHub Pages) | site host only | Firebase | Cloud (if worker handles Rust) | WebHID |
 
 ```bash
-cd editor
-./serve.py                          # http://127.0.0.1:8080/?projectID=demo
+# From the site root (serves marketing + editor + /api)
+python3 serve.py                    # http://127.0.0.1:8080/editor/?projectID=demo
+
+# Or from editor/
+./serve.py
 ./serve.py --mode firebase
 ODC_MONOREPO=/path/to/bootloader_odb ./serve.py
 ```

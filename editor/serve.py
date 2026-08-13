@@ -36,6 +36,15 @@ from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parent
 PROJECTS_DIR = ROOT / "projects"
+# When editor/ lives inside the marketing site, serve the whole site so
+# /editor/?projectID=demo, logos, and /api/* all work on one local port.
+_SITE_CANDIDATE = ROOT.parent
+SITE_ROOT = (
+    _SITE_CANDIDATE
+    if (_SITE_CANDIDATE / "index.html").is_file()
+    and (_SITE_CANDIDATE / "editor" / "index.html").is_file()
+    else ROOT
+)
 
 
 def discover_monorepo() -> Path:
@@ -464,7 +473,7 @@ def config_payload() -> dict:
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT), **kwargs)
+        super().__init__(*args, directory=str(SITE_ROOT), **kwargs)
 
     def _proxy_physicalai(self, method: str) -> bool:
         """Serve Physical AI UI + proxy its API under /physicalai/ (Chrome agent uses :8080)."""
@@ -624,6 +633,13 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(404, {"error": "not found"})
             return
 
+        # Convenience: /?projectID=… opens the editor, not the marketing home.
+        if SITE_ROOT != ROOT and path in ("/", "") and "projectID=" in (parsed.query or ""):
+            self.send_response(302)
+            self.send_header("Location", "/editor/?" + parsed.query)
+            self.end_headers()
+            return
+
         super().do_GET()
 
     def do_PUT(self) -> None:
@@ -733,9 +749,16 @@ def main() -> None:
     PORT = args.port
 
     ensure_layout()
-    os.chdir(ROOT)
+    os.chdir(SITE_ROOT)
     server = ThreadingHTTPServer((HOST, PORT), Handler)
-    print(f"ODC editor [{MODE}]: http://{HOST}:{PORT}/?projectID=demo")
+    editor_url = (
+        f"http://{HOST}:{PORT}/editor/?projectID=demo"
+        if SITE_ROOT != ROOT
+        else f"http://{HOST}:{PORT}/?projectID=demo"
+    )
+    print(f"ODC editor [{MODE}]: {editor_url}")
+    if SITE_ROOT != ROOT:
+        print(f"  site:     http://{HOST}:{PORT}/")
     if MODE == "local":
         print(f"  monorepo: {REPO_ROOT}")
         print(f"  projects: {PROJECTS_DIR}")
