@@ -442,7 +442,7 @@
     }
 
     /* Local flash: ask user to press ODC button (may need several presses) */
-    #flashGate {
+    #flashGate, #editGate {
       display: none;
       position: fixed;
       inset: 0;
@@ -453,11 +453,11 @@
       padding: 1.5rem;
     }
 
-    #flashGate.visible {
+    #flashGate.visible, #editGate.visible {
       display: flex;
     }
 
-    #flashGate .flash-gate-card {
+    #flashGate .flash-gate-card, #editGate .flash-gate-card {
       max-width: 420px;
       width: 100%;
       background: #161b22;
@@ -468,13 +468,13 @@
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     }
 
-    #flashGate h2 {
+    #flashGate h2, #editGate h2 {
       margin: 0 0 0.6rem;
       font-size: 1.1rem;
       font-weight: 600;
     }
 
-    #flashGate p {
+    #flashGate p, #editGate p {
       margin: 0 0 0.75rem;
       color: #9fbad1;
       font-size: 0.92rem;
@@ -487,7 +487,7 @@
       margin-bottom: 1rem;
     }
 
-    #flashGate .flash-gate-actions {
+    #flashGate .flash-gate-actions, #editGate .flash-gate-actions {
       display: flex;
       gap: 0.6rem;
       flex-wrap: wrap;
@@ -495,7 +495,7 @@
       justify-content: space-between;
     }
 
-    #flashGate button {
+    #flashGate button, #editGate button {
       border: none;
       border-radius: 6px;
       padding: 0.55rem 0.9rem;
@@ -516,6 +516,17 @@
       padding: 0.45rem 0.7rem;
       font-size: 0.8rem;
       font-weight: 500;
+    }
+
+    #btnEditGateSignIn {
+      background: #238636;
+      color: #fff;
+    }
+
+    #btnEditGateCancel {
+      background: #21262d;
+      color: #e6edf3;
+      margin-left: auto;
     }
 
     #btnFlashGateListHid:hover {
@@ -755,6 +766,17 @@
     </div>
   </div>
 
+  <div id="editGate" aria-hidden="true">
+    <div class="flash-gate-card" role="dialog" aria-labelledby="editGateTitle">
+      <h2 id="editGateTitle">Sign in to edit</h2>
+      <p>This project is public, but only the owner can change the original. Sign in and we’ll copy it to your page.</p>
+      <div class="flash-gate-actions">
+        <button type="button" id="btnEditGateSignIn">Sign in with Google</button>
+        <button type="button" id="btnEditGateCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   
   <button id="btnAIHelp" class="ai-help-btn">
     <span>🤖</span> Help
@@ -843,7 +865,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
       from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js';
-    import { getDatabase, ref, set, get, onValue }
+    import { getDatabase, ref, set, get, update, onValue }
       from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js';
 
     const DEFAULT_FIREBASE = {
@@ -903,6 +925,41 @@
       return `${window.location.pathname}?${params.toString()}`;
     }
 
+    function slugify(raw) {
+      const s = String(raw || '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 48);
+      return s || 'project';
+    }
+
+    function newProjectId() {
+      const bytes = new Uint8Array(6);
+      crypto.getRandomValues(bytes);
+      return 'p' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function uniqueSlug(base, used) {
+      let slug = slugify(base);
+      if (!used[slug]) return slug;
+      let i = 2;
+      while (used[`${slug}-${i}`]) i += 1;
+      return `${slug}-${i}`;
+    }
+
+    let projectAccess = {
+      ownerUid: null,
+      username: null,
+      slug: null,
+      name: null,
+      loaded: false
+    };
+    let forkInProgress = false;
+    let editGateWaiter = null;
+
     function firstAuthUser() {
       if (!auth) return Promise.resolve(null);
       return new Promise((resolve) => {
@@ -952,24 +1009,165 @@
 
     async function refreshProjectPublicLink() {
       const link = document.getElementById('projectPublicLink');
-      if (!link || !database || !window.PROJECT_CODE) return;
+      projectAccess.loaded = false;
+      if (!database || !window.PROJECT_CODE) {
+        projectAccess.loaded = true;
+        if (link) link.hidden = true;
+        return;
+      }
       try {
         const snap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
         if (!snap.exists()) {
-          link.hidden = true;
+          projectAccess = { ownerUid: null, username: null, slug: null, name: null, loaded: true };
+          if (link) link.hidden = true;
           return;
         }
         const p = snap.val() || {};
-        const name = p.name || p.slug || 'Project';
-        if (p.username && p.slug) {
+        projectAccess = {
+          ownerUid: p.ownerUid || null,
+          username: p.username || null,
+          slug: p.slug || null,
+          name: p.name || p.slug || 'Project',
+          loaded: true
+        };
+        const name = projectAccess.name;
+        if (link && p.username && p.slug) {
           link.hidden = false;
           link.href = `/${encodeURIComponent(p.username)}/${encodeURIComponent(p.slug)}`;
           link.textContent = `${p.username} / ${name}`;
-        } else {
+        } else if (link) {
           link.hidden = true;
         }
       } catch {
-        link.hidden = true;
+        projectAccess = { ownerUid: null, username: null, slug: null, name: null, loaded: true };
+        if (link) link.hidden = true;
+      }
+    }
+
+    function canEditOriginal() {
+      if (IS_LOCAL) return true;
+      const uid = auth && auth.currentUser && auth.currentUser.uid;
+      if (!projectAccess.loaded) return false;
+      return !!(uid && projectAccess.ownerUid && uid === projectAccess.ownerUid);
+    }
+
+    function rememberCloneIntent(content) {
+      try {
+        sessionStorage.setItem('odc-clone', JSON.stringify({
+          projectId: window.PROJECT_CODE,
+          content: content || '',
+          returnTo: 'editor'
+        }));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function showEditGate() {
+      const gate = document.getElementById('editGate');
+      if (gate) {
+        gate.classList.add('visible');
+        gate.setAttribute('aria-hidden', 'false');
+      }
+    }
+
+    function hideEditGate() {
+      const gate = document.getElementById('editGate');
+      if (gate) {
+        gate.classList.remove('visible');
+        gate.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function promptSignInToEdit() {
+      if (editGateWaiter) return editGateWaiter.promise;
+      let resolve;
+      const promise = new Promise((r) => { resolve = r; });
+      editGateWaiter = { promise, resolve };
+      showEditGate();
+      return promise;
+    }
+
+    function finishEditGate(ok) {
+      hideEditGate();
+      if (editGateWaiter) {
+        editGateWaiter.resolve(ok);
+        editGateWaiter = null;
+      }
+    }
+
+    async function cloneProjectForMe(content) {
+      const user = auth && auth.currentUser;
+      if (!user || !database) throw new Error('Sign in to copy this project.');
+      const userSnap = await get(ref(database, `users/${user.uid}`));
+      const rec = userSnap.exists() ? userSnap.val() : null;
+      if (!rec || !rec.username) {
+        rememberCloneIntent(content);
+        window.location.href = '/project/';
+        return null;
+      }
+      const srcSnap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
+      const src = srcSnap.exists() ? srcSnap.val() : {};
+      const name = src.name || src.slug || projectAccess.name || 'Project';
+      const pubSnap = await get(ref(database, `profiles/${rec.username}`));
+      const pub = pubSnap.exists() ? pubSnap.val() : null;
+      const used = (pub && pub.projects) || {};
+      const slug = uniqueSlug(name, used);
+      const id = newProjectId();
+      const createdAt = new Date().toISOString();
+      const codeContent = content || (src.code && src.code.content) || '';
+      await set(ref(database, `projects/${id}`), {
+        ownerUid: user.uid,
+        username: rec.username,
+        slug,
+        name,
+        isMain: false,
+        public: true,
+        clonedFrom: window.PROJECT_CODE || null,
+        createdAt,
+        updatedAt: createdAt,
+        code: { content: codeContent, language: 'rust' }
+      });
+      await update(ref(database, `users/${user.uid}/projectIds`), { [id]: true });
+      await update(ref(database, `profiles/${rec.username}/projects/${slug}`), {
+        id,
+        name,
+        isMain: false,
+        updatedAt: createdAt
+      });
+      return id;
+    }
+
+    async function ensureCanSave(content) {
+      if (IS_LOCAL) return true;
+      if (!projectAccess.loaded) await refreshProjectPublicLink();
+      if (canEditOriginal()) return true;
+      if (forkInProgress) return false;
+      forkInProgress = true;
+      try {
+        if (!(auth && auth.currentUser)) {
+          const ok = await promptSignInToEdit();
+          if (!ok) {
+            if (typeof editor !== 'undefined' && editor) {
+              isLocalChange = true;
+              editor.setValue(lastSavedContent);
+              isLocalChange = false;
+            }
+            return false;
+          }
+          if (canEditOriginal()) return true;
+        }
+        updateStatus('Copying to your page…', '');
+        const id = await cloneProjectForMe(content);
+        if (!id) return false;
+        window.location.replace(editorQueryWithProject(id));
+        return false;
+      } catch (e) {
+        console.warn('Clone failed', e);
+        updateStatus((e && e.message) || 'Could not copy this project.', 'error');
+        return false;
+      } finally {
+        forkInProgress = false;
       }
     }
 
@@ -1082,12 +1280,32 @@
       });
       drop?.addEventListener('click', (e) => e.stopPropagation());
 
+      document.getElementById('btnEditGateSignIn')?.addEventListener('click', async () => {
+        if (!auth) {
+          rememberCloneIntent(editor ? editor.getValue() : lastSavedContent);
+          window.location.href = '/project/';
+          return;
+        }
+        try {
+          await signInWithPopup(auth, google);
+        } catch (err) {
+          if (err && err.code !== 'auth/popup-closed-by-user') {
+            console.warn('Sign-in failed', err);
+            finishEditGate(false);
+          }
+        }
+      });
+      document.getElementById('btnEditGateCancel')?.addEventListener('click', () => {
+        finishEditGate(false);
+      });
+
       if (!auth) {
         renderUserMenu(null);
         return;
       }
       onAuthStateChanged(auth, (user) => {
         renderUserMenu(user);
+        if (user && editGateWaiter) finishEditGate(true);
       });
     }
 
@@ -1095,7 +1313,7 @@
     if (!(await resolveBareEditorUrl())) {
       await new Promise(() => {});
     }
-    refreshProjectPublicLink();
+    await refreshProjectPublicLink();
 
     
     const btnUpload = document.getElementById('btnUpload');
@@ -2192,36 +2410,15 @@
           return true;
         }
 
-        const testData = {
-          timestamp: Date.now(),
-          test: true,
-          message: 'Connection test'
-        };
-
-        const writeResponse = await fetch(`${DATABASE_URL}${DATABASE_PATH}/test.json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(testData)
-        });
-
-        if (!writeResponse.ok) {
-          throw new Error(`HTTP ${writeResponse.status}: ${writeResponse.statusText}`);
-        }
-
-        const readResponse = await fetch(`${DATABASE_URL}${DATABASE_PATH}/test.json`);
+        const readResponse = await fetch(projectApiUrl(), { cache: 'no-store' });
         if (!readResponse.ok) {
           throw new Error(`HTTP ${readResponse.status}: ${readResponse.statusText}`);
         }
-
-        const data = await readResponse.json();
-
-        if (data && data.test === true) {
-          updateStatus('✅ Connected to Firebase', 'connected');
-          console.log('✅ Connection test successful (Fetch API)');
-          isConnected = true;
-          return true;
-        }
-        throw new Error('Invalid Firebase response');
+        await readResponse.json();
+        updateStatus('✅ Connected to Firebase', 'connected');
+        console.log('✅ Connection test successful (Fetch API)');
+        isConnected = true;
+        return true;
       } catch (error) {
         console.error('❌ Connection error:', error);
         updateStatus(IS_LOCAL ? 'Start ./serve.py' : 'OFFLINE', 'error');
@@ -2234,6 +2431,9 @@
     async function saveToFirebase(content) {
       if (isSyncing || content === lastSavedContent) {
         return; 
+      }
+      if (!IS_LOCAL && !(await ensureCanSave(content))) {
+        return;
       }
 
       try {
@@ -2571,29 +2771,30 @@ fn main() {
       
       
       if (urlCode) {
-        isSyncing = true; 
+        isSyncing = true;
         console.log('🔗 Saving URL code to Firebase to prevent listener overwrite...');
         try {
-          await fetch(projectApiUrl(), {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content: urlCode,
-              code: urlCode,
-              projectID: currentProjectCode,
-              language: 'rust',
-              lastModified: new Date().toISOString(),
-              updated: new Date().toISOString(),
-              timestamp: Date.now(),
-              size: urlCode.length
-              
-            })
-          });
-          console.log('✅ URL code saved to Firebase');
+          if (await ensureCanSave(urlCode)) {
+            await fetch(projectApiUrl(), {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: urlCode,
+                code: urlCode,
+                projectID: currentProjectCode,
+                language: 'rust',
+                lastModified: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                timestamp: Date.now(),
+                size: urlCode.length
+              })
+            });
+            console.log('✅ URL code saved to Firebase');
+          }
         } catch (e) {
           console.warn('⚠️ Could not save URL code to Firebase:', e.message);
         } finally {
-          isSyncing = false; 
+          isSyncing = false;
         }
       }
 
@@ -2651,19 +2852,18 @@ fn main() {
       editor.onDidChangeModelContent(() => {
         const currentContent = editor.getValue();
 
-        
         if (!isLocalChange && currentContent !== lastSavedContent) {
           hideFlashButton();
         }
 
-        
         if (!isLocalChange) {
-          
           if (saveTimeout) {
             clearTimeout(saveTimeout);
           }
-
-          
+          if (!IS_LOCAL && !canEditOriginal()) {
+            saveToFirebase(currentContent);
+            return;
+          }
           saveTimeout = setTimeout(() => {
             saveToFirebase(currentContent);
           }, DEBOUNCE_DELAY);

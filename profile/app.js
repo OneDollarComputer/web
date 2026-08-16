@@ -88,6 +88,14 @@ function slugify(raw) {
   return s || "project";
 }
 
+function uniqueSlug(base, used) {
+  let slug = slugify(base);
+  if (!used[slug]) return slug;
+  let i = 2;
+  while (used[`${slug}-${i}`]) i += 1;
+  return `${slug}-${i}`;
+}
+
 function suggestUsername(displayName, email) {
   const fromName = (displayName || "").split(/\s+/)[0] || "";
   const fromEmail = (email || "").split("@")[0] || "";
@@ -288,6 +296,125 @@ function isOwner(username) {
   return !!(me && profile && profile.username === username);
 }
 
+function rememberCloneIntent(projectId, content, returnTo) {
+  try {
+    sessionStorage.setItem("odc-clone", JSON.stringify({
+      projectId,
+      content: content || "",
+      returnTo: returnTo || "page"
+    }));
+  } catch {
+    /* ignore */
+  }
+}
+
+async function cloneProject(sourceId, contentOverride) {
+  if (!me || !profile || !profile.username) {
+    throw new Error("Sign in and choose a username first.");
+  }
+  const srcSnap = await get(ref(db, `projects/${sourceId}`));
+  const src = srcSnap.exists() ? srcSnap.val() : {};
+  const content = contentOverride
+    ?? (src.code && src.code.content)
+    ?? DEFAULT_CODE;
+  const name = src.name || src.slug || "Project";
+  const pub = await loadPublicProfile(profile.username);
+  const used = (pub && pub.projects) || {};
+  const slug = uniqueSlug(name, used);
+  const id = newProjectId();
+  const createdAt = nowIso();
+  await set(ref(db, `projects/${id}`), {
+    ownerUid: me.uid,
+    username: profile.username,
+    slug,
+    name,
+    isMain: false,
+    public: true,
+    clonedFrom: sourceId,
+    createdAt,
+    updatedAt: createdAt,
+    code: { content, language: "rust" }
+  });
+  await update(ref(db, `users/${me.uid}/projectIds`), { [id]: true });
+  await update(ref(db, `profiles/${profile.username}/projects/${slug}`), {
+    id,
+    name,
+    isMain: false,
+    updatedAt: createdAt
+  });
+  return { id, slug, username: profile.username, name };
+}
+
+let forkBusy = false;
+
+async function handleEditAttempt() {
+  const pane = $("projectPane");
+  if (!pane || pane.hidden) return false;
+  const username = pane.dataset.username;
+  const sourceId = pane.dataset.projectId;
+  if (!sourceId || isOwner(username)) return true;
+  if (forkBusy) return false;
+  forkBusy = true;
+  try {
+    if (!me) {
+      setStatus("Sign in to edit — we'll copy this project to your page.");
+      try {
+        await signInWithPopup(auth, google);
+      } catch (e) {
+        if (e && e.code === "auth/popup-closed-by-user") {
+          setStatus("Sign in to edit this project.");
+          return false;
+        }
+        throw e;
+      }
+      profile = await loadMyUser(me);
+      syncNav();
+    }
+    if (isOwner(username)) return true;
+    if (!profile || !profile.username) {
+      rememberCloneIntent(sourceId, $("codeEditor").value, "page");
+      go("/project/", true);
+      return false;
+    }
+    setStatus("Copying to your page…");
+    const dest = await cloneProject(sourceId, $("codeEditor").value);
+    go(`/${dest.username}/${dest.slug}`);
+    return false;
+  } catch (e) {
+    setStatus((e && e.message) || "Could not copy this project.");
+    return false;
+  } finally {
+    forkBusy = false;
+  }
+}
+
+async function consumePendingClone() {
+  if (!me || !profile || !profile.username) return false;
+  let raw;
+  try {
+    raw = sessionStorage.getItem("odc-clone");
+  } catch {
+    return false;
+  }
+  if (!raw) return false;
+  sessionStorage.removeItem("odc-clone");
+  let pending;
+  try {
+    pending = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+  if (!pending || !pending.projectId) return false;
+  setStatus("Copying to your page…");
+  const dest = await cloneProject(pending.projectId, pending.content);
+  if (pending.returnTo === "editor") {
+    window.location.href = `/editor/?projectID=${encodeURIComponent(dest.id)}`;
+    return true;
+  }
+  go(`/${dest.username}/${dest.slug}`, true);
+  return true;
+}
+
 function renderLogin() {
   hideAll();
   $("viewLogin").hidden = false;
@@ -343,6 +470,7 @@ function renderUser(username, pub, owner) {
   $("listPane").hidden = false;
   $("ownerBar").hidden = !owner;
   $("visitorNote").hidden = owner;
+  $("visitorNote").textContent = "Public projects on this computer.";
   document.title = `${username} — One Dollar Computer`;
   setCanonical(`/${username}/`);
   $("profileName").textContent = (pub && pub.displayName) || username;
@@ -381,8 +509,9 @@ async function renderProject(username, slug, pub, owner) {
   $("projectPane").hidden = false;
   $("ownerBar").hidden = !owner;
   $("visitorNote").hidden = owner;
+  $("visitorNote").textContent = "Public project. Start editing to copy it to your page.";
   $("btnSave").hidden = !owner;
-  $("codeEditor").readOnly = !owner;
+  $("codeEditor").readOnly = false;
 
   const entry = pub && pub.projects && pub.projects[slug];
   if (!entry) {
@@ -505,6 +634,8 @@ $("btnClaim").addEventListener("click", async () => {
   try {
     const name = await claimUsername(me, $("usernameInput").value);
     profile = await loadMyUser(me);
+    syncNav();
+    if (await consumePendingClone()) return;
     go(`/${name}/`, true);
   } catch (e) {
     showError((e && e.message) || "Could not create your page.");
@@ -519,6 +650,7 @@ $("btnSave").addEventListener("click", async () => {
   const username = pane.dataset.username;
   const slug = pane.dataset.slug;
   if (!auth.currentUser || !id) return;
+  if (!(await handleEditAttempt())) return;
   setStatus("Saving…");
   try {
     const updatedAt = nowIso();
@@ -540,14 +672,9 @@ $("btnNew").addEventListener("click", async () => {
     $("newProjectName").focus();
     return;
   }
-  let slug = slugify(name);
   const pub = await loadPublicProfile(profile.username);
   const used = (pub && pub.projects) || {};
-  if (used[slug]) {
-    let i = 2;
-    while (used[`${slug}-${i}`]) i += 1;
-    slug = `${slug}-${i}`;
-  }
+  let slug = uniqueSlug(name, used);
   const id = newProjectId();
   const createdAt = nowIso();
   await set(ref(db, `projects/${id}`), {
@@ -570,6 +697,14 @@ $("btnNew").addEventListener("click", async () => {
   });
   $("newProjectName").value = "";
   go(`/${profile.username}/${slug}`);
+});
+
+$("codeEditor").addEventListener("beforeinput", async (e) => {
+  const pane = $("projectPane");
+  if (!pane || pane.hidden) return;
+  if (isOwner(pane.dataset.username)) return;
+  e.preventDefault();
+  await handleEditAttempt();
 });
 
 window.addEventListener("popstate", () => {
@@ -607,6 +742,7 @@ onAuthStateChanged(auth, async (user) => {
   }
   syncNav();
   try {
+    if (profile && profile.username && (await consumePendingClone())) return;
     await render();
   } catch (e) {
     showError((e && e.message) || "Could not load this page.");
