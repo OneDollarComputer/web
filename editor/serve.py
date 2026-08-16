@@ -104,13 +104,13 @@ except ImportError:
     wrap_odc_source = None  # type: ignore
 
 FIREBASE_PUBLIC = {
-    "apiKey": "AIzaSyBGp8r-Eir4NRnIRfeA6c6rIMZmdJnti4M",
-    "authDomain": "onedollarboard-1b26a.firebaseapp.com",
-    "databaseURL": "https://onedollarboard-1b26a-default-rtdb.firebaseio.com",
-    "projectId": "onedollarboard-1b26a",
-    "storageBucket": "onedollarboard-1b26a.firebasestorage.app",
-    "messagingSenderId": "448761452728",
-    "appId": "1:448761452728:web:f309f53f24cfbac5d8bc4d",
+    "apiKey": "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
+    "authDomain": "odc-files.firebaseapp.com",
+    "databaseURL": "https://odc-files-default-rtdb.firebaseio.com",
+    "projectId": "odc-files",
+    "storageBucket": "odc-files.firebasestorage.app",
+    "messagingSenderId": "1086912562723",
+    "appId": "1:1086912562723:web:d158f4ce5c08d1ceb95396",
 }
 
 DEFAULT_CODE = """//! Example: blink the LED on the One Dollar Computer.
@@ -693,8 +693,15 @@ class Handler(SimpleHTTPRequestHandler):
             },
         )
 
+        t0 = time.time()
         result = compile_rust(content)
+        elapsed = time.time() - t0
         now = datetime.now(timezone.utc).isoformat()
+        print(
+            f"[compile] {project_id} ok={result.get('ok')} "
+            f"{result.get('binarySize') or 0}B in {elapsed:.1f}s",
+            flush=True,
+        )
         if not result.get("ok"):
             project = save_project(
                 project_id,

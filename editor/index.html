@@ -598,7 +598,7 @@
   </div>
 
   <div class="footer">
-    <b>OneDollarComputer</b> — Upload compiles and flashes. Status flashes connected / disconnected / error briefly. Press ODC button if asked.
+    <b>OneDollarComputer</b> — Upload compiles and flashes. Press the ODC button when asked.
   </div>
 
   <div id="flashGate" aria-hidden="true">
@@ -706,13 +706,13 @@
       from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js';
 
     const DEFAULT_FIREBASE = {
-      apiKey: "AIzaSyBGp8r-Eir4NRnIRfeA6c6rIMZmdJnti4M",
-      authDomain: "onedollarboard-1b26a.firebaseapp.com",
-      databaseURL: "https://onedollarboard-1b26a-default-rtdb.firebaseio.com",
-      projectId: "onedollarboard-1b26a",
-      storageBucket: "onedollarboard-1b26a.firebasestorage.app",
-      messagingSenderId: "448761452728",
-      appId: "1:448761452728:web:f309f53f24cfbac5d8bc4d"
+      apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
+      authDomain: "odc-files.firebaseapp.com",
+      databaseURL: "https://odc-files-default-rtdb.firebaseio.com",
+      projectId: "odc-files",
+      storageBucket: "odc-files.firebasestorage.app",
+      messagingSenderId: "1086912562723",
+      appId: "1:1086912562723:web:d158f4ce5c08d1ceb95396"
     };
 
     async function loadEditorConfig() {
@@ -1821,7 +1821,7 @@
       : (firebaseConfig.databaseURL || DEFAULT_FIREBASE.databaseURL);
     const DATABASE_PATH = IS_LOCAL
       ? `/api/projects/${currentProjectCode}`
-      : `/projects/${currentProjectCode}`;
+      : `/projects/${currentProjectCode}/code`;
 
     function projectApiUrl() {
       return IS_LOCAL
@@ -1830,7 +1830,7 @@
     }
 
     if (!IS_LOCAL && database && currentProjectCode) {
-      codeRef = ref(database, `${DATABASE_PATH}/code`);
+      codeRef = ref(database, DATABASE_PATH);
     }
 
     
@@ -2028,23 +2028,7 @@
       if (IS_LOCAL) {
         setUploadEnabled(false);
         try {
-          if (!hidReady) {
-            const wait = await waitForOdBootloader(90);
-            if (wait === 'cancelled') {
-              autoFlashAfterCompile = false;
-              updateStatus('Upload cancelled — press Upload again when ready', '');
-              return;
-            }
-            if (wait !== 'ready') {
-              autoFlashAfterCompile = false;
-              updateStatus(
-                '❌ Bootloader not detected. Press the ODC button several times, then Upload again.',
-                'error'
-              );
-              return;
-            }
-          }
-
+          // Compile first so a missing bootloader never looks like a failed build.
           const result = await compileCode();
           if (!result || !result.binary) {
             autoFlashAfterCompile = false;
@@ -2093,6 +2077,7 @@
 
         if (IS_LOCAL) {
           updateStatus('🔨 Compiling locally (Cargo)...', '');
+          const t0 = performance.now();
           const response = await fetch('/api/compile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2103,6 +2088,7 @@
             })
           });
           const result = await response.json();
+          const secs = ((performance.now() - t0) / 1000).toFixed(1);
           if (!response.ok || result.compilationStatus === 'error' || result.ok === false) {
             const err = result.compilationError || result.error || `HTTP ${response.status}`;
             updateStatus('❌ Compile failed', 'error');
@@ -2111,7 +2097,7 @@
             return null;
           }
           lastSavedContent = content;
-          updateStatus(`✅ Compiled (${result.binarySize || 0} bytes)`, 'connected');
+          updateStatus(`✅ Compiled (${result.binarySize || 0} bytes) in ${secs}s`, 'connected');
           markCompilationNoticed(
             {
               compilationStatus: 'success',

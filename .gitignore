@@ -2,6 +2,8 @@ editor.backup.20251104_075254/index.html
 editor.backup.20251104_004712/index.html
 editor/.DS_Store
 editor/__pycache__/
+editor/secrets/
+firebase-debug.log
 .DS_Store
 
 # original ODB brand images kept locally while rebranding
