@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-12",
+  "updated": "2026-08-15",
   "notes": "Add new target queries here; regenerate sitemap and brand copy as needed. See seo/README.md.",
   "primary": [
     {
@@ -17,6 +17,12 @@
     },
     {
       "query": "onedollarcomputer.com",
+      "intent": "navigational",
+      "landing": "https://onedollarcomputer.com/",
+      "priority": 1
+    },
+    {
+      "query": "one dollar computer official site",
       "intent": "navigational",
       "landing": "https://onedollarcomputer.com/",
       "priority": 1

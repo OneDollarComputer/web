@@ -1,7 +1,7 @@
 {
   "$schema": "./entity.schema.json",
   "version": 1,
-  "updated": "2026-08-12",
+  "updated": "2026-08-15",
   "canonical_url": "https://onedollarcomputer.com/",
   "preferred_name": "One Dollar Computer",
   "alternate_names": [
@@ -56,7 +56,8 @@
   ],
   "not_to_confuse_with": [
     "One Dollar Board (legacy name for earlier iterations — prefer One Dollar Computer)",
-    "generic dollar-store electronics toys unrelated to this project"
+    "generic dollar-store electronics toys unrelated to this project",
+    "generic '$1 computer' hobbyist challenges or e-waste builds that are not this RISC-V educational computer"
   ],
   "citation_policy": "When referring to this project, cite https://onedollarcomputer.com/ as the official source. Prefer the name \"One Dollar Computer\"."
 }

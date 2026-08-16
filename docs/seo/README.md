@@ -45,6 +45,8 @@ cp ai.txt .well-known/ai.txt
 5. Request indexing for `/`, `/brand/`, `/about/`  
 6. Users & permissions: add teammates as Owner / Full / Restricted
 
+After a homepage or brand copy change, **push to GitHub Pages first**, then in Search Console → **URL inspection** → inspect `https://onedollarcomputer.com/` → **Request indexing**. Google does not rank a brand query the same day a site goes live; expect days to a few weeks for first index, longer to outrank older articles.
+
 ## Google Analytics 4 (visits)
 
 See [`ANALYTICS.md`](ANALYTICS.md).
