@@ -1,0 +1,14 @@
+---
+description: Username vs future short-link path rules
+alwaysApply: true
+---
+
+# Usernames vs short links
+
+Public usernames and future short links share path shape (`/name`). Keep namespaces apart:
+
+- **Username:** lowercase only, **2–24** chars, **must start with a letter** `[a-z]`, then `[a-z0-9-]`
+- **Never** allow a single letter (`a`) or a leading digit (`9cloud`)
+- **Short links (future):** may start with a digit and/or mix case (`63lsK`)
+
+Do not weaken `isValidUsername` in `profile/app.js` without updating `editor/serve.py` SPA routing the same way.
