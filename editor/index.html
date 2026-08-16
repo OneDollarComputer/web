@@ -51,20 +51,15 @@
 
     
     let projectID = getProjectIDFromURL();
-    if (!projectID) {
-      const newID = generateProjectID();
-      
-      
-      const params = new URLSearchParams(window.location.search);
-      params.set('projectID', newID);
-      const newURL = `${window.location.pathname}?${params.toString()}`;
-
-      
-      window.location.replace(newURL);
-      
-    } else {
-      
+    if (projectID) {
       window.PROJECT_CODE = projectID;
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      // Magic-load / AI links still get an anonymous project id.
+      if (params.get('code') || params.get('aiToken')) {
+        params.set('projectID', generateProjectID());
+        window.location.replace(`${window.location.pathname}?${params.toString()}`);
+      }
     }
   </script>
 
@@ -86,23 +81,147 @@
     .header {
       background: #11161b;
       border-bottom: 1px solid #202830;
-      padding: 16px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-shrink: 0;
+      gap: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .header-brand {
+      display: flex;
+      flex-shrink: 0;
+    }
+
+    .header-brand img {
+      display: block;
+    }
+
+    .header-titles {
+      min-width: 0;
     }
 
     h1 {
-      font-size: 1.2rem;
+      font-size: 1.05rem;
       margin: 0;
       color: #e6edf3;
+    }
+
+    .project-public-link {
+      display: block;
+      color: #7ee2b8;
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: min(28rem, 42vw);
+    }
+
+    .project-public-link:hover {
+      text-decoration: underline;
     }
 
     .controls {
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-shrink: 0;
+    }
+
+    .user-menu {
+      position: relative;
+    }
+
+    .user-signin {
+      background: #30363d;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .user-signin:hover {
+      background: #40464d;
+    }
+
+    .user-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 11rem;
+    }
+
+    .user-menu-btn img {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-menu-btn span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-menu-drop {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      min-width: 16rem;
+      padding: 0.35rem 0;
+      z-index: 40;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .user-menu-drop a,
+    .user-menu-drop button.user-signout {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: #e6edf3;
+      padding: 8px 14px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      text-decoration: none;
+      border-radius: 0;
+    }
+
+    .user-menu-drop a:hover,
+    .user-menu-drop button.user-signout:hover {
+      background: #21262d;
+    }
+
+    .user-menu-projects {
+      border-top: 1px solid #30363d;
+      border-bottom: 1px solid #30363d;
+      margin: 0.35rem 0;
+      max-height: 12rem;
+      overflow: auto;
+    }
+
+    .user-menu-projects a.is-current {
+      color: #7ee2b8;
+    }
+
+    .user-menu-drop button.user-signout {
+      color: #ffa198;
     }
 
     button {
@@ -585,11 +704,31 @@
 
 <body>
   <div class="header">
-    <h1>OneDollarComputer - Editor <span id="modeBadge" style="font-size:0.75rem;color:#9fbad1;font-weight:500;"></span></h1>
+    <div class="header-left">
+      <a class="header-brand" href="/" title="One Dollar Computer">
+        <img src="/odc_logo_white.svg" width="28" height="28" alt="" />
+      </a>
+      <div class="header-titles">
+        <h1>Editor <span id="modeBadge" style="font-size:0.75rem;color:#9fbad1;font-weight:500;"></span></h1>
+        <a id="projectPublicLink" class="project-public-link" hidden></a>
+      </div>
+    </div>
     <div class="controls">
       <span id="status" class="status-empty"></span>
       <button id="btnUpload" class="upload" disabled title="Upload: compile and flash">⬆️ Upload</button>
       <span id="aiSessionBadge" class="ai-session-badge"></span>
+      <div class="user-menu" id="userMenu">
+        <a class="user-signin" id="btnEditorSignIn" href="/project/">Sign in</a>
+        <button type="button" class="secondary user-menu-btn" id="btnUserMenu" hidden>
+          <img id="userMenuPhoto" alt="" hidden />
+          <span id="userMenuLabel">Account</span>
+        </button>
+        <div class="user-menu-drop" id="userMenuDrop" hidden>
+          <a id="userMenuPage" href="/project/">Your projects</a>
+          <div id="userMenuProjects" class="user-menu-projects"></div>
+          <button type="button" class="user-signout" id="btnEditorSignOut">Sign out</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -702,6 +841,8 @@
   
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+      from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js';
     import { getDatabase, ref, set, get, onValue }
       from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js';
 
@@ -729,7 +870,7 @@
     const IS_LOCAL = MODE === 'local';
     const firebaseConfig = EDITOR_CONFIG.firebase || DEFAULT_FIREBASE;
 
-    let app = null, database = null, codeRef = null;
+    let app = null, database = null, codeRef = null, auth = null;
 
     const modeBadge = document.getElementById('modeBadge');
     if (modeBadge) {
@@ -739,17 +880,222 @@
       ? 'OneDollarComputer - Editor (Local)'
       : 'OneDollarComputer - Editor';
 
-    if (!IS_LOCAL) {
-      try {
-        app = initializeApp(firebaseConfig);
-        database = getDatabase(app);
-      } catch (error) {
-        console.error('❌ Error initializing Firebase:', error);
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      database = getDatabase(app);
+    } catch (error) {
+      console.error('❌ Error initializing Firebase:', error);
+      if (!IS_LOCAL) {
         alert('Error initializing Firebase. Check the console for details.');
       }
-    } else {
+    }
+    if (IS_LOCAL) {
       console.log('📁 Local mode: JSON projects via /api/projects');
     }
+
+    const google = new GoogleAuthProvider();
+    google.setCustomParameters({ prompt: 'select_account' });
+
+    function editorQueryWithProject(id) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('projectID', id);
+      return `${window.location.pathname}?${params.toString()}`;
+    }
+
+    function firstAuthUser() {
+      if (!auth) return Promise.resolve(null);
+      return new Promise((resolve) => {
+        const stop = onAuthStateChanged(auth, (user) => {
+          stop();
+          resolve(user || null);
+        });
+      });
+    }
+
+    async function resolveBareEditorUrl() {
+      if (window.PROJECT_CODE) return true;
+      if (IS_LOCAL) {
+        window.location.replace(editorQueryWithProject('demo'));
+        return false;
+      }
+      const user = await firstAuthUser();
+      if (!user || !database) {
+        window.location.replace('/project/');
+        return false;
+      }
+      try {
+        const snap = await get(ref(database, `users/${user.uid}`));
+        const rec = snap.exists() ? snap.val() : null;
+        if (rec && rec.mainProjectId) {
+          window.location.replace(editorQueryWithProject(rec.mainProjectId));
+          return false;
+        }
+      } catch (e) {
+        console.warn('Could not resolve user project', e);
+      }
+      window.location.replace('/project/');
+      return false;
+    }
+
+    function projectEntries(pub) {
+      const map = (pub && pub.projects) || {};
+      const main = pub && pub.mainSlug;
+      return Object.keys(map)
+        .map((slug) => ({ slug, ...map[slug] }))
+        .sort((a, b) => {
+          if (a.slug === main || a.isMain) return -1;
+          if (b.slug === main || b.isMain) return 1;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+    }
+
+    async function refreshProjectPublicLink() {
+      const link = document.getElementById('projectPublicLink');
+      if (!link || !database || !window.PROJECT_CODE) return;
+      try {
+        const snap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
+        if (!snap.exists()) {
+          link.hidden = true;
+          return;
+        }
+        const p = snap.val() || {};
+        const name = p.name || p.slug || 'Project';
+        if (p.username && p.slug) {
+          link.hidden = false;
+          link.href = `/${encodeURIComponent(p.username)}/${encodeURIComponent(p.slug)}`;
+          link.textContent = `${p.username} / ${name}`;
+        } else {
+          link.hidden = true;
+        }
+      } catch {
+        link.hidden = true;
+      }
+    }
+
+    async function renderUserMenu(user) {
+      const signIn = document.getElementById('btnEditorSignIn');
+      const menuBtn = document.getElementById('btnUserMenu');
+      const drop = document.getElementById('userMenuDrop');
+      const photo = document.getElementById('userMenuPhoto');
+      const label = document.getElementById('userMenuLabel');
+      const page = document.getElementById('userMenuPage');
+      const list = document.getElementById('userMenuProjects');
+      if (!signIn || !menuBtn || !drop) return;
+
+      if (!user) {
+        signIn.hidden = false;
+        menuBtn.hidden = true;
+        drop.hidden = true;
+        if (page) page.href = '/project/';
+        if (list) list.innerHTML = '';
+        return;
+      }
+
+      signIn.hidden = true;
+      menuBtn.hidden = false;
+      if (photo) {
+        if (user.photoURL) {
+          photo.src = user.photoURL;
+          photo.hidden = false;
+        } else {
+          photo.hidden = true;
+        }
+      }
+
+      let rec = null;
+      try {
+        const snap = await get(ref(database, `users/${user.uid}`));
+        rec = snap.exists() ? snap.val() : null;
+      } catch {
+        rec = null;
+      }
+
+      const username = rec && rec.username;
+      if (label) label.textContent = username ? `/${username}` : (user.displayName || 'Account');
+      if (page) {
+        page.href = username ? `/${encodeURIComponent(username)}/` : '/project/';
+        page.textContent = username ? `onedollarcomputer.com/${username}/` : 'Create your page';
+      }
+
+      if (list) {
+        list.innerHTML = '';
+        if (username) {
+          try {
+            const pubSnap = await get(ref(database, `profiles/${username}`));
+            const pub = pubSnap.exists() ? pubSnap.val() : null;
+            for (const p of projectEntries(pub)) {
+              if (!p.id) continue;
+              const a = document.createElement('a');
+              a.href = editorQueryWithProject(p.id);
+              a.textContent = p.name || p.slug;
+              if (String(p.id) === String(window.PROJECT_CODE)) a.classList.add('is-current');
+              list.appendChild(a);
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+    }
+
+    function wireUserMenu() {
+      const signIn = document.getElementById('btnEditorSignIn');
+      const menuBtn = document.getElementById('btnUserMenu');
+      const drop = document.getElementById('userMenuDrop');
+      const signOutBtn = document.getElementById('btnEditorSignOut');
+
+      signIn?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!auth) {
+          window.location.href = '/project/';
+          return;
+        }
+        try {
+          const cred = await signInWithPopup(auth, google);
+          const snap = await get(ref(database, `users/${cred.user.uid}`));
+          if (!snap.exists() || !snap.val().username) {
+            window.location.href = '/project/';
+            return;
+          }
+          if (!window.PROJECT_CODE && snap.val().mainProjectId) {
+            window.location.replace(editorQueryWithProject(snap.val().mainProjectId));
+          }
+        } catch (err) {
+          if (err && err.code !== 'auth/popup-closed-by-user') {
+            console.warn('Sign-in failed', err);
+            window.location.href = '/project/';
+          }
+        }
+      });
+
+      menuBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (drop) drop.hidden = !drop.hidden;
+      });
+      signOutBtn?.addEventListener('click', async () => {
+        if (auth) await signOut(auth);
+        if (drop) drop.hidden = true;
+      });
+      document.addEventListener('click', () => {
+        if (drop) drop.hidden = true;
+      });
+      drop?.addEventListener('click', (e) => e.stopPropagation());
+
+      if (!auth) {
+        renderUserMenu(null);
+        return;
+      }
+      onAuthStateChanged(auth, (user) => {
+        renderUserMenu(user);
+      });
+    }
+
+    wireUserMenu();
+    if (!(await resolveBareEditorUrl())) {
+      await new Promise(() => {});
+    }
+    refreshProjectPublicLink();
 
     
     const btnUpload = document.getElementById('btnUpload');

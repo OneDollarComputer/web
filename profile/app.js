@@ -415,7 +415,7 @@ async function renderProject(username, slug, pub, owner) {
   $("selectedMeta").textContent = `onedollarcomputer.com/${username}/${slug}`;
   $("codeEditor").value = (data.code && data.code.content) || "";
   $("btnOpenEditor").href = `/editor/?projectID=${encodeURIComponent(entry.id)}`;
-  $("btnOpenEditor").hidden = !owner;
+  $("btnOpenEditor").hidden = false;
   $("projectPane").dataset.projectId = entry.id;
   $("projectPane").dataset.username = username;
   $("projectPane").dataset.slug = slug;
