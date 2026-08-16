@@ -1,6 +1,7 @@
 /**
  * One Dollar Computer — show signed-in avatar in site chrome
- * Mark Sign in links with data-odc-signin; this swaps them for a photo → /username/
+ * Mark Sign in links with data-odc-signin (prefer inside .odc-auth-slot).
+ * CSS /js/auth-nav.css hides them until html.odc-auth-ready.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
@@ -15,47 +16,6 @@ const FIREBASE = {
   messagingSenderId: "1086912562723",
   appId: "1:1086912562723:web:d158f4ce5c08d1ceb95396"
 };
-
-const STYLE_ID = "odc-auth-nav-style";
-
-function ensureStyle() {
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement("style");
-  style.id = STYLE_ID;
-  style.textContent = `
-    a.odc-auth-avatar {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 999px;
-      overflow: hidden;
-      border: 1px solid rgba(72, 225, 167, 0.35);
-      background: #121a28;
-      text-decoration: none;
-      flex-shrink: 0;
-      vertical-align: middle;
-    }
-    a.odc-auth-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    a.odc-auth-avatar span {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #E8EEF8;
-      line-height: 1;
-    }
-    footer a.odc-auth-avatar {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 function makeAvatar(user, username) {
   const a = document.createElement("a");
@@ -77,34 +37,65 @@ function makeAvatar(user, username) {
   return a;
 }
 
+function authSlots() {
+  const header =
+    document.querySelector("header .odc-auth-slot") ||
+    document.querySelector("nav .odc-auth-slot");
+  const footer = document.querySelector("footer .odc-auth-slot");
+  const slots = [];
+  if (header) slots.push(header);
+  if (footer && footer !== header) slots.push(footer);
+  if (!slots.length) {
+    document.querySelectorAll(".odc-auth-slot").forEach((el) => slots.push(el));
+  }
+  // Fallback: wrap lone sign-in links once
+  if (!slots.length) {
+    document.querySelectorAll("[data-odc-signin]").forEach((el) => {
+      if (el.closest(".odc-auth-slot")) return;
+      const wrap = document.createElement("span");
+      wrap.className = "odc-auth-slot";
+      el.parentNode.insertBefore(wrap, el);
+      wrap.appendChild(el);
+      slots.push(wrap);
+    });
+  }
+  return slots;
+}
+
+function fillSlotSignedOut(slot) {
+  const existing = slot.querySelector("[data-odc-signin]");
+  slot.querySelectorAll("[data-odc-avatar]").forEach((el) => el.remove());
+  if (existing) {
+    existing.hidden = false;
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = "/project/";
+  a.dataset.odcSignin = "";
+  a.textContent = "Sign in";
+  a.className = "nav-link text-sm text-base-sub font-medium";
+  slot.appendChild(a);
+}
+
+function fillSlotSignedIn(slot, user, username) {
+  const signIn = slot.querySelector("[data-odc-signin]");
+  if (signIn) signIn.hidden = true;
+  slot.querySelectorAll("[data-odc-avatar]").forEach((el) => el.remove());
+  slot.appendChild(makeAvatar(user, username));
+}
+
 function applySignedOut() {
-  document.querySelectorAll("[data-odc-signin]").forEach((el) => {
-    el.hidden = false;
-  });
-  document.querySelectorAll("[data-odc-avatar]").forEach((el) => el.remove());
+  authSlots().forEach(fillSlotSignedOut);
+  markReady();
 }
 
 function applySignedIn(user, username) {
-  ensureStyle();
-  document.querySelectorAll("[data-odc-signin]").forEach((el) => {
-    el.hidden = true;
-  });
-  // One avatar in the header nav; footer keeps its own if marked separately.
-  const headerSignIn = document.querySelector("header [data-odc-signin], nav [data-odc-signin]");
-  const footerSignIn = document.querySelector("footer [data-odc-signin]");
-  const targets = [];
-  if (headerSignIn) targets.push(headerSignIn);
-  if (footerSignIn && footerSignIn !== headerSignIn) targets.push(footerSignIn);
-  if (!targets.length) {
-    document.querySelectorAll("[data-odc-signin]").forEach((el) => targets.push(el));
-  }
+  authSlots().forEach((slot) => fillSlotSignedIn(slot, user, username));
+  markReady();
+}
 
-  // Clear previous avatars first (avoid duplicates on auth refresh).
-  document.querySelectorAll("[data-odc-avatar]").forEach((el) => el.remove());
-
-  targets.forEach((el) => {
-    el.insertAdjacentElement("afterend", makeAvatar(user, username));
-  });
+function markReady() {
+  document.documentElement.classList.add("odc-auth-ready");
 }
 
 async function loadUsername(uid) {

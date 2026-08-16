@@ -1,0 +1,52 @@
+/* Hide Sign in until Firebase auth resolves — avoids flash of Sign in → avatar */
+html:not(.odc-auth-ready) [data-odc-signin],
+html:not(.odc-auth-ready) [data-odc-avatar] {
+  visibility: hidden !important;
+}
+
+.odc-auth-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  vertical-align: middle;
+}
+
+a.odc-auth-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(72, 225, 167, 0.35);
+  background: #121a28;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+a.odc-auth-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+a.odc-auth-avatar span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e8eef8;
+  line-height: 1;
+}
+
+footer a.odc-auth-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+footer .odc-auth-slot {
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+}
