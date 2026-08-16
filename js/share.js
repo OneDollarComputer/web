@@ -11,9 +11,9 @@
   var ROOT_ID = 'odc-share-root';
 
   var SHARE_ICON =
-    '<svg class="odc-share-ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
-    '<path fill="currentColor" d="M12 3.2a1 1 0 0 1 1 1v7.17l2.12-2.12a1 1 0 1 1 1.42 1.42l-3.83 3.83a1 1 0 0 1-1.42 0L7.46 10.67a1 1 0 0 1 1.42-1.42L11 11.37V4.2a1 1 0 0 1 1-1Z"/>' +
-    '<path fill="currentColor" d="M6.5 12.5a1 1 0 0 1 1 1V17a1.5 1.5 0 0 0 1.5 1.5h6A1.5 1.5 0 0 0 16.5 17v-3.5a1 1 0 1 1 2 0V17A3.5 3.5 0 0 1 15 20.5H9A3.5 3.5 0 0 1 5.5 17v-3.5a1 1 0 0 1 1-1Z"/>' +
+    '<svg class="odc-share-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">' +
+    '<path stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ' +
+    'd="M12 3v11m0-11 3.5 3.5M12 3 8.5 6.5M6 11v7.5A2.5 2.5 0 0 0 8.5 21h7a2.5 2.5 0 0 0 2.5-2.5V11"/>' +
     '</svg>';
 
   function cleanPath(pathname) {
