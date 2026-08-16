@@ -16,6 +16,7 @@
 - **Machine-readable entity:** https://onedollarcomputer.com/seo/entity.json
 - **Brand identity page:** https://onedollarcomputer.com/brand/
 - **About / mission:** https://onedollarcomputer.com/about/
+- **Sign in / your page:** https://onedollarcomputer.com/project/ (Google account → public URL `/{username}/`)
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
 

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Page not found — One Dollar Computer</title>
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <style>
+    body { margin:0; font-family: ui-sans-serif, system-ui, sans-serif; background:#07090F; color:#E8EEF8; }
+    main { max-width:36rem; margin:4rem auto; padding:0 1.25rem; }
+    a { color:#48E1A7; }
+  </style>
+  <script>
+    (function () {
+      var reserved = {
+        about:1, brand:1, project:1, projects:1, editor:1, docs:1, seo:1,
+        "3d":1, electronics:1, download:1, js:1, guides:1, api:1, physicalai:1,
+        profile:1, login:1, signup:1, users:1, user:1, u:1, admin:1, www:1,
+        static:1, assets:1, css:1, img:1, images:1, favicon:1, robots:1,
+        sitemap:1, llms:1, humans:1, ai:1, index:1, agents:1
+      };
+      var parts = location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+      var userOk = parts[0] && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parts[0]) && !reserved[parts[0]];
+      var slugOk = !parts[1] || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parts[1]);
+      if (parts.length >= 1 && parts.length <= 2 && userOk && slugOk) {
+        try { sessionStorage.setItem("odc-path", location.pathname + location.search + location.hash); }
+        catch (e) {}
+        location.replace("/profile/");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <main>
+    <h1>Page not found</h1>
+    <p>That URL is not a page on One Dollar Computer.</p>
+    <p><a href="/">Home</a> · <a href="/project/">Sign in</a></p>
+  </main>
+</body>
+</html>

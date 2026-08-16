@@ -1,6 +1,36 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "usernames": {
+      "$username": {
+        ".read": true,
+        ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.child('uid').val() === auth.uid && newData.child('uid').val() === auth.uid))"
+      }
+    },
+    "profiles": {
+      "$username": {
+        ".read": true,
+        ".write": "auth != null && root.child('usernames').child($username).child('uid').val() === auth.uid"
+      }
+    },
+    "projects": {
+      "$pid": {
+        ".read": "data.child('public').val() === true || (auth != null && data.child('ownerUid').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || data.child('ownerUid').val() === auth.uid)",
+        "code": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    },
+    "cache": {
+      ".read": true,
+      ".write": true
+    }
   }
 }

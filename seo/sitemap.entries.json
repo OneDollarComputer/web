@@ -17,6 +17,12 @@
       "lastmod": "2026-08-15"
     },
     {
+      "path": "/project/",
+      "changefreq": "weekly",
+      "priority": 0.7,
+      "lastmod": "2026-08-15"
+    },
+    {
       "path": "/about/",
       "changefreq": "monthly",
       "priority": 0.9,

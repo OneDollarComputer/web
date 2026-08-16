@@ -471,6 +471,64 @@ def config_payload() -> dict:
     return payload
 
 
+USERNAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+PROFILE_RESERVED = frozenset(
+    {
+        "about",
+        "brand",
+        "project",
+        "projects",
+        "editor",
+        "docs",
+        "seo",
+        "3d",
+        "electronics",
+        "download",
+        "js",
+        "guides",
+        "api",
+        "physicalai",
+        "profile",
+        "login",
+        "signup",
+        "users",
+        "user",
+        "u",
+        "admin",
+        "www",
+        "static",
+        "assets",
+        "css",
+        "img",
+        "images",
+        "favicon",
+        "robots",
+        "sitemap",
+        "llms",
+        "humans",
+        "ai",
+        "index",
+        "agents",
+        "well-known",
+    }
+)
+
+
+def is_user_profile_path(path: str) -> bool:
+    parts = [p for p in path.split("/") if p]
+    if not parts or len(parts) > 2:
+        return False
+    if any("." in p for p in parts):
+        return False
+    if parts[0] in PROFILE_RESERVED:
+        return False
+    if not USERNAME_RE.fullmatch(parts[0]):
+        return False
+    if len(parts) == 2 and not USERNAME_RE.fullmatch(parts[1]):
+        return False
+    return True
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(SITE_ROOT), **kwargs)
@@ -598,6 +656,8 @@ class Handler(SimpleHTTPRequestHandler):
             if path.startswith("/api/"):
                 self._send_json(404, {"error": "local API disabled in firebase mode"})
                 return
+            if is_user_profile_path(path):
+                self.path = "/profile/"
             super().do_GET()
             return
 
@@ -638,6 +698,11 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_response(302)
             self.send_header("Location", "/editor/?" + parsed.query)
             self.end_headers()
+            return
+
+        if is_user_profile_path(path):
+            self.path = "/profile/"
+            super().do_GET()
             return
 
         super().do_GET()
