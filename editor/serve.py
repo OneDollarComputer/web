@@ -354,11 +354,24 @@ def probe_hid_device() -> dict:
 
         try:
             tool = ensure_flashingpro()
+            # FlashingPro -i can hang forever on some macOS/HID states; never block /api/device.
             probe = subprocess.run(
                 [str(tool), "-C", "hid", "-i"],
                 capture_output=True,
                 text=True,
+                timeout=3,
             )
+        except subprocess.TimeoutExpired as e:
+            out = ((e.stdout or "") + (e.stderr or "")).strip() if hasattr(e, "stdout") else ""
+            payload = {
+                "present": False,
+                "error": "FlashingPro probe timed out",
+                "detail": (out or "")[-2000:],
+                "timeout": True,
+            }
+            _HID_CACHE["at"] = time.time()
+            _HID_CACHE["payload"] = payload
+            return dict(payload)
         except Exception as e:
             # Must not raise: ThreadingHTTPServer leaves an empty reply if do_GET throws,
             # and the editor treats that as "ODC disconnected".

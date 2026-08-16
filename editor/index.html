@@ -1523,24 +1523,67 @@
       hidReadyInitialized = true;
     }
 
-    async function probeHidDevice() {
-      const r = await fetch('/api/device', { cache: 'no-store' });
-      return r.json();
+    async function probeHostHidDevice() {
+      if (!IS_LOCAL) return null;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      try {
+        const r = await fetch('/api/device', { cache: 'no-store', signal: ctrl.signal });
+        return await r.json();
+      } catch (_) {
+        return null;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    /** True when an authorized ODC bootloader HID device is actually online. */
+    async function probeWebHidBootloader({ holdOpen = !IS_LOCAL } = {}) {
+      if (!('hid' in navigator)) return false;
+      if (flashDevice && flashDevice.opened) return true;
+      const known = await findKnownBoardDevice();
+      if (!known) return false;
+      if (known.opened) return true;
+      try {
+        await known.open();
+        if (!holdOpen && !flashInProgress) {
+          try { await known.close(); } catch (_) {}
+        } else {
+          flashDevice = known;
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function probeBootloaderPresent() {
+      if (await probeWebHidBootloader()) return true;
+      if (!IS_LOCAL) return false;
+      try {
+        const d = await probeHostHidDevice();
+        return !!(d && d.present);
+      } catch (_) {
+        return false;
+      }
     }
 
     function startHidPoll() {
-      if (!IS_LOCAL) return;
       const tick = async () => {
         if (flashInProgress) return;
         try {
-          const d = await probeHidDevice();
-          setHidReady(!!(d && d.present));
+          setHidReady(await probeBootloaderPresent());
         } catch (_) {
           setHidReady(false);
         }
       };
       tick();
       setInterval(tick, 1000);
+      if ('hid' in navigator) {
+        const onUsb = () => { tick(); };
+        navigator.hid.addEventListener('connect', onUsb);
+        navigator.hid.addEventListener('disconnect', onUsb);
+      }
     }
 
     async function waitForOdBootloader(waitSec = 90) {
@@ -1565,10 +1608,15 @@
         }
       };
 
+      const markReady = () => {
+        setHidReady(true);
+        if (flashGateStatus) flashGateStatus.textContent = '✅ Bootloader detected';
+        updateStatus('✅ ODC bootloader detected', 'connected');
+      };
+
       try {
-        const d0 = await probeHidDevice();
-        if (d0 && d0.present) {
-          setHidReady(true);
+        if (await probeBootloaderPresent()) {
+          markReady();
           return 'ready';
         }
       } catch (_) {}
@@ -1577,6 +1625,7 @@
       showFlashGate();
 
       let cancelled = false;
+      let pairedReady = false;
       const onCancel = () => { cancelled = true; };
 
       const onListHid = async () => {
@@ -1596,9 +1645,12 @@
                 flashGateStatus.textContent =
                   `Selected: ${name} (${pid}). Checking USB…`;
               }
-              // Prefer pairing into flashDevice when WebHID flash path is used later.
               try {
                 await setupOpenedDevice(d, { showIntro: false });
+                if (flashDevice && flashDevice.opened) {
+                  pairedReady = true;
+                  markReady();
+                }
               } catch (_) {}
             } else if (flashGateStatus) {
               flashGateStatus.textContent =
@@ -1617,14 +1669,14 @@
           }
         }
 
-        // Host probe (local FlashingPro) still decides bootloader readiness.
-        try {
-          const d = await probeHidDevice();
-          if (d && d.present) {
-            setHidReady(true);
-            if (flashGateStatus) flashGateStatus.textContent = '✅ Bootloader detected';
-          }
-        } catch (_) {}
+        if (!pairedReady) {
+          try {
+            if (await probeBootloaderPresent()) {
+              pairedReady = true;
+              markReady();
+            }
+          } catch (_) {}
+        }
       };
 
       if (btnFlashGateCancel) btnFlashGateCancel.addEventListener('click', onCancel);
@@ -1633,13 +1685,14 @@
       try {
         const deadline = Date.now() + waitSec * 1000;
         while (!cancelled && Date.now() < deadline) {
+          if (pairedReady || (flashDevice && flashDevice.opened)) {
+            markReady();
+            return 'ready';
+          }
           await new Promise((r) => setTimeout(r, 400));
           try {
-            const d = await probeHidDevice();
-            if (d && d.present) {
-              setHidReady(true);
-              if (flashGateStatus) flashGateStatus.textContent = '✅ Bootloader detected';
-              updateStatus('✅ ODC bootloader detected', 'connected');
+            if (await probeBootloaderPresent()) {
+              markReady();
               return 'ready';
             }
           } catch (_) {}
@@ -2186,11 +2239,8 @@
           try {
             let present = hidReady;
             if (!present) {
-              try {
-                const d0 = await probeHidDevice();
-                present = !!(d0 && d0.present);
-                setHidReady(present);
-              } catch (_) {}
+              present = await probeBootloaderPresent();
+              setHidReady(present);
             }
 
             if (!present) {
@@ -2205,6 +2255,13 @@
                 );
               }
             }
+
+            // Release WebHID so FlashingPro can open HID exclusively.
+            try {
+              if (flashDevice && flashDevice.opened) await flashDevice.close();
+            } catch (_) {}
+            flashDevice = null;
+            detachInputReportListener();
 
             updateStatus('✅ ODC bootloader detected — flashing…', 'connected');
 
@@ -2240,7 +2297,19 @@
           throw new Error('This browser does not support WebHID. Use a recent Chrome/Edge.');
         }
 
-        
+        // Wait for bootloader on USB (WebHID) before opening the picker only when needed.
+        if (!(flashDevice && flashDevice.opened) && !(await probeBootloaderPresent())) {
+          const wait = await waitForOdBootloader(90);
+          if (wait === 'cancelled') {
+            updateStatus('Upload cancelled — press Upload again when ready', '');
+            return;
+          }
+          if (wait !== 'ready') {
+            throw new Error(
+              'Bootloader not detected. Press the ODC button several times, then click Upload again.'
+            );
+          }
+        }
 
         
         const byteCharacters = atob(binaryBase64);
