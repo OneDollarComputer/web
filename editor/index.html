@@ -159,21 +159,35 @@
     .user-menu-btn {
       display: flex;
       align-items: center;
-      gap: 8px;
-      max-width: 11rem;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: #21262d;
+      border: 1px solid #30363d;
     }
 
-    .user-menu-btn img {
-      width: 22px;
-      height: 22px;
+    .user-menu-btn:hover {
+      background: #30363d;
+      border-color: #484f58;
+    }
+
+    .user-menu-btn img,
+    .user-menu-btn .user-menu-fallback {
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       object-fit: cover;
     }
 
-    .user-menu-btn span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .user-menu-btn .user-menu-fallback {
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #e6edf3;
+      background: #30363d;
     }
 
     .user-menu-drop {
@@ -732,9 +746,9 @@
       <button type="button" class="secondary" id="btnShare" data-odc-share>Share</button>
       <div class="user-menu" id="userMenu">
         <a class="user-signin" id="btnEditorSignIn" href="/project/">Sign in</a>
-        <button type="button" class="secondary user-menu-btn" id="btnUserMenu" hidden aria-label="Your page">
+        <button type="button" class="user-menu-btn" id="btnUserMenu" hidden aria-label="Account menu">
           <img id="userMenuPhoto" alt="" hidden />
-          <span id="userMenuLabel"></span>
+          <span id="userMenuFallback" class="user-menu-fallback" hidden></span>
         </button>
         <div class="user-menu-drop" id="userMenuDrop" hidden>
           <a id="userMenuPage" href="/project/">Your page</a>
@@ -1178,7 +1192,7 @@
       const menuBtn = document.getElementById('btnUserMenu');
       const drop = document.getElementById('userMenuDrop');
       const photo = document.getElementById('userMenuPhoto');
-      const label = document.getElementById('userMenuLabel');
+      const fallback = document.getElementById('userMenuFallback');
       const page = document.getElementById('userMenuPage');
       const list = document.getElementById('userMenuProjects');
       if (!signIn || !menuBtn || !drop) return;
@@ -1216,15 +1230,18 @@
 
       signIn.hidden = true;
       menuBtn.hidden = false;
-      if (photo) {
-        if (user.photoURL) {
-          photo.src = user.photoURL;
-          photo.hidden = false;
-        } else {
-          photo.hidden = true;
+      menuBtn.setAttribute('aria-label', `/${username}`);
+      if (user.photoURL && photo) {
+        photo.src = user.photoURL;
+        photo.hidden = false;
+        if (fallback) fallback.hidden = true;
+      } else {
+        if (photo) photo.hidden = true;
+        if (fallback) {
+          fallback.hidden = false;
+          fallback.textContent = (username[0] || '?').toUpperCase();
         }
       }
-      if (label) label.textContent = `/${username}`;
       if (page) {
         page.href = `/${encodeURIComponent(username)}/`;
         page.textContent = `/${username}/`;
