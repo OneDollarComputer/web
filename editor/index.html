@@ -142,6 +142,11 @@
       position: relative;
     }
 
+    /* Author display:* rules override the UA [hidden] stylesheet — force hide. */
+    .user-menu [hidden] {
+      display: none !important;
+    }
+
     .user-signin {
       background: #30363d;
       color: #fff;
