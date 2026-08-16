@@ -38,28 +38,14 @@ function makeAvatar(user, username) {
 }
 
 function authSlots() {
+  // Header only — never put the avatar in the footer.
   const header =
     document.querySelector("header .odc-auth-slot") ||
+    document.querySelector("nav.top .odc-auth-slot") ||
     document.querySelector("nav .odc-auth-slot");
-  const footer = document.querySelector("footer .odc-auth-slot");
-  const slots = [];
-  if (header) slots.push(header);
-  if (footer && footer !== header) slots.push(footer);
-  if (!slots.length) {
-    document.querySelectorAll(".odc-auth-slot").forEach((el) => slots.push(el));
-  }
-  // Fallback: wrap lone sign-in links once
-  if (!slots.length) {
-    document.querySelectorAll("[data-odc-signin]").forEach((el) => {
-      if (el.closest(".odc-auth-slot")) return;
-      const wrap = document.createElement("span");
-      wrap.className = "odc-auth-slot";
-      el.parentNode.insertBefore(wrap, el);
-      wrap.appendChild(el);
-      slots.push(wrap);
-    });
-  }
-  return slots;
+  if (header) return [header];
+  const first = document.querySelector(".odc-auth-slot");
+  return first ? [first] : [];
 }
 
 function fillSlotSignedOut(slot) {
