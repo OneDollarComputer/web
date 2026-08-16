@@ -516,7 +516,6 @@ async function renderProject(username, slug, pub, owner) {
   $("ownerBar").hidden = !owner;
   $("visitorNote").hidden = owner;
   $("visitorNote").textContent = "Public project. Start editing to copy it to your page.";
-  $("btnSave").hidden = !owner;
   $("codeEditor").readOnly = false;
 
   const entry = pub && pub.projects && pub.projects[slug];
@@ -548,12 +547,16 @@ async function renderProject(username, slug, pub, owner) {
   }
   $("selectedTitle").textContent = name;
   $("selectedMeta").textContent = `onedollarcomputer.com/${username}/${slug}`;
-  $("codeEditor").value = (data.code && data.code.content) || "";
+  const code = (data.code && data.code.content) || "";
+  $("codeEditor").value = code;
+  lastSavedCode = code;
   $("btnOpenEditor").href = `/editor/?projectID=${encodeURIComponent(entry.id)}`;
   $("btnOpenEditor").hidden = false;
   $("projectPane").dataset.projectId = entry.id;
   $("projectPane").dataset.username = username;
   $("projectPane").dataset.slug = slug;
+  if (owner) setStatus("Edits save automatically.");
+  else setStatus("");
 }
 
 function needsUsername() {
@@ -650,25 +653,52 @@ $("btnClaim").addEventListener("click", async () => {
   }
 });
 
-$("btnSave").addEventListener("click", async () => {
+let saveTimer = null;
+let lastSavedCode = "";
+let savingCode = false;
+const SAVE_DEBOUNCE_MS = 800;
+
+async function saveProjectCode() {
   const pane = $("projectPane");
+  if (!pane || pane.hidden) return;
   const id = pane.dataset.projectId;
   const username = pane.dataset.username;
   const slug = pane.dataset.slug;
-  if (!auth.currentUser || !id) return;
-  if (!(await handleEditAttempt())) return;
+  const content = $("codeEditor").value;
+  if (!auth.currentUser || !id || !isOwner(username)) return;
+  if (content === lastSavedCode || savingCode) return;
+  savingCode = true;
   setStatus("Saving…");
   try {
     const updatedAt = nowIso();
     await update(ref(db, `projects/${id}`), {
       updatedAt,
-      code: { content: $("codeEditor").value, language: "rust" }
+      code: { content, language: "rust" }
     });
     await update(ref(db, `profiles/${username}/projects/${slug}`), { updatedAt });
+    lastSavedCode = content;
     setStatus("Saved.");
   } catch (e) {
     setStatus("Save failed: " + ((e && e.message) || "unknown"));
+  } finally {
+    savingCode = false;
   }
+}
+
+function scheduleAutosave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    saveProjectCode().catch(() => {});
+  }, SAVE_DEBOUNCE_MS);
+}
+
+$("codeEditor").addEventListener("input", () => {
+  const pane = $("projectPane");
+  if (!pane || pane.hidden) return;
+  if (!isOwner(pane.dataset.username)) return;
+  setStatus("Saving…");
+  scheduleAutosave();
 });
 
 $("btnNew").addEventListener("click", async () => {
