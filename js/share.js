@@ -1,6 +1,7 @@
 /**
  * One Dollar Computer — Share (QR + copy)
- * Short link: https://odc.rs + path · QR opens live onedollarcomputer.com until DNS is ready
+ * Triggers: any [data-odc-share] in the page nav / chrome
+ * Short link: https://odc.rs + path · QR opens onedollarcomputer.com until odc.rs DNS is ready
  */
 (function () {
   'use strict';
@@ -9,12 +10,6 @@
   var LIVE_ORIGIN = 'https://onedollarcomputer.com';
   var STYLE_ID = 'odc-share-style';
   var ROOT_ID = 'odc-share-root';
-
-  var SHARE_ICON =
-    '<svg class="odc-share-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">' +
-    '<path stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ' +
-    'd="M12 3v11m0-11 3.5 3.5M12 3 8.5 6.5M6 11v7.5A2.5 2.5 0 0 0 8.5 21h7a2.5 2.5 0 0 0 2.5-2.5V11"/>' +
-    '</svg>';
 
   function cleanPath(pathname) {
     var path = String(pathname || '/').replace(/\/+$/, '') || '/';
@@ -49,35 +44,9 @@
       '#' + ROOT_ID + '{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;',
       '  -webkit-font-smoothing:antialiased;}',
 
-      /* —— FAB —— */
-      '#odc-share-btn{position:fixed;right:max(0.85rem,env(safe-area-inset-right));',
-      '  top:50%;transform:translateY(-50%);z-index:1200;isolation:isolate;',
-      '  display:inline-flex;align-items:center;gap:0.55rem;',
-      '  margin:0;padding:0.72rem 1.05rem 0.72rem 0.85rem;border:1px solid rgba(72,225,167,0.35);',
-      '  border-radius:999px;cursor:pointer;color:#E8EEF8;',
-      '  background:linear-gradient(160deg,rgba(18,28,42,0.92),rgba(8,12,20,0.88));',
-      '  backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);',
-      '  box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 10px 28px rgba(0,0,0,0.45),',
-      '    0 0 24px rgba(72,225,167,0.12);',
-      '  font-size:0.78rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;',
-      '  transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s ease,border-color .22s ease,',
-      '    background .22s ease,color .22s ease;}',
-      '#odc-share-btn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;z-index:-1;',
-      '  background:conic-gradient(from 180deg at 50% 50%,transparent 0deg,#48E1A7 55deg,transparent 120deg,',
-      '    transparent 240deg,#48E1A7 300deg,transparent 360deg);opacity:0.35;filter:blur(10px);',
-      '  animation:odc-share-aura 5.5s ease-in-out infinite;}',
-      '#odc-share-btn .odc-share-ico{flex-shrink:0;opacity:0.95;transition:transform .22s cubic-bezier(.22,1,.36,1);}',
-      '#odc-share-btn:hover{transform:translateY(-50%) translateX(-3px) scale(1.04);',
-      '  border-color:rgba(72,225,167,0.7);color:#fff;',
-      '  box-shadow:0 0 0 1px rgba(255,255,255,0.06) inset,0 14px 36px rgba(0,0,0,0.5),',
-      '    0 0 36px rgba(72,225,167,0.28);}',
-      '#odc-share-btn:hover .odc-share-ico{transform:translateY(-1px);}',
-      '#odc-share-btn:active{transform:translateY(-50%) scale(0.97);}',
-      '#odc-share-btn:focus-visible{outline:2px solid #48E1A7;outline-offset:3px;}',
+      'button[data-odc-share],a[data-odc-share]{cursor:pointer;}',
+      'button[data-odc-share]{appearance:none;background:transparent;border:0;padding:0;font:inherit;color:inherit;}',
 
-      '@keyframes odc-share-aura{0%,100%{opacity:.28;transform:scale(1);}50%{opacity:.55;transform:scale(1.06);}}',
-
-      /* —— Overlay —— */
       '#odc-share-overlay{display:flex;position:fixed;inset:0;z-index:1300;padding:1.25rem;',
       '  align-items:center;justify-content:center;',
       '  background:rgba(2,6,12,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);',
@@ -85,7 +54,6 @@
       '  transition:opacity .28s ease,visibility .28s;}',
       '#odc-share-overlay.open{opacity:1;visibility:visible;pointer-events:auto;}',
 
-      /* —— Card —— */
       '#odc-share-card{position:relative;width:min(21.5rem,100%);padding:1.6rem 1.45rem 1.35rem;',
       '  border-radius:1.35rem;color:#E8EEF8;text-align:center;',
       '  background:linear-gradient(165deg,#121a28 0%,#0a1018 55%,#070b12 100%);',
@@ -120,7 +88,7 @@
       '#odc-share-link:hover{background:rgba(72,225,167,0.14);border-color:rgba(72,225,167,0.4);}',
 
       '#odc-share-actions{display:flex;flex-direction:column;gap:0.55rem;}',
-      '#odc-share-copy,#odc-share-native,#odc-share-close{appearance:none;border:0;cursor:pointer;',
+      '#odc-share-copy,#odc-share-native{appearance:none;border:0;cursor:pointer;',
       '  font:inherit;font-weight:600;border-radius:0.85rem;padding:0.78rem 1rem;',
       '  transition:transform .15s ease,background .15s ease,opacity .15s ease;}',
       '#odc-share-copy{background:linear-gradient(180deg,#5AE9B4,#48E1A7);color:#04140e;',
@@ -137,22 +105,13 @@
       '  transition:background .15s ease,color .15s ease;}',
       '#odc-share-x:hover{background:rgba(255,255,255,0.1);color:#fff;}',
 
-      '@media (max-width:520px){',
-      '  #odc-share-btn{top:auto;bottom:max(1.25rem,env(safe-area-inset-bottom));transform:none;',
-      '    right:max(0.85rem,env(safe-area-inset-right));}',
-      '  #odc-share-btn:hover{transform:translateY(-2px) scale(1.03);}',
-      '  #odc-share-btn:active{transform:scale(0.97);}',
-      '  body.odc-has-ai-help #odc-share-btn{bottom:max(4.75rem,calc(env(safe-area-inset-bottom) + 3.75rem));}',
-      '}',
-
       '@media (prefers-reduced-motion:reduce){',
-      '  #odc-share-btn,#odc-share-btn::before,#odc-share-overlay,#odc-share-card{animation:none!important;',
-      '    transition:none!important;}',
+      '  #odc-share-overlay,#odc-share-card{transition:none!important;}',
       '}'
     ].join('');
   }
 
-  function ensureUi() {
+  function ensureModal() {
     if (document.getElementById(ROOT_ID)) return;
 
     if (!document.getElementById(STYLE_ID)) {
@@ -162,21 +121,13 @@
       document.head.appendChild(style);
     }
 
-    if (document.getElementById('btnAIHelp')) {
-      document.body.classList.add('odc-has-ai-help');
-    }
-
     var root = document.createElement('div');
     root.id = ROOT_ID;
     root.innerHTML =
-      '<button type="button" id="odc-share-btn" aria-haspopup="dialog" aria-controls="odc-share-overlay">' +
-      SHARE_ICON +
-      '<span>Share</span>' +
-      '</button>' +
       '<div id="odc-share-overlay" role="dialog" aria-modal="true" aria-labelledby="odc-share-title" hidden>' +
       '  <div id="odc-share-card">' +
       '    <button type="button" id="odc-share-x" aria-label="Close">×</button>' +
-      '    <p class="odc-share-kicker" id="odc-share-kicker">One Dollar Computer</p>' +
+      '    <p id="odc-share-kicker">One Dollar Computer</p>' +
       '    <h2 id="odc-share-title">Share this page</h2>' +
       '    <p id="odc-share-lede">Scan with a phone, or copy the short link</p>' +
       '    <div id="odc-share-qr-wrap"><div id="odc-share-qr" aria-hidden="true"></div></div>' +
@@ -193,7 +144,6 @@
     var nativeBtn = document.getElementById('odc-share-native');
     if (navigator.share) nativeBtn.hidden = false;
 
-    document.getElementById('odc-share-btn').addEventListener('click', openShare);
     document.getElementById('odc-share-x').addEventListener('click', closeShare);
     document.getElementById('odc-share-copy').addEventListener('click', copyLink);
     nativeBtn.addEventListener('click', nativeShare);
@@ -205,7 +155,19 @@
     });
   }
 
+  function bindTriggers() {
+    document.querySelectorAll('[data-odc-share]').forEach(function (el) {
+      if (el.getAttribute('data-odc-share-bound') === '1') return;
+      el.setAttribute('data-odc-share-bound', '1');
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        openShare();
+      });
+    });
+  }
+
   function openShare() {
+    ensureModal();
     var url = shareUrl();
     var target = qrUrl();
     var overlay = document.getElementById('odc-share-overlay');
@@ -214,11 +176,10 @@
     var title = document.getElementById('odc-share-title');
     var path = publicPath();
 
-    if (path !== '/' && path.split('/').filter(Boolean).length >= 1) {
-      title.textContent = 'Share this project';
-    } else {
-      title.textContent = 'Share this page';
-    }
+    title.textContent =
+      path !== '/' && path.split('/').filter(Boolean).length >= 1
+        ? 'Share this project'
+        : 'Share this page';
 
     link.href = target;
     link.textContent = url.replace(/^https:\/\//, '');
@@ -278,13 +239,16 @@
         url: url
       })
       .catch(function () {
-        /* user cancelled */
+        /* cancelled */
       });
   }
 
   function boot() {
-    ensureUi();
+    ensureModal();
+    bindTriggers();
   }
+
+  window.odcOpenShare = openShare;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
