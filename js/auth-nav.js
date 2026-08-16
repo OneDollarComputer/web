@@ -88,11 +88,21 @@ function applySignedIn(user, username) {
   ensureStyle();
   document.querySelectorAll("[data-odc-signin]").forEach((el) => {
     el.hidden = true;
-    const next = el.nextElementSibling;
-    if (next && next.dataset && next.dataset.odcAvatar === "1") {
-      next.replaceWith(makeAvatar(user, username));
-      return;
-    }
+  });
+  // One avatar in the header nav; footer keeps its own if marked separately.
+  const headerSignIn = document.querySelector("header [data-odc-signin], nav [data-odc-signin]");
+  const footerSignIn = document.querySelector("footer [data-odc-signin]");
+  const targets = [];
+  if (headerSignIn) targets.push(headerSignIn);
+  if (footerSignIn && footerSignIn !== headerSignIn) targets.push(footerSignIn);
+  if (!targets.length) {
+    document.querySelectorAll("[data-odc-signin]").forEach((el) => targets.push(el));
+  }
+
+  // Clear previous avatars first (avoid duplicates on auth refresh).
+  document.querySelectorAll("[data-odc-avatar]").forEach((el) => el.remove());
+
+  targets.forEach((el) => {
     el.insertAdjacentElement("afterend", makeAvatar(user, username));
   });
 }
