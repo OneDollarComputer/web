@@ -296,14 +296,20 @@ function renderLogin() {
   $("pageLede").textContent = "Continue with Google. Pick a short name, then your projects live at onedollarcomputer.com/your-name/";
 }
 
-function renderClaim(user) {
+function renderClaim(user, preferredName) {
   hideAll();
   $("viewClaim").hidden = false;
   document.title = "Choose your name — One Dollar Computer";
   setCanonical("/project/");
   const input = $("usernameInput");
-  if (input && !input.value) {
-    input.value = suggestUsername(user.displayName, user.email);
+  if (input) {
+    const hint = preferredName && isValidUsername(preferredName)
+      ? preferredName
+      : "";
+    if (hint) input.value = hint;
+    else if (!input.value) {
+      input.value = suggestUsername(user.displayName, user.email);
+    }
   }
   updateUsernamePreview();
 }
@@ -415,6 +421,10 @@ async function renderProject(username, slug, pub, owner) {
   $("projectPane").dataset.slug = slug;
 }
 
+function needsUsername() {
+  return !!(me && (!profile || !profile.username));
+}
+
 async function render() {
   view = parseRoute();
   showError("");
@@ -426,7 +436,7 @@ async function render() {
       go(`/${profile.username}/`, true);
       return;
     }
-    if (me && (!profile || !profile.username)) {
+    if (needsUsername()) {
       renderClaim(me);
       return;
     }
@@ -437,18 +447,26 @@ async function render() {
   if (view.kind === "missing") {
     hideAll();
     $("viewMissing").hidden = false;
+    $("missingTitle").textContent = "Not found";
     $("missingText").textContent = "This page does not exist.";
     document.title = "Not found — One Dollar Computer";
     return;
   }
 
   const pub = await loadPublicProfile(view.username);
+
+  if (needsUsername() && !pub) {
+    renderClaim(me, view.username);
+    return;
+  }
+
   if (!pub) {
     hideAll();
     $("viewMissing").hidden = false;
-    $("missingText").textContent = `No user named “${view.username}” yet. Sign in with Google to claim a name.`;
+    $("missingTitle").textContent = "This name is free";
+    $("missingText").textContent = `No user named “${view.username}” yet. Sign in with Google to claim this name.`;
     document.title = "User not found — One Dollar Computer";
-    $("missingLogin").hidden = false;
+    $("missingLogin").hidden = !!me;
     return;
   }
   $("missingLogin").hidden = true;
@@ -558,10 +576,28 @@ window.addEventListener("popstate", () => {
   render().catch((e) => showError((e && e.message) || "Could not load page."));
 });
 
+function syncNav() {
+  const signIn = $("navSignIn");
+  if (signIn) signIn.hidden = !!me;
+  $("btnSignOut").hidden = !me;
+  const mine = $("navMine");
+  if (!mine) return;
+  if (profile && profile.username) {
+    mine.hidden = false;
+    mine.href = `/${profile.username}/`;
+    mine.textContent = `/${profile.username}/`;
+  } else if (me) {
+    mine.hidden = false;
+    mine.href = "/project/";
+    mine.textContent = "Create your page";
+  } else {
+    mine.hidden = true;
+  }
+}
+
 onAuthStateChanged(auth, async (user) => {
   me = user;
   profile = null;
-  $("btnSignOut").hidden = !user;
   if (user) {
     try {
       profile = await loadMyUser(user);
@@ -569,19 +605,17 @@ onAuthStateChanged(auth, async (user) => {
       showError((e && e.message) || "Could not load your account.");
     }
   }
-  const mine = $("navMine");
-  if (mine) {
-    if (profile && profile.username) {
-      mine.hidden = false;
-      mine.href = `/${profile.username}/`;
-      mine.textContent = `/${profile.username}/`;
-    } else {
-      mine.hidden = true;
-    }
-  }
+  syncNav();
   try {
     await render();
   } catch (e) {
     showError((e && e.message) || "Could not load this page.");
   }
 });
+
+{
+  const route = parseRoute();
+  if (route.kind === "user" || route.kind === "project") {
+    render().catch((e) => showError((e && e.message) || "Could not load this page."));
+  }
+}

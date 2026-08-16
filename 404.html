@@ -1,40 +1,134 @@
 <!doctype html>
+<!-- GitHub Pages SPA fallback for /{user} and /{user}/{slug}. Keep in sync with profile/index.html -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Page not found — One Dollar Computer</title>
+  <title>Projects — One Dollar Computer</title>
+  <meta name="description" content="Sign in with Google and publish your One Dollar Computer projects at onedollarcomputer.com/your-name/" />
+  <link rel="canonical" href="https://onedollarcomputer.com/project/" />
+  <meta name="robots" content="index, follow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Projects — One Dollar Computer" />
+  <meta property="og:description" content="Google sign-in. Your page: onedollarcomputer.com/your-name/" />
+  <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
+  <meta property="og:site_name" content="One Dollar Computer" />
+  <meta name="theme-color" content="#07090F" />
+  <script defer src="/js/analytics.js"></script>
   <style>
-    body { margin:0; font-family: ui-sans-serif, system-ui, sans-serif; background:#07090F; color:#E8EEF8; }
-    main { max-width:36rem; margin:4rem auto; padding:0 1.25rem; }
-    a { color:#48E1A7; }
+    :root { --bg:#07090F; --text:#E8EEF8; --sub:#A9B4C7; --accent:#48E1A7; --line:#1D2843; --card:#0D1220; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); line-height:1.55; }
+    nav.top { padding:1rem 1.25rem; border-bottom:1px solid var(--line); display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+    nav.top a { color:var(--accent); text-decoration:none; }
+    nav.top .brand { display:flex; align-items:center; gap:0.75rem; color:var(--text); font-weight:600; text-decoration:none; }
+    main { max-width: 56rem; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+    h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); line-height:1.2; margin:0 0 0.5rem; }
+    .lede, .meta { color:var(--sub); }
+    .lede { margin:0 0 1.5rem; }
+    .card { border:1px solid var(--line); border-radius:12px; padding:1.25rem; background:var(--card); }
+    button, .btn, input { font: inherit; }
+    button, .btn { cursor: pointer; border:0; border-radius:8px; padding:0.65rem 1rem; }
+    #btnGoogle, #btnGoogle2 { background:#fff; color:#1f1f1f; display:inline-flex; align-items:center; gap:0.6rem; font-weight:600; }
+    .ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+    .primary { background:var(--accent); color:#04140e; font-weight:600; }
+    .error { color:#ff8a8a; margin:0.75rem 0 0; }
+    .user { display:flex; align-items:center; gap:0.85rem; margin-bottom:1.25rem; }
+    .user img, #profilePhoto { width:44px; height:44px; border-radius:50%; object-fit:cover; }
+    .user small, #profileHandle { color:var(--sub); display:block; }
+    #profileHandle a { color:var(--accent); text-decoration:none; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap:0.75rem; }
+    .proj-card { display:flex; flex-direction:column; gap:0.25rem; border:1px solid var(--line); border-radius:10px; padding:0.9rem; color:var(--text); text-decoration:none; background:transparent; }
+    .proj-card:hover { border-color:var(--accent); }
+    .proj-card span { color:var(--sub); font-size:0.82rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    textarea { width:100%; min-height:16rem; background:#07090F; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:0.75rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.85rem; }
+    .row { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; align-items:center; }
+    a.btn { text-decoration:none; display:inline-flex; align-items:center; }
+    #status { color:var(--sub); font-size:0.9rem; min-height:1.2em; }
+    h2 { font-size:1.05rem; margin:0 0 0.35rem; }
+    label { display:block; font-weight:600; margin:0 0 0.35rem; }
+    input[type=text] { width:100%; max-width:22rem; background:#07090F; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:0.65rem 0.75rem; }
+    .preview { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--accent); margin:0.65rem 0 1rem; }
+    .owner-tools { margin-top:1rem; padding-top:1rem; border-top:1px solid var(--line); }
   </style>
-  <script>
-    (function () {
-      var reserved = {
-        about:1, brand:1, project:1, projects:1, editor:1, docs:1, seo:1,
-        "3d":1, electronics:1, download:1, js:1, guides:1, api:1, physicalai:1,
-        profile:1, login:1, signup:1, users:1, user:1, u:1, admin:1, www:1,
-        static:1, assets:1, css:1, img:1, images:1, favicon:1, robots:1,
-        sitemap:1, llms:1, humans:1, ai:1, index:1, agents:1
-      };
-      var parts = location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
-      var userOk = parts[0] && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parts[0]) && !reserved[parts[0]];
-      var slugOk = !parts[1] || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parts[1]);
-      if (parts.length >= 1 && parts.length <= 2 && userOk && slugOk) {
-        try { sessionStorage.setItem("odc-path", location.pathname + location.search + location.hash); }
-        catch (e) {}
-        location.replace("/profile/");
-      }
-    })();
-  </script>
 </head>
 <body>
+  <nav class="top">
+    <a class="brand" href="/">
+      <img src="/odc_logo_black.svg" width="28" height="28" alt="" />
+      One Dollar Computer
+    </a>
+    <a href="/about/">About</a>
+    <a href="/brand/">Brand</a>
+    <a id="navSignIn" href="/project/">Sign in</a>
+    <a id="navMine" hidden href="/project/">Your page</a>
+    <button type="button" class="ghost" id="btnSignOut" hidden style="margin-left:auto">Sign out</button>
+  </nav>
   <main>
-    <h1>Page not found</h1>
-    <p>That URL is not a page on One Dollar Computer.</p>
-    <p><a href="/">Home</a> · <a href="/project/">Sign in</a></p>
+    <p id="authError" class="error" hidden></p>
+
+    <section id="viewLogin" class="card" hidden>
+      <h1>Your computer, your page</h1>
+      <p class="lede" id="pageLede">Sign in with Google. Choose a name. Your projects appear at onedollarcomputer.com/your-name/</p>
+      <button type="button" id="btnGoogle">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.3 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.7-6.4 7.1l.1.1 6.3 5.2C38.4 38.3 44 32 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        Continue with Google
+      </button>
+    </section>
+
+    <section id="viewClaim" class="card" hidden>
+      <h1>Choose your name</h1>
+      <p class="lede">This becomes your public URL. Example: <strong>cloud</strong> → onedollarcomputer.com/cloud/</p>
+      <label for="usernameInput">Username</label>
+      <input id="usernameInput" type="text" maxlength="24" autocomplete="username" spellcheck="false" />
+      <p class="preview" id="usernamePreview"></p>
+      <button type="button" class="primary" id="btnClaim">Create my page</button>
+    </section>
+
+    <section id="viewPage" hidden>
+      <div class="user">
+        <img id="profilePhoto" alt="" hidden />
+        <div>
+          <strong id="profileName"></strong>
+          <small id="profileHandle"></small>
+        </div>
+      </div>
+      <p id="visitorNote" class="meta" hidden>Public projects on this computer.</p>
+      <div id="listPane">
+        <h1>Projects</h1>
+        <div id="projectGrid" class="grid"></div>
+        <div id="ownerBar" class="owner-tools card" hidden>
+          <h2>New project</h2>
+          <p class="meta">Name becomes the URL, like LED → /led or Boat controlled by radio → /boat-controlled-by-radio</p>
+          <div class="row">
+            <input id="newProjectName" type="text" placeholder="Project name" maxlength="80" />
+            <button type="button" class="primary" id="btnNew">Add project</button>
+          </div>
+        </div>
+      </div>
+      <div id="projectPane" class="card" hidden>
+        <h1 id="selectedTitle">Project</h1>
+        <p class="meta" id="selectedMeta"></p>
+        <textarea id="codeEditor" spellcheck="false" aria-label="Firmware code"></textarea>
+        <div class="row">
+          <button type="button" class="primary" id="btnSave">Save code</button>
+          <a class="btn ghost" id="btnOpenEditor" href="/editor/">Open editor</a>
+        </div>
+        <p id="status"></p>
+      </div>
+    </section>
+
+    <section id="viewMissing" class="card" hidden>
+      <h1 id="missingTitle">Not found</h1>
+      <p class="lede" id="missingText">This page does not exist.</p>
+      <p id="missingLogin" hidden>
+        <button type="button" id="btnGoogle2">Continue with Google</button>
+      </p>
+      <p><a href="/project/">Sign in</a> · <a href="/">Home</a></p>
+    </section>
   </main>
+  <script type="module" src="/profile/app.js"></script>
 </body>
 </html>
