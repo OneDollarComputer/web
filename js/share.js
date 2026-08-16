@@ -87,8 +87,8 @@
       '  transition:background .15s ease,border-color .15s ease;}',
       '#odc-share-link:hover{background:rgba(72,225,167,0.14);border-color:rgba(72,225,167,0.4);}',
 
-      '#odc-share-actions{display:flex;flex-direction:column;gap:0.55rem;}',
-      '#odc-share-copy,#odc-share-native{appearance:none;border:0;cursor:pointer;',
+      '#odc-share-actions{display:flex;flex-direction:row;gap:0.55rem;}',
+      '#odc-share-copy,#odc-share-native{appearance:none;border:0;cursor:pointer;flex:1;',
       '  font:inherit;font-weight:600;border-radius:0.85rem;padding:0.78rem 1rem;',
       '  transition:transform .15s ease,background .15s ease,opacity .15s ease;}',
       '#odc-share-copy{background:linear-gradient(180deg,#5AE9B4,#48E1A7);color:#04140e;',
