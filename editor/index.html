@@ -1523,6 +1523,17 @@
       hidReadyInitialized = true;
     }
 
+    // USB HID identity (must exist before probe/pair helpers below).
+    const VENDOR_ID = 0x1209;
+    const PID_B003FUN = 0xB003;
+    const PID_MIN = 0xB000, PID_MAX = 0xB00F;
+    function isB003Fun(pid) { return pid === PID_B003FUN; }
+    function isExpectedPid(pid) { return (pid >= PID_MIN && pid <= PID_MAX) || isB003Fun(pid); }
+    function isBoardDevice(hidDevice) {
+      if (!hidDevice) return false;
+      return hidDevice.vendorId === VENDOR_ID && (isExpectedPid(hidDevice.productId) || isB003Fun(hidDevice.productId));
+    }
+
     async function probeHostHidDevice() {
       if (!IS_LOCAL) return null;
       const ctrl = new AbortController();
@@ -1537,6 +1548,16 @@
       }
     }
 
+    function withTimeout(promise, ms) {
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('timeout')), ms);
+        promise.then(
+          (v) => { clearTimeout(t); resolve(v); },
+          (e) => { clearTimeout(t); reject(e); }
+        );
+      });
+    }
+
     /** True when an authorized ODC bootloader HID device is actually online. */
     async function probeWebHidBootloader({ holdOpen = !IS_LOCAL } = {}) {
       if (!('hid' in navigator)) return false;
@@ -1545,7 +1566,7 @@
       if (!known) return false;
       if (known.opened) return true;
       try {
-        await known.open();
+        await withTimeout(known.open(), 1500);
         if (!holdOpen && !flashInProgress) {
           try { await known.close(); } catch (_) {}
         } else {
@@ -1558,14 +1579,52 @@
     }
 
     async function probeBootloaderPresent() {
+      // Local: prefer FlashingPro host probe (no WebHID permission needed).
+      if (IS_LOCAL) {
+        try {
+          const d = await probeHostHidDevice();
+          if (d && d.present) return true;
+        } catch (_) {}
+      }
       if (await probeWebHidBootloader()) return true;
-      if (!IS_LOCAL) return false;
+      return false;
+    }
+
+    /**
+     * Must run directly from a user gesture (Upload click).
+     * WebHID cannot see the bootloader until the user picks it once.
+     */
+    async function pairWebHidFromGesture() {
+      if (!('hid' in navigator)) return false;
+      if (await probeWebHidBootloader({ holdOpen: true })) return true;
       try {
-        const d = await probeHostHidDevice();
-        return !!(d && d.present);
-      } catch (_) {
+        const devices = await navigator.hid.requestDevice({
+          filters: [
+            { vendorId: VENDOR_ID, productId: PID_B003FUN },
+            { vendorId: VENDOR_ID }
+          ]
+        });
+        if (!devices || !devices.length) return false;
+        await setupOpenedDevice(devices[0], { showIntro: false });
+        const ok = !!(flashDevice && flashDevice.opened);
+        setHidReady(ok);
+        return ok;
+      } catch (e) {
+        if (e && e.name === 'NotAllowedError') return false;
+        console.warn('WebHID pair failed', e);
         return false;
       }
+    }
+
+    async function ensureBootloaderForUpload() {
+      if (await probeBootloaderPresent()) {
+        setHidReady(true);
+        return 'ready';
+      }
+      // Use the Upload click as the WebHID permission gesture.
+      if (await pairWebHidFromGesture()) return 'ready';
+      const wait = await waitForOdBootloader(90);
+      return wait;
     }
 
     function startHidPoll() {
@@ -1580,9 +1639,22 @@
       tick();
       setInterval(tick, 1000);
       if ('hid' in navigator) {
-        const onUsb = () => { tick(); };
+        const onUsb = async (ev) => {
+          if (ev && ev.device && isBoardDevice(ev.device)) {
+            try {
+              if (!ev.device.opened) await withTimeout(ev.device.open(), 1500);
+              flashDevice = ev.device;
+              setHidReady(true);
+              return;
+            } catch (_) {}
+          }
+          tick();
+        };
         navigator.hid.addEventListener('connect', onUsb);
-        navigator.hid.addEventListener('disconnect', onUsb);
+        navigator.hid.addEventListener('disconnect', () => {
+          if (flashDevice && !flashDevice.opened) flashDevice = null;
+          tick();
+        });
       }
     }
 
@@ -1820,16 +1892,10 @@
     }
 
     
-    const VENDOR_ID = 0x1209;     
     const REPORT_ID = 0x00;       
     const CMD = { PING: 0x01, INFO: 0x02, ERASE64: 0x10, LOAD64: 0x11, PROG64: 0x12, BOOT: 0x20 };
     const DEFAULT_REPORT_LEN = 64;   
     let OUT_REPORT_LEN = DEFAULT_REPORT_LEN; 
-
-    const PID_B003FUN = 0xB003;  
-    const PID_MIN = 0xB000, PID_MAX = 0xB00F; 
-    function isB003Fun(pid) { return pid === PID_B003FUN; }
-    function isExpectedPid(pid) { return (pid >= PID_MIN && pid <= PID_MAX) || isB003Fun(pid); }
 
     let flashDevice = null;
     let inputReportDevice = null;
@@ -1842,11 +1908,6 @@
 
     function addrBytes(addr) {
       return [(addr >>> 16) & 0xFF, (addr >>> 8) & 0xFF, addr & 0xFF];
-    }
-
-    function isBoardDevice(hidDevice) {
-      if (!hidDevice) return false;
-      return hidDevice.vendorId === VENDOR_ID && (isExpectedPid(hidDevice.productId) || isB003Fun(hidDevice.productId));
     }
 
     async function findKnownBoardDevice() {
@@ -2674,10 +2735,25 @@
       flashStatusLocked = false;
       autoFlashAfterCompile = true;
 
+      // Pair / detect bootloader using this click (WebHID needs a user gesture).
+      const boot = await ensureBootloaderForUpload();
+      if (boot === 'cancelled') {
+        autoFlashAfterCompile = false;
+        updateStatus('Upload cancelled — press Upload again when ready', '');
+        return;
+      }
+      if (boot !== 'ready') {
+        autoFlashAfterCompile = false;
+        updateStatus(
+          '❌ Bootloader not detected. Press the ODC button, then Upload and select One Dollar Computer.',
+          'error'
+        );
+        return;
+      }
+
       if (IS_LOCAL) {
         setUploadEnabled(false);
         try {
-          // Compile first so a missing bootloader never looks like a failed build.
           const result = await compileCode();
           if (!result || !result.binary) {
             autoFlashAfterCompile = false;
@@ -2691,19 +2767,25 @@
         return;
       }
 
-      // Firebase: compile request then flash when binary ready
+      // Firebase: compile, then flash when binary is ready (keep autoFlashUntil then).
       setUploadEnabled(false);
       try {
         const result = await compileCode();
-        if (!result) return;
+        if (!result) {
+          autoFlashAfterCompile = false;
+          return;
+        }
         if (pendingBinary) {
+          autoFlashAfterCompile = false;
           await flashBinary(pendingBinary, pendingBinarySize);
         } else {
-          updateStatus('Compilation requested — Upload again when binary is ready', 'connected');
+          updateStatus('Compiling… will flash when the binary is ready', 'connected');
         }
+      } catch (e) {
+        autoFlashAfterCompile = false;
+        throw e;
       } finally {
         setUploadEnabled(true);
-        autoFlashAfterCompile = false;
       }
     }
 
@@ -3088,6 +3170,14 @@ fn main() {
                   setUploadEnabled(true);
                   console.log('✅✅✅ Recording button SHOWN!');
                   console.log('   - Binary valid for current code');
+                  if (autoFlashAfterCompile && !flashInProgress) {
+                    autoFlashAfterCompile = false;
+                    try {
+                      await flashBinary(cacheData.binary, size);
+                    } catch (err) {
+                      console.warn('Auto-flash after compile failed', err);
+                    }
+                  }
                 } else {
                   hideFlashButton();
                   markCompilationNoticed(data, cacheData.binarySize || data.binarySize || 0);
