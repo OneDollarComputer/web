@@ -1,0 +1,26 @@
+---
+description: Keep the product UI quiet — no feature clutter that distracts users
+alwaysApply: true
+---
+
+# Keep it clean
+
+One Dollar Computer should feel calm and obvious. Prefer fewer controls over more features.
+
+## Do
+
+- One primary action per surface (e.g. Upload, Sign in)
+- Short labels: **Sign in**, **Sign out**, **/cloud** — never "Sign in Account", "Your account", or stacked synonyms
+- Hide advanced tools until they are needed (owner-only, after sign-in, after first edit)
+- When in doubt, leave it out or put it behind an existing menu
+
+## Don’t
+
+- Add badges, chips, dual CTAs, or redundant nav for the same job
+- Invent settings panels, dashboards, or "power user" chrome unless explicitly asked
+- Show both guest and signed-in chrome at once
+- Expand copy: one sentence beats a paragraph of explanation
+
+## Check before shipping
+
+If a new control can be removed and the user still completes the task, remove it.

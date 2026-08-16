@@ -724,7 +724,7 @@ function syncNav() {
   } else if (me) {
     mine.hidden = false;
     mine.href = "/project/";
-    mine.textContent = "Create your page";
+    mine.textContent = "Choose name";
   } else {
     mine.hidden = true;
   }

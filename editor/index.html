@@ -730,12 +730,12 @@
       <span id="aiSessionBadge" class="ai-session-badge"></span>
       <div class="user-menu" id="userMenu">
         <a class="user-signin" id="btnEditorSignIn" href="/project/">Sign in</a>
-        <button type="button" class="secondary user-menu-btn" id="btnUserMenu" hidden>
+        <button type="button" class="secondary user-menu-btn" id="btnUserMenu" hidden aria-label="Your page">
           <img id="userMenuPhoto" alt="" hidden />
-          <span id="userMenuLabel">Account</span>
+          <span id="userMenuLabel"></span>
         </button>
         <div class="user-menu-drop" id="userMenuDrop" hidden>
-          <a id="userMenuPage" href="/project/">Your projects</a>
+          <a id="userMenuPage" href="/project/">Your page</a>
           <div id="userMenuProjects" class="user-menu-projects"></div>
           <button type="button" class="user-signout" id="btnEditorSignOut">Sign out</button>
         </div>
@@ -1185,7 +1185,29 @@
         signIn.hidden = false;
         menuBtn.hidden = true;
         drop.hidden = true;
+        signIn.href = '/project/';
+        signIn.textContent = 'Sign in';
         if (page) page.href = '/project/';
+        if (list) list.innerHTML = '';
+        return;
+      }
+
+      let rec = null;
+      try {
+        const snap = await get(ref(database, `users/${user.uid}`));
+        rec = snap.exists() ? snap.val() : null;
+      } catch {
+        rec = null;
+      }
+
+      const username = rec && rec.username;
+      // Signed-out chrome stays "Sign in" until they have a public name.
+      if (!username) {
+        signIn.hidden = false;
+        menuBtn.hidden = true;
+        drop.hidden = true;
+        signIn.href = '/project/';
+        signIn.textContent = 'Sign in';
         if (list) list.innerHTML = '';
         return;
       }
@@ -1200,39 +1222,27 @@
           photo.hidden = true;
         }
       }
-
-      let rec = null;
-      try {
-        const snap = await get(ref(database, `users/${user.uid}`));
-        rec = snap.exists() ? snap.val() : null;
-      } catch {
-        rec = null;
-      }
-
-      const username = rec && rec.username;
-      if (label) label.textContent = username ? `/${username}` : (user.displayName || 'Account');
+      if (label) label.textContent = `/${username}`;
       if (page) {
-        page.href = username ? `/${encodeURIComponent(username)}/` : '/project/';
-        page.textContent = username ? `onedollarcomputer.com/${username}/` : 'Create your page';
+        page.href = `/${encodeURIComponent(username)}/`;
+        page.textContent = `/${username}/`;
       }
 
       if (list) {
         list.innerHTML = '';
-        if (username) {
-          try {
-            const pubSnap = await get(ref(database, `profiles/${username}`));
-            const pub = pubSnap.exists() ? pubSnap.val() : null;
-            for (const p of projectEntries(pub)) {
-              if (!p.id) continue;
-              const a = document.createElement('a');
-              a.href = editorQueryWithProject(p.id);
-              a.textContent = p.name || p.slug;
-              if (String(p.id) === String(window.PROJECT_CODE)) a.classList.add('is-current');
-              list.appendChild(a);
-            }
-          } catch {
-            /* ignore */
+        try {
+          const pubSnap = await get(ref(database, `profiles/${username}`));
+          const pub = pubSnap.exists() ? pubSnap.val() : null;
+          for (const p of projectEntries(pub)) {
+            if (!p.id) continue;
+            const a = document.createElement('a');
+            a.href = editorQueryWithProject(p.id);
+            a.textContent = p.name || p.slug;
+            if (String(p.id) === String(window.PROJECT_CODE)) a.classList.add('is-current');
+            list.appendChild(a);
           }
+        } catch {
+          /* ignore */
         }
       }
     }
