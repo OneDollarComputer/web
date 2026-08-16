@@ -471,7 +471,8 @@ def config_payload() -> dict:
     return payload
 
 
-USERNAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+USERNAME_RE = re.compile(r"^[a-z][a-z0-9-]*$")
+PROJECT_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 PROFILE_RESERVED = frozenset(
     {
         "about",
@@ -524,7 +525,7 @@ def is_user_profile_path(path: str) -> bool:
         return False
     if not USERNAME_RE.fullmatch(parts[0]):
         return False
-    if len(parts) == 2 and not USERNAME_RE.fullmatch(parts[1]):
+    if len(parts) == 2 and not PROJECT_SLUG_RE.fullmatch(parts[1]):
         return False
     return True
 

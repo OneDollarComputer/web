@@ -99,12 +99,16 @@ function uniqueSlug(base, used) {
 function suggestUsername(displayName, email) {
   const fromName = (displayName || "").split(/\s+/)[0] || "";
   const fromEmail = (email || "").split("@")[0] || "";
-  return slugify(fromName || fromEmail || "user").replace(/-/g, "").slice(0, 24) || "user";
+  let base = slugify(fromName || fromEmail || "user").replace(/-/g, "").slice(0, 24);
+  base = base.replace(/^[0-9]+/, "");
+  if (!base || base.length < 2) base = (base + "user").slice(0, 24);
+  return base || "user";
 }
 
+/** Public usernames: lowercase, 2–24 chars, start with a letter (not a digit). */
 function isValidUsername(name) {
   return (
-    /^[a-z0-9][a-z0-9-]{0,22}[a-z0-9]$/.test(name) &&
+    /^[a-z][a-z0-9-]{0,22}[a-z0-9]$/.test(name) &&
     name.length >= 2 &&
     name.length <= 24 &&
     !RESERVED.has(name)
@@ -138,7 +142,7 @@ function parseRoute() {
   if (!parts.length || parts[0] === "project" || parts[0] === "profile") {
     return { kind: "login" };
   }
-  if (RESERVED.has(parts[0]) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parts[0])) {
+  if (RESERVED.has(parts[0]) || !/^[a-z][a-z0-9-]*$/.test(parts[0])) {
     return { kind: "missing" };
   }
   if (parts.length === 1) return { kind: "user", username: parts[0] };
@@ -182,7 +186,9 @@ function go(path, replace) {
 async function claimUsername(user, username) {
   const name = slugify(username).replace(/-+/g, "-");
   if (!isValidUsername(name)) {
-    throw new Error("Use 2–24 letters or numbers (and optional hyphens). That name is reserved or invalid.");
+    throw new Error(
+      "Use 2–24 characters: start with a letter, then letters, numbers, or hyphens. Single letters and names that start with a number are not allowed."
+    );
   }
   const existingSnap = await get(ref(db, `users/${user.uid}`));
   const prev = existingSnap.exists() ? existingSnap.val() : null;
@@ -448,7 +454,7 @@ function updateUsernamePreview() {
   const name = slugify(input.value).replace(/-+/g, "-");
   preview.textContent = name && isValidUsername(name)
     ? `onedollarcomputer.com/${name}/`
-    : "Pick a short public name, like cloud";
+    : "2+ characters, start with a letter — e.g. cloud";
 }
 
 function projectEntries(pub) {
