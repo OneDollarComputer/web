@@ -28,6 +28,10 @@
         }
       }
     },
+    "compileQueue": {
+      ".read": true,
+      ".write": true
+    },
     "cache": {
       ".read": true,
       ".write": true

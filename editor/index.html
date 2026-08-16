@@ -2868,6 +2868,20 @@
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
+        // Queue for the cloud worker (cannot list /projects under current rules).
+        try {
+          await fetch(`${DATABASE_URL}/compileQueue/${encodeURIComponent(currentProjectCode)}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestedAt: data.compilationRequestedAt,
+              binaryHash
+            })
+          });
+        } catch (queueErr) {
+          console.warn('compileQueue write failed', queueErr);
+        }
+
         updateStatus('✅ Compilation requested', 'connected');
         console.log('✅ Compilation request sent to Firebase');
 

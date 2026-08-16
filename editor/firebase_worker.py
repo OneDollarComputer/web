@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Firebase compile worker for One Dollar Computer.
 
-Listens to RTDB /projects/{id}/code (same contract as onedollarboard) and
-compiles simple Rust via wrap_odc + Cargo — the same path as editor/serve.py.
+Canonical copy: github.com/OneDollarComputer/compiler (`worker.py` + `compile_odc.py`).
+This file remains so the site tree can run a worker without that checkout.
 
-  ODC_MONOREPO=/path/to/bootloader_odb \\
-  FIREBASE_URL=https://odc-files-default-rtdb.firebaseio.com \\
-  python3 editor/firebase_worker.py
+Polls /compileQueue (public) then reads/writes /projects/{id}/code.
 """
 
 from __future__ import annotations
@@ -62,8 +60,16 @@ def put(path: str, body: dict):
     return rtdb(path, "PUT", body)
 
 
+def delete(path: str):
+    return rtdb(path, "DELETE")
+
+
 def code_path(project_id: str) -> str:
     return f"projects/{project_id}/code"
+
+
+def queue_path(project_id: str) -> str:
+    return f"compileQueue/{project_id}"
 
 
 def extract_code_node(project_val):
@@ -94,6 +100,7 @@ def process_job(project_id: str, data: dict) -> None:
                 "compilationUpdatedAt": now_iso(),
             },
         )
+        delete(queue_path(project_id))
         return
 
     print(f"[compile] {project_id} claimed by {WORKER_ID}", flush=True)
@@ -119,6 +126,7 @@ def process_job(project_id: str, data: dict) -> None:
                 "compilationUpdatedAt": now_iso(),
             },
         )
+        delete(queue_path(project_id))
         print(f"[compile] {project_id} error", flush=True)
         return
 
@@ -150,25 +158,41 @@ def process_job(project_id: str, data: dict) -> None:
             "processingStartedAt": None,
         },
     )
+    delete(queue_path(project_id))
     print(f"[compile] {project_id} ok {result['binarySize']}B hash={h}", flush=True)
+
+
+def claim_queued_jobs() -> None:
+    queue = rtdb("compileQueue") or {}
+    if not isinstance(queue, dict) or not queue:
+        return
+    for project_id in list(queue.keys()):
+        try:
+            raw = rtdb(code_path(project_id))
+            data = extract_code_node({"code": raw}) if raw is not None else None
+            if data is None and isinstance(raw, dict):
+                data = extract_code_node(raw)
+            if not data:
+                delete(queue_path(project_id))
+                continue
+            if data.get("compilationStatus") == "pending" or data.get(
+                "compilationRequested"
+            ):
+                process_job(str(project_id), data)
+            else:
+                # Stale queue entry after a finished job.
+                delete(queue_path(project_id))
+        except Exception:
+            traceback.print_exc()
 
 
 def main() -> int:
     print(f"ODC Firebase worker {WORKER_ID}", flush=True)
     print(f"  rtdb: {FIREBASE_URL}", flush=True)
+    print("  queue: /compileQueue", flush=True)
     while True:
         try:
-            projects = rtdb("projects") or {}
-            if isinstance(projects, dict):
-                for project_id, val in projects.items():
-                    data = extract_code_node(val)
-                    if not data:
-                        continue
-                    if (
-                        data.get("compilationStatus") == "pending"
-                        and data.get("compilationRequested") is True
-                    ):
-                        process_job(str(project_id), data)
+            claim_queued_jobs()
         except Exception:
             traceback.print_exc()
         time.sleep(POLL_SEC)
