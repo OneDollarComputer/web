@@ -4,6 +4,7 @@ editor/.DS_Store
 editor/__pycache__/
 editor/secrets/
 firebase-debug.log
+.firebase/
 .DS_Store
 
 # original ODB brand images kept locally while rebranding

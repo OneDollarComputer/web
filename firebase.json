@@ -1,5 +1,16 @@
 {
   "database": {
     "rules": "editor/database.rules.json"
+  },
+  "hosting": {
+    "public": "firebase-hosting",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "https://onedollarcomputer.com/",
+        "type": 302
+      }
+    ]
   }
 }

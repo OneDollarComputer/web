@@ -15,7 +15,7 @@ fn main() {
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
-  authDomain: "odc-files.firebaseapp.com",
+  authDomain: "auth.onedollarcomputer.com",
   databaseURL: "https://odc-files-default-rtdb.firebaseio.com",
   projectId: "odc-files",
   storageBucket: "odc-files.firebasestorage.app",

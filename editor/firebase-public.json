@@ -2,7 +2,7 @@
   "projectId": "odc-files",
   "appId": "1:1086912562723:web:d158f4ce5c08d1ceb95396",
   "apiKey": "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
-  "authDomain": "odc-files.firebaseapp.com",
+  "authDomain": "auth.onedollarcomputer.com",
   "databaseURL": "https://odc-files-default-rtdb.firebaseio.com",
   "storageBucket": "odc-files.firebasestorage.app",
   "messagingSenderId": "1086912562723",
