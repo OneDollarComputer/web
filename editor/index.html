@@ -2127,6 +2127,17 @@
     ]);
     // Same payload FlashingPro sends on open — keeps the chip in HID bootloader.
     const HALT_WAIT_BLOB = new Uint8Array([0x81, 0x46, 0x94, 0xc1, 0xfd, 0x56, 0x14, 0xc1, 0x82, 0x80]);
+    // FlashingPro boot_app (-b): leave bootloader and run user flash.
+    const RUN_APP_BLOB = new Uint8Array([
+      0xb7, 0xf5, 0xff, 0x1f, 0x93, 0x87, 0xc5, 0x77, 0x03, 0xa7, 0x07, 0x00, 0x13, 0x57, 0x07,
+      0x01, 0x83, 0x96, 0x07, 0x00, 0x93, 0xc7, 0xc6, 0x77, 0x63, 0x16, 0xf7, 0x00, 0x33, 0x87,
+      0xb6, 0x00, 0x67, 0x00, 0x07, 0x00, 0xb7, 0x27, 0x02, 0x40, 0x93, 0x87, 0x87, 0x02, 0x37,
+      0x07, 0x67, 0x45, 0x13, 0x07, 0x37, 0x12, 0x23, 0xa0, 0xe7, 0x00, 0xb7, 0x27, 0x02, 0x40,
+      0x93, 0x87, 0x87, 0x02, 0x37, 0x97, 0xef, 0xcd, 0x13, 0x07, 0xb7, 0x9a, 0x23, 0xa0, 0xe7,
+      0x00, 0xb7, 0x27, 0x02, 0x40, 0x93, 0x87, 0xc7, 0x00, 0x23, 0xa0, 0x07, 0x00, 0xb7, 0x27,
+      0x02, 0x40, 0x93, 0x87, 0x07, 0x01, 0x13, 0x07, 0x00, 0x08, 0x23, 0xa0, 0xe7, 0x00, 0xb7,
+      0xf7, 0x00, 0xe0, 0x93, 0x87, 0x07, 0xd1, 0x37, 0x07, 0x00, 0x80, 0x23, 0xa0, 0xe7, 0x00
+    ]);
 
     async function haltBootloaderCountdown() {
       if (!flashDevice || !flashDevice.opened || !isB003Fun(flashDevice.productId)) return;
@@ -2134,6 +2145,17 @@
       writeOpArb(op, HALT_WAIT_BLOB);
       await commitOpFeature(op);
       console.log('Bootloader countdown halted');
+    }
+
+    async function bootAppFromBootloader() {
+      if (!flashDevice || !flashDevice.opened || !isB003Fun(flashDevice.productId)) return;
+      const op = resetOp();
+      writeOpArb(op, RUN_APP_BLOB);
+      await commitOpFeature(op, { noGetReport: true });
+      console.log('Boot command sent — running app');
+      try { await flashDevice.close(); } catch (_) {}
+      flashDevice = null;
+      setHidReady(false);
     }
 
     function resetOp() { const buffer = new Uint8Array(128); buffer.fill(0); buffer[0] = 0xaa; return { buffer, commandplace: 4 }; }
@@ -2261,6 +2283,7 @@
         await haltBootloaderCountdown();
         const FLASH_BASE = 0x08000000;
         await writeBinaryBlobFeature(FLASH_BASE, binU8);
+        await bootAppFromBootloader();
         console.log('Flash completed successfully (B003Fun).');
         updateStatus('✅ Uploaded — new program is running.', 'connected');
       } catch (e) {
@@ -2663,6 +2686,7 @@
             compilationStatus: currentData.compilationStatus,
             binaryHash: currentData.binaryHash,
             binarySize: currentData.binarySize,
+            binary: currentData.binary,
             compilationResult: currentData.compilationResult,
             compilationUpdatedAt: currentData.compilationUpdatedAt,
             binarySavedAt: currentData.binarySavedAt
@@ -2980,24 +3004,50 @@ fn main() {
       
       if (urlCode) {
         isSyncing = true;
-        console.log('🔗 Saving URL code to Firebase to prevent listener overwrite...');
+        console.log('🔗 Saving URL code to Firebase (merge — keep binary if still valid)...');
         try {
           if (await ensureCanSave(urlCode)) {
-            await fetch(projectApiUrl(), {
-              method: 'PUT',
+            let currentData = {};
+            try {
+              const cur = await fetch(projectApiUrl(), { cache: 'no-store' });
+              if (cur.ok) currentData = (await cur.json()) || {};
+            } catch (_) {}
+
+            const urlHash = await getCodeHash(urlCode);
+            const keepBinary =
+              currentData.compilationStatus === 'success' &&
+              currentData.binaryHash === urlHash &&
+              !!(currentData.binary || currentData.binarySize);
+
+            // PATCH merges — never wipe an existing binary with a full PUT.
+            const patch = {
+              content: urlCode,
+              language: 'rust',
+              lastModified: new Date().toISOString(),
+              timestamp: Date.now(),
+              size: urlCode.length
+            };
+            if (!keepBinary) {
+              // Invalidate stale compile metadata when URL code differs.
+              patch.compilationStatus = null;
+              patch.compilationRequested = false;
+              patch.binaryHash = null;
+              patch.binary = null;
+              patch.binarySize = null;
+            }
+
+            const response = await fetch(projectApiUrl(), {
+              method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                content: urlCode,
-                code: urlCode,
-                projectID: currentProjectCode,
-                language: 'rust',
-                lastModified: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                timestamp: Date.now(),
-                size: urlCode.length
-              })
+              body: JSON.stringify(patch)
             });
-            console.log('✅ URL code saved to Firebase');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            console.log(
+              keepBinary
+                ? '✅ URL code saved — existing binary kept'
+                : '✅ URL code saved — binary cleared (code changed)'
+            );
+            lastSavedContent = urlCode;
           }
         } catch (e) {
           console.warn('⚠️ Could not save URL code to Firebase:', e.message);
