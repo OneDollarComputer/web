@@ -2050,7 +2050,12 @@
 
       if (isB003Fun(flashDevice.productId)) {
         console.log('Detected B003Fun Bootloader (PID 0xB003). Using Feature Reports.');
-        updateStatus('Connected (B003Fun)', 'connected');
+        try {
+          await haltBootloaderCountdown();
+        } catch (e) {
+          console.warn('Bootloader halt failed', e);
+        }
+        if (showIntro) updateStatus('Connected (bootloader)', 'connected');
         return;
       }
 
@@ -2120,6 +2125,16 @@
       0x94, 0xc1, 0xb7, 0x06, 0x05, 0x00, 0xd4, 0xc3, 0x94, 0x41, 0x91, 0x05, 0x11, 0x07, 0xe3, 0xc8,
       0xc5, 0xfe, 0xc1, 0x66, 0x93, 0x86, 0x06, 0x04, 0xd4, 0xc3, 0xfd, 0x56, 0x14, 0xc1, 0x82, 0x80
     ]);
+    // Same payload FlashingPro sends on open — keeps the chip in HID bootloader.
+    const HALT_WAIT_BLOB = new Uint8Array([0x81, 0x46, 0x94, 0xc1, 0xfd, 0x56, 0x14, 0xc1, 0x82, 0x80]);
+
+    async function haltBootloaderCountdown() {
+      if (!flashDevice || !flashDevice.opened || !isB003Fun(flashDevice.productId)) return;
+      const op = resetOp();
+      writeOpArb(op, HALT_WAIT_BLOB);
+      await commitOpFeature(op);
+      console.log('Bootloader countdown halted');
+    }
 
     function resetOp() { const buffer = new Uint8Array(128); buffer.fill(0); buffer[0] = 0xaa; return { buffer, commandplace: 4 }; }
     function writeOp4(op, v) { const dv = new DataView(op.buffer.buffer); dv.setUint32(op.commandplace, v, true); op.commandplace += 4; }
@@ -2243,13 +2258,14 @@
       try {
         console.log('B003Fun compatible mode: using Feature Reports (0xaa, 128B).');
         flashUnlocked = false;
+        await haltBootloaderCountdown();
         const FLASH_BASE = 0x08000000;
         await writeBinaryBlobFeature(FLASH_BASE, binU8);
         console.log('Flash completed successfully (B003Fun).');
-        updateStatus('Flash completed successfully! Disconnect and reconnect to run the code.', 'connected');
+        updateStatus('✅ Uploaded — new program is running.', 'connected');
       } catch (e) {
         console.error('B003Fun flash error: ' + e.message);
-        updateStatus('Flash failed', 'error');
+        updateStatus('❌ Flash failed: ' + (e.message || 'Unknown'), 'error');
         throw e;
       }
     }
@@ -2735,20 +2751,13 @@
       flashStatusLocked = false;
       autoFlashAfterCompile = true;
 
-      // Pair / detect bootloader using this click (WebHID needs a user gesture).
-      const boot = await ensureBootloaderForUpload();
-      if (boot === 'cancelled') {
-        autoFlashAfterCompile = false;
-        updateStatus('Upload cancelled — press Upload again when ready', '');
-        return;
-      }
-      if (boot !== 'ready') {
-        autoFlashAfterCompile = false;
-        updateStatus(
-          '❌ Bootloader not detected. Press the ODC button, then Upload and select One Dollar Computer.',
-          'error'
-        );
-        return;
+      // Use this click to grant WebHID if needed — do NOT require bootloader yet.
+      // Holding the bootloader open during cloud compile lets its countdown expire.
+      if ('hid' in navigator) {
+        try {
+          const known = await findKnownBoardDevice();
+          if (!known) await pairWebHidFromGesture();
+        } catch (_) {}
       }
 
       if (IS_LOCAL) {
@@ -2767,7 +2776,7 @@
         return;
       }
 
-      // Firebase: compile, then flash when binary is ready (keep autoFlashUntil then).
+      // Firebase: compile, then flash when binary is ready.
       setUploadEnabled(false);
       try {
         const result = await compileCode();
@@ -3190,6 +3199,10 @@ fn main() {
                       await flashBinary(cacheData.binary, size);
                     } catch (err) {
                       console.warn('Auto-flash after compile failed', err);
+                      updateStatus(
+                        '❌ Flash failed: ' + ((err && err.message) || 'Press ODC button, then Upload again'),
+                        'error'
+                      );
                     }
                   }
                 } else {
