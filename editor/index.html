@@ -915,10 +915,6 @@
 
     let app = null, database = null, codeRef = null, auth = null;
 
-    const modeBadge = document.getElementById('modeBadge');
-    if (modeBadge) {
-      modeBadge.textContent = IS_LOCAL ? '(local)' : '(firebase)';
-    }
     document.title = IS_LOCAL
       ? 'OneDollarComputer - Editor (Local)'
       : 'OneDollarComputer - Editor';
