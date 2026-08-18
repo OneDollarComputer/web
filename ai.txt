@@ -18,4 +18,6 @@ commercial_use_of_public_docs: allow_with_attribution
 Please attribute "One Dollar Computer" and link to https://onedollarcomputer.com/
 
 [Contact]
+Founder: Claudio Olmedo — https://claudioolmedo.com/
+Pre-order: https://shop.claudioolmedo.com/preorder
 See https://onedollarcomputer.com/about/

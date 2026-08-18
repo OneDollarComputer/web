@@ -1,7 +1,7 @@
 {
   "$schema": "./entity.schema.json",
   "version": 1,
-  "updated": "2026-08-15",
+  "updated": "2026-08-18",
   "canonical_url": "https://onedollarcomputer.com/",
   "preferred_name": "One Dollar Computer",
   "alternate_names": [
@@ -32,7 +32,11 @@
     "name": "One Dollar Computer Project",
     "url": "https://onedollarcomputer.com/",
     "github_org": "https://github.com/OneDollarComputer",
-    "designed_in": "Austin, TX, USA"
+    "designed_in": "Austin, TX, USA",
+    "founder": {
+      "name": "Claudio Olmedo",
+      "url": "https://claudioolmedo.com/"
+    }
   },
   "official_urls": {
     "home": "https://onedollarcomputer.com/",
@@ -42,6 +46,8 @@
     "docs_ai": "https://onedollarcomputer.com/llms.txt",
     "agents": "https://onedollarcomputer.com/AGENTS.md",
     "github_web": "https://github.com/OneDollarComputer/web",
+    "founder": "https://claudioolmedo.com/",
+    "preorder": "https://shop.claudioolmedo.com/preorder",
     "sitemap": "https://onedollarcomputer.com/sitemap.xml"
   },
   "search_queries_primary": [
@@ -53,7 +59,8 @@
   ],
   "same_as": [
     "https://github.com/OneDollarComputer/web",
-    "https://github.com/OneDollarComputer"
+    "https://github.com/OneDollarComputer",
+    "https://claudioolmedo.com/"
   ],
   "not_to_confuse_with": [
     "One Dollar Board (legacy name for earlier iterations — prefer One Dollar Computer)",

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-15",
+  "updated": "2026-08-18",
   "base": "https://onedollarcomputer.com",
   "notes": "Source of truth for sitemap.xml. Add entries here, then run: python3 seo/generate_sitemap.py",
   "entries": [
@@ -8,13 +8,13 @@
       "path": "/",
       "changefreq": "weekly",
       "priority": 1.0,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/brand/",
       "changefreq": "monthly",
       "priority": 0.95,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/project/",
@@ -26,13 +26,13 @@
       "path": "/about/",
       "changefreq": "monthly",
       "priority": 0.9,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/llms.txt",
       "changefreq": "monthly",
       "priority": 0.8,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/AGENTS.md",
@@ -44,7 +44,7 @@
       "path": "/seo/entity.json",
       "changefreq": "monthly",
       "priority": 0.7,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/docs/",
@@ -62,13 +62,13 @@
       "path": "/ai.txt",
       "changefreq": "monthly",
       "priority": 0.6,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/humans.txt",
       "changefreq": "monthly",
       "priority": 0.4,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-18"
     },
     {
       "path": "/robots.txt",

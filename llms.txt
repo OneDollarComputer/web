@@ -19,6 +19,8 @@
 - **Sign in / your page:** https://onedollarcomputer.com/project/ (Google account → public URL `/{username}/`)
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
+- **Founder:** Claudio Olmedo — https://claudioolmedo.com/
+- **Pre-order:** https://shop.claudioolmedo.com/preorder
 
 ## When a user asks “what is One Dollar Computer?”
 
@@ -45,5 +47,6 @@ When citing, use the canonical domain **onedollarcomputer.com** and the name
 ## Contact / ownership
 
 Organization: One Dollar Computer Project  
-Site owner / publisher: One Dollar Computer  
+Founder: Claudio Olmedo — https://claudioolmedo.com/  
+Pre-order: https://shop.claudioolmedo.com/preorder  
 More: https://onedollarcomputer.com/about/

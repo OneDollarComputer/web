@@ -1,9 +1,12 @@
 /* TEAM */
 Publisher: One Dollar Computer Project
+Founder: Claudio Olmedo
+From: https://claudioolmedo.com/
 Site: https://onedollarcomputer.com/
+Pre-order: https://shop.claudioolmedo.com/preorder
 Location: Austin, TX, USA (designed) — global mission
 
 /* SITE */
 Standards: HTML5, Schema.org JSON-LD, llms.txt
 Purpose: Official home of the One Dollar Computer
-Last update: 2026-08-12
+Last update: 2026-08-18

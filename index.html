@@ -122,11 +122,19 @@
               "addressCountry": "US"
             }
           },
+          "founder": { "@id": "https://claudioolmedo.com/#person" },
           "sameAs": [
             "https://github.com/OneDollarComputer",
-            "https://github.com/OneDollarComputer/web"
+            "https://github.com/OneDollarComputer/web",
+            "https://claudioolmedo.com/"
           ],
           "brand": { "@id": "https://onedollarcomputer.com/#brand" }
+        },
+        {
+          "@type": "Person",
+          "@id": "https://claudioolmedo.com/#person",
+          "name": "Claudio Olmedo",
+          "url": "https://claudioolmedo.com/"
         },
         {
           "@type": ["Product", "HardwareDevice"],
@@ -148,7 +156,7 @@
           },
           "offers": {
             "@type": "Offer",
-            "url": "https://onedollarcomputer.com/",
+            "url": "https://shop.claudioolmedo.com/preorder",
             "price": "1.00",
             "priceCurrency": "USD",
             "availability": "https://schema.org/PreOrder",
@@ -896,6 +904,9 @@
           <p class="mt-6 text-base-sub text-lg md:text-xl prose-max mx-auto font-light leading-relaxed">The official website of <strong>One Dollar Computer</strong> is <strong>onedollarcomputer.com</strong>.
             It is a specific educational computer — not a generic “$1 computer” hobby challenge. This ultra&#8209;affordable
             RISC-V tool is designed to unlock creativity for classrooms, clubs, and curious minds everywhere.</p>
+          <p class="mt-8">
+            <a href="https://shop.claudioolmedo.com/preorder" class="text-base-accent font-semibold">Pre-order</a>
+          </p>
         </div>
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <div class="reveal">
@@ -1004,9 +1015,9 @@
           </div>
           <div class="rounded-2xl card-glass p-7 reveal reveal-delay-1">
             <h3 class="text-xl font-semibold mb-4">A future built by everyone</h3>
-            <p class="text-base-sub leading-relaxed">Because it costs about one dollar, impact scales simply. A thousand
-              dollars is not one expensive machine. It is a thousand computers — a thousand new chances for possible
-              talent to wake up.</p>
+            <p class="text-base-sub leading-relaxed">Because it costs about one dollar, impact scales simply. Three
+              thousand dollars is not one expensive machine. It is three thousand computers — three thousand new chances
+              for possible talent to wake up.</p>
             <p class="text-base-sub mt-4 leading-relaxed">A future built by everyone — one dollar at a time.</p>
           </div>
         </div>
@@ -1022,7 +1033,7 @@
               cities.</p>
             <p class="text-base-sub text-lg leading-relaxed prose-max mx-auto">Some people will buy one computer to invent.
               Some will buy many — for a classroom, a club, a community — because the math is honest: one dollar, one
-              opportunity. A thousand dollars can mean a thousand possible talents, waiting to be awakened.</p>
+              opportunity. Three thousand dollars can mean three thousand possible talents, waiting to be awakened.</p>
             <p class="text-base-sub text-lg leading-relaxed prose-max mx-auto">The Computer of Things means computation
               inside everyday objects. At one dollar, a computer can go into a student’s project, a teacher’s classroom,
               a toy, a tool — into almost anything, even a chair. Connectivity is optional; a computer in the thing is
@@ -1135,7 +1146,9 @@
 
   <footer class="relative border-t border-base-line/40 footer-glow">
     <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-4">
-      <p class="text-base-sub text-sm">© <span id="y"></span> One Dollar Computer · <a href="/brand/"
+      <p class="text-base-sub text-sm">© <span id="y"></span> One Dollar Computer · <a href="https://shop.claudioolmedo.com/preorder"
+          class="hover:text-base-text">Pre-order</a> · <a href="https://claudioolmedo.com/"
+          class="hover:text-base-text">Claudio Olmedo</a> · <a href="/brand/"
           class="hover:text-base-text">Brand</a> · <a href="/about/" class="hover:text-base-text">About</a> · <button
           type="button" data-odc-share class="hover:text-base-text bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer">Share</button> · <a
           href="/llms.txt" class="hover:text-base-text">llms.txt</a></p>
