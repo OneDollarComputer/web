@@ -605,6 +605,7 @@
       gap: 10px;
       transition: transform 0.2s, background 0.2s;
       font-size: 1rem;
+      overflow: hidden;
     }
 
     .ai-help-btn:hover {
@@ -648,18 +649,82 @@
       align-items: center;
       z-index: 2000;
       backdrop-filter: blur(5px);
+      padding: 1rem;
+      overflow-y: auto;
+      box-sizing: border-box;
     }
 
     .ai-modal-content {
+      position: relative;
+      overflow: hidden;
       background: #1c2128;
       border: 1px solid #444c56;
-      padding: 30px;
+      padding: 28px 24px 24px;
       border-radius: 16px;
       max-width: 420px;
       width: 90%;
       text-align: center;
       color: white;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      margin: auto;
+      box-sizing: border-box;
+    }
+
+    @media (max-height: 720px) {
+      .ai-modal-content { padding: 22px 18px 16px; }
+      .ai-modal-content h2 { font-size: 1.25rem; margin-bottom: 0.35rem; }
+      .ai-modal-content p { margin-bottom: 12px; }
+      .ai-modal-content .ai-beta-note { margin: -4px 0 12px; }
+      #qrcode-container {
+        width: 140px;
+        height: 140px;
+        padding: 10px;
+        margin-bottom: 14px;
+      }
+    }
+
+    .ai-beta-corner {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 6.5rem;
+      height: 6.5rem;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 3;
+      border-top-right-radius: 16px;
+    }
+
+    .ai-beta-corner span {
+      position: absolute;
+      top: 16px;
+      right: -26px;
+      width: 118px;
+      padding: 6px 0;
+      background: #ffea00;
+      color: #111;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      transform: rotate(45deg);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .ai-help-btn .ai-beta-corner {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-top-right-radius: 50px;
+    }
+
+    .ai-help-btn .ai-beta-corner span {
+      top: 8px;
+      right: -26px;
+      width: 90px;
+      padding: 3px 0;
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
     }
 
     .ai-modal-content h2 {
@@ -807,12 +872,14 @@
 
   
   <button id="btnAIHelp" class="ai-help-btn">
+    <span class="ai-beta-corner" aria-hidden="true"><span>Beta</span></span>
     <span>🤖</span> Help
   </button>
 
   
   <div id="aiModal" class="ai-modal-overlay">
     <div class="ai-modal-content">
+      <span class="ai-beta-corner" aria-hidden="true"><span>Beta</span></span>
       <h2>AI Coding Assistant</h2>
       <p>Scan the code or choose an AI to continue your development.</p>
       <p class="ai-beta-note">Beta — may not work with every AI.</p>
