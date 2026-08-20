@@ -84,10 +84,13 @@
     dt { font-weight:600; color:var(--text); }
     dd { margin:0.15rem 0 0; }
     .card { border:1px solid var(--line); border-radius:12px; padding:1.25rem; background:#0D1220; }
-    nav.top { padding:1rem 1.25rem; border-bottom:1px solid var(--line); display:flex; gap:1rem; align-items:center; }
+    nav.top { padding:1rem 1.25rem; border-bottom:1px solid var(--line); display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
     nav.top img { width:28px; height:28px; }
     nav.top a { color: var(--accent); text-decoration: none; }
     nav.top button[data-odc-share] { color: var(--accent); background: transparent; border: 0; padding: 0; font: inherit; cursor: pointer; }
+    .preorder-btn { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; background:#ffea00; color:#111 !important; font-weight:700; font-size:12px; letter-spacing:1.2px; text-transform:uppercase; text-decoration:none; border-radius:4px; box-shadow:0 4px 14px rgba(0,0,0,.28); margin-left:auto; }
+    .preorder-btn:hover { background:#fff36a; }
+    .preorder-btn__price { background:#111; color:#ffea00; padding:2px 6px; border-radius:3px; }
     code { font-size:0.9em; }
   </style>
 </head>
@@ -97,11 +100,11 @@
       <img src="/odc_logo_white.svg" width="28" height="28" alt="" />
       <strong>One Dollar Computer</strong>
     </a>
-    <a href="https://shop.claudioolmedo.com/preorder">Pre-order</a>
     <a href="/about/">About</a>
     <button type="button" data-odc-share>Share</button>
-    <span class="odc-auth-slot"><a href="/project/" data-odc-signin>Sign in</a></span>
     <a href="/llms.txt">llms.txt</a>
+    <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
+    <span class="odc-auth-slot"><a href="/project/" data-odc-signin>Sign in</a></span>
   </nav>
   <main>
     <h1>One Dollar Computer</h1>

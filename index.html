@@ -341,6 +341,101 @@
       width: 100%
     }
 
+    .preorder-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: #ffea00;
+      color: #111;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+      line-height: 1.2;
+      white-space: nowrap
+    }
+
+    .preorder-btn:hover {
+      background: #fff36a;
+      color: #111;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4)
+    }
+
+    .preorder-btn:focus-visible {
+      background: #fff36a;
+      color: #111;
+      outline: 2px solid #fff;
+      outline-offset: 3px
+    }
+
+    .preorder-btn:active {
+      transform: none
+    }
+
+    .preorder-btn__price {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #111;
+      color: #ffea00;
+      border-radius: 3px;
+      font-size: 12px;
+      letter-spacing: 0.06em
+    }
+
+    .preorder-btn--nav {
+      padding: 8px 14px;
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28)
+    }
+
+    .preorder-btn--nav .preorder-btn__price {
+      font-size: 11px;
+      padding: 2px 6px
+    }
+
+    .preorder-btn--hero {
+      margin-top: 0;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45)
+    }
+
+    .hero-cta {
+      position: absolute;
+      left: 1.25rem;
+      bottom: 1.5rem;
+      z-index: 12;
+      pointer-events: auto
+    }
+
+    @media (min-width: 640px) {
+      .hero-cta { left: 2rem; bottom: 2rem }
+    }
+
+    @media (min-width: 768px) {
+      .hero-cta { left: 3rem }
+    }
+
+    @media (min-width: 1024px) {
+      .hero-cta { left: 4rem }
+    }
+
+    .hero-stage {
+      padding-bottom: 4.5rem
+    }
+
+    @media (max-height: 640px) {
+      .hero-wordmark { font-size: clamp(1.55rem, 5.2vw, 2.75rem) }
+      .hero-stage { align-items: flex-start; padding-top: 1.25rem; padding-bottom: 4.5rem }
+    }
+
     .hero-overlay {
       background: linear-gradient(to bottom, rgba(7, 9, 15, 0) 50%, rgba(7, 9, 15, .55) 80%, #07090F 100%)
     }
@@ -840,6 +935,7 @@
           <a href="#faq" class="nav-link">FAQ</a>
           <button type="button" class="nav-link" data-odc-share>Share</button>
         </div>
+        <a class="preorder-btn preorder-btn--nav" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
         <span class="odc-auth-slot">
           <a href="/project/" class="nav-link text-sm text-base-sub font-medium" data-odc-signin>Sign in</a>
         </span>
@@ -849,20 +945,21 @@
   <div class="h-16"></div>
 
   <main id="main">
-    <section class="relative w-full bg-black overflow-hidden h-[60vh] md:h-[70vh]" aria-label="One Dollar Computer">
+    <section class="relative w-full bg-black overflow-hidden h-[60vh] md:h-[70vh] max-h-[calc(100dvh-4rem)]" aria-label="One Dollar Computer">
       <img src="/one_dollar_computer_face.jpeg" alt="One Dollar Computer — friendly face"
         class="absolute inset-0 w-full h-full object-cover object-[68%_center] md:object-center" loading="eager" />
       <div class="hero-overlay absolute inset-0"></div>
       <div class="ambient-orb w-[400px] h-[400px] bg-[#48E1A7] top-[10%] right-[10%]"></div>
       <div class="ambient-orb w-[300px] h-[300px] bg-[#8AB4FF] bottom-[20%] left-[5%]" style="animation-delay:-7s">
       </div>
-      <div class="absolute inset-0 z-10 flex items-center pointer-events-none">
+      <div class="absolute inset-0 z-10 flex items-center pointer-events-none hero-stage">
         <p class="hero-wordmark pl-5 sm:pl-8 md:pl-12 lg:pl-16" aria-label="One Dollar Computer">
           <span>One</span>
           <span>Dollar</span>
           <span>Computer</span>
         </p>
       </div>
+      <a class="preorder-btn preorder-btn--hero hero-cta" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
     </section>
 
     <!-- Project status timeline -->
@@ -905,7 +1002,7 @@
             It is a specific educational computer — not a generic “$1 computer” hobby challenge. This ultra&#8209;affordable
             RISC-V tool is designed to unlock creativity for classrooms, clubs, and curious minds everywhere.</p>
           <p class="mt-8">
-            <a href="https://shop.claudioolmedo.com/preorder" class="text-base-accent font-semibold">Pre-order</a>
+            <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
           </p>
         </div>
         <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -1145,16 +1242,18 @@
   </main>
 
   <footer class="relative border-t border-base-line/40 footer-glow">
-    <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-4">
-      <p class="text-base-sub text-sm">© <span id="y"></span> One Dollar Computer · <a href="https://shop.claudioolmedo.com/preorder"
-          class="hover:text-base-text">Pre-order</a> · <a href="https://claudioolmedo.com/"
-          class="hover:text-base-text">Claudio Olmedo</a> · <a href="/brand/"
-          class="hover:text-base-text">Brand</a> · <a href="/about/" class="hover:text-base-text">About</a> · <button
-          type="button" data-odc-share class="hover:text-base-text bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer">Share</button> · <a
-          href="/llms.txt" class="hover:text-base-text">llms.txt</a></p>
-      <p class="text-sm font-semibold">Designed in Austin, TX — <span
-          class="text-transparent bg-clip-text bg-gradient-to-r from-base-accent to-base-sky">to change the WORLD</span>
-      </p>
+    <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div>
+        <p class="text-base-sub text-sm">© <span id="y"></span> One Dollar Computer · <a href="https://claudioolmedo.com/"
+            class="hover:text-base-text">Claudio Olmedo</a> · <a href="/brand/"
+            class="hover:text-base-text">Brand</a> · <a href="/about/" class="hover:text-base-text">About</a> · <button
+            type="button" data-odc-share class="hover:text-base-text bg-transparent border-0 p-0 font-inherit text-inherit cursor-pointer">Share</button> · <a
+            href="/llms.txt" class="hover:text-base-text">llms.txt</a></p>
+        <p class="mt-3 text-sm font-semibold">Designed in Austin, TX — <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-base-accent to-base-sky">to change the WORLD</span>
+        </p>
+      </div>
+      <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
     </div>
   </footer>
 
