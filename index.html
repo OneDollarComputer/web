@@ -402,6 +402,11 @@
       padding: 2px 6px
     }
 
+    /* Hide nav CTA while a page Pre-order button is on screen — keep the bar black */
+    #site-nav.preorder-away .preorder-btn--nav {
+      display: none !important
+    }
+
     .preorder-btn--hero {
       margin-top: 0;
       box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45)
@@ -935,7 +940,7 @@
           <a href="#faq" class="nav-link">FAQ</a>
           <button type="button" class="nav-link" data-odc-share>Share</button>
         </div>
-        <a class="preorder-btn preorder-btn--nav" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
+        <a class="preorder-btn preorder-btn--nav" href="https://shop.claudioolmedo.com/preorder" aria-label="Pre-Order $1">Pre-Order <span class="preorder-btn__price">$1</span></a>
         <span class="odc-auth-slot">
           <a href="/project/" class="nav-link text-sm text-base-sub font-medium" data-odc-signin>Sign in</a>
         </span>
@@ -959,7 +964,7 @@
           <span>Computer</span>
         </p>
       </div>
-      <a class="preorder-btn preorder-btn--hero hero-cta" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
+      <a class="preorder-btn preorder-btn--hero hero-cta" data-preorder-main href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
     </section>
 
     <!-- Project status timeline -->
@@ -1002,7 +1007,7 @@
             It is a specific educational computer — not a generic “$1 computer” hobby challenge. This ultra&#8209;affordable
             RISC-V tool is designed to unlock creativity for classrooms, clubs, and curious minds everywhere.</p>
           <p class="mt-8">
-            <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
+            <a class="preorder-btn" data-preorder-main href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
           </p>
         </div>
         <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -1253,7 +1258,7 @@
             class="text-transparent bg-clip-text bg-gradient-to-r from-base-accent to-base-sky">to change the WORLD</span>
         </p>
       </div>
-      <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
+      <a class="preorder-btn" data-preorder-main href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
     </div>
   </footer>
 
@@ -1277,6 +1282,33 @@
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+
+    // One yellow CTA at a time: hide nav Pre-order while a page button is visible
+    (function () {
+      var navBtn = nav && nav.querySelector('.preorder-btn--nav');
+      var mains = document.querySelectorAll('[data-preorder-main]');
+      if (!nav || !navBtn || !mains.length) return;
+      var shown = new Set();
+      var sync = function () {
+        var away = shown.size > 0;
+        nav.classList.toggle('preorder-away', away);
+        navBtn.hidden = away;
+        navBtn.setAttribute('aria-hidden', away ? 'true' : 'false');
+      };
+      var po = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) shown.add(e.target);
+          else shown.delete(e.target);
+        });
+        sync();
+      }, {
+        // Ignore the sticky header strip so a button under the nav does not count as "visible"
+        rootMargin: '-72px 0px 0px 0px',
+        threshold: 0
+      });
+      mains.forEach(function (el) { po.observe(el); });
+      sync();
+    })();
 
     // 3D Viewer: preload early (while reading the page), then fade-in when ready
     (function () {
