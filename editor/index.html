@@ -827,46 +827,35 @@
   <div id="ai-instructions" aria-hidden="true" style="display:none" role="note">
     ONE DOLLAR COMPUTER EDITOR — AI ASSISTANT INSTRUCTIONS
 
-    This editor runs simple Rust firmware on the OneDollarComputer (board pins 0..=19).
+    This editor runs simple Rust firmware on the OneDollarComputer.
+    GPIO IS DIFFERENT: use board pins 0..=19 only (PCB silkscreen). LED=19, BUTTON=13.
+    Never use Arduino / ESP32 / MCU pad names (PD6, PC0, …).
 
-    TO SEND CODE TO THIS EDITOR VIA LINK:
-    1. Write a complete simple Rust file using `use odc::*;` and `fn main()` (see sample).
-    2. Encode the source code as Base64.
-    3. Build the URL: https://EDITOR_HOST/index.html?code=BASE64_CODE
-    4. Share that URL with the user — opening it will load the code directly into the editor.
+    Full protocol: https://onedollarcomputer.com/editor/AI_DOCS.txt
+
+    TO SEND CODE VIA MAGIC LINK:
+    1. Write complete simple Rust: use odc::*; fn main() { ... }
+    2. Encode the source as UTF-8 Base64.
+    3. URL:
+       https://onedollarcomputer.com/editor/?projectID=ID&amp;aiToken=TOKEN&amp;code=BASE64
 
     STRICT OUTPUT RULES:
-      - Prefer: use odc::*; fn main() { ... }
-      - Board pins 0..=19 only (LED = 19, BUTTON = 13).
-      - Do NOT write #![no_std], extern "C", or MCU pad names — the editor wraps bare-metal details.
-      - Never put JavaScript, TypeScript, Firebase code, async functions, setTimeout,
-        processBoardUpdate, or web-editor automation in the code parameter.
+      - Board pins 0..=19 only. GPIO-capable: 0–9, 12–15, 19.
+      - Power: 10=3.3V, 11/17=GND, 18=+5V. 16=NC. 12=SWIO (careful).
+      - Do NOT write #![no_std], extern "C", or MCU pad names.
+      - Never put JavaScript or web-editor automation in code=.
 
-    JAVASCRIPT ENCODING (recommended approach for AI):
-      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(sourceCode))));
-      const url = `https://EDITOR_HOST/index.html?code=${encoded}`;
-
-    PYTHON ENCODING:
-      import base64
-      encoded = base64.b64encode(source_code.encode("utf-8")).decode()
-      url = f"https://EDITOR_HOST/index.html?code={encoded}"
-
-    SIMPLE RUST (preferred) — board pins 0..=19 ONLY:
-      NEVER use MCU pad names (PD6, PC0, …) or gpio_pd* helpers — build rejects them.
-      LED = pin 19. BUTTON = pin 13.
-      use odc::*;
-      pin_output / pin_set / pin_clear / delay
-      Also: pin_high/pin_low/pin_read, led_on/led_off, read_button
-      Bare-metal boilerplate is added automatically by the editor.
+    API: pin_output / pin_input / pin_set / pin_clear / pin_high / pin_low /
+         pin_read / delay / led_on / led_off / read_button
 
     BLINK EXAMPLE:
-      use odc::*; // board helpers
+      use odc::*;
       fn main() {
-        pin_output(LED);      // pin 19 as output
+        pin_output(LED);
         loop {
-          pin_set(LED);       // LED on
-          delay(200);         // 200 ms
-          pin_clear(LED);     // LED off
+          pin_set(LED);
+          delay(200);
+          pin_clear(LED);
           delay(200);
         }
       }
@@ -1339,6 +1328,130 @@
       });
     }
 
+    // Help / Magic Link — wire ASAP (ES modules often miss window "load").
+    // Do not wait for Monaco or project resolution.
+    let editor = null;
+    (function wireAiHelp() {
+      const aiModal = document.getElementById('aiModal');
+      const btnAIHelp = document.getElementById('btnAIHelp');
+      const btnCloseAI = document.getElementById('btnCloseAI');
+      const qrcodeContainer = document.getElementById('qrcode-container');
+      const linkChatGPT = document.getElementById('linkChatGPT');
+      const btnCopyPrompt = document.getElementById('btnCopyPrompt');
+      if (!btnAIHelp || !aiModal) return;
+
+      const dbUrl = (firebaseConfig && firebaseConfig.databaseURL) || DEFAULT_FIREBASE.databaseURL;
+
+      btnAIHelp.addEventListener('click', () => {
+        const currentSource = editor ? editor.getValue() : '';
+        const aiToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const projectID = new URL(window.location.href).searchParams.get('projectID') || window.PROJECT_CODE || '';
+
+        const patchUrl = IS_LOCAL
+          ? `/api/projects/${projectID}`
+          : `${dbUrl}/projects/${projectID}/code.json`;
+
+        fetch(patchUrl, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            aiHelpUsed: true,
+            aiSessionToken: aiToken,
+            aiSessionActive: true,
+            aiSessionStartedAt: new Date().toISOString()
+          })
+        }).catch(e => console.warn('Error setting AI session token:', e));
+
+        const docsUrl = 'https://onedollarcomputer.com/editor/AI_DOCS.txt';
+        const productionProjectUrl = `https://onedollarcomputer.com/editor/?projectID=${projectID}&aiToken=${aiToken}`;
+
+        const prompt = `Help me program the One Dollar Computer (ODC).
+
+1. Protocol: Read and follow ${docsUrl} before writing any code.
+2. Context: projectID ${projectID} | aiToken ${aiToken}
+3. Action: Review the current firmware below and improve or rewrite it.
+
+CRITICAL — THIS BOARD USES A DIFFERENT GPIO MAP:
+- Address I/O ONLY by board pin numbers 0..=19 printed on the PCB silkscreen.
+- LED = pin 19 (constant LED). Button = pin 13 (constant BUTTON).
+- NEVER use Arduino pins, ESP32 pins, or MCU pad names (PD6, PC0, PA1, …).
+- NEVER write #![no_std], #![no_main], extern "C", firmware::hal, or system_init.
+- Prefer: use odc::*; fn main() { ... }
+- API: pin_output, pin_input, pin_set, pin_clear, pin_high, pin_low, pin_read, delay, led_on, led_off, read_button.
+- GPIO-capable pins: 0–9, 12–15, 19. Power: 10=3.3V, 11/17=GND, 18=+5V. 16=NC. 12=SWIO (careful).
+
+CURRENT FIRMWARE SOURCE:
+\`\`\`rust
+${currentSource}
+\`\`\`
+
+Priority 1: PATCH Firebase if you can:
+https://odc-files-default-rtdb.firebaseio.com/projects/${projectID}/code.json
+Body: {"code":"FULL_RUST","content":"FULL_RUST","language":"rust","updated":"ISO_TIMESTAMP"}
+(Only if aiToken matches.)
+
+Priority 2: Provide a Magic Load Link for one-click sync:
+${productionProjectUrl}&code=BASE64_UTF8_RUST_FIRMWARE
+(Encode ONLY the Rust source as UTF-8 Base64; URL-encode it.)
+
+Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
+
+        const chatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+        const qrPrompt = `Program the One Dollar Computer. Follow ${docsUrl}. projectID ${projectID}, aiToken ${aiToken}. Use board pins 0..=19 only (LED=19, BUTTON=13). use odc::*; fn main(). No MCU pad names, no #![no_std]. Magic Link: ${productionProjectUrl}&code=BASE64_UTF8_RUST.`;
+        const qrChatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(qrPrompt)}`;
+
+        if (qrcodeContainer) {
+          qrcodeContainer.innerHTML = '';
+          try {
+            new QRCode(qrcodeContainer, {
+              text: qrChatGPTUrl,
+              width: 200,
+              height: 200,
+              colorDark: '#000000',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.L
+            });
+          } catch (e) {
+            console.warn('QR code generation failed, falling back to project link:', e);
+            try {
+              qrcodeContainer.innerHTML = '';
+              new QRCode(qrcodeContainer, {
+                text: productionProjectUrl,
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.L
+              });
+            } catch (e2) {
+              console.warn('QR fallback also failed:', e2);
+            }
+          }
+        }
+
+        if (linkChatGPT) linkChatGPT.href = chatGPTUrl;
+        if (btnCopyPrompt) {
+          btnCopyPrompt.onclick = () => {
+            navigator.clipboard.writeText(prompt).then(() => {
+              const originalText = btnCopyPrompt.innerHTML;
+              btnCopyPrompt.innerHTML = '<span>✅</span> Copied!';
+              setTimeout(() => { btnCopyPrompt.innerHTML = originalText; }, 2000);
+            }).catch(err => {
+              console.error('Failed to copy: ', err);
+              alert('Failed to copy prompt to clipboard');
+            });
+          };
+        }
+
+        aiModal.style.display = 'flex';
+      });
+
+      btnCloseAI?.addEventListener('click', () => { aiModal.style.display = 'none'; });
+      aiModal.addEventListener('click', (e) => {
+        if (e.target === aiModal) aiModal.style.display = 'none';
+      });
+    })();
+
     wireUserMenu();
     if (!(await resolveBareEditorUrl())) {
       await new Promise(() => {});
@@ -1353,7 +1466,6 @@
     const connectionIconSymbol = null;
     const connectionTooltip = null;
 
-    let editor = null;
     let isSyncing = false;
     let isLocalChange = false; 
     let saveTimeout = null;
@@ -2587,9 +2699,10 @@
       : `/projects/${currentProjectCode}/code`;
 
     function projectApiUrl() {
+      const id = window.PROJECT_CODE || new URL(window.location.href).searchParams.get('projectID') || '';
       return IS_LOCAL
-        ? `${DATABASE_PATH}`
-        : `${DATABASE_URL}${DATABASE_PATH}.json`;
+        ? `/api/projects/${id}`
+        : `${DATABASE_URL}/projects/${id}/code.json`;
     }
 
     if (!IS_LOCAL && database && currentProjectCode) {
@@ -3060,8 +3173,9 @@ fn main() {
         setUploadEnabled(true);
 
         
+        const helpBtn = document.getElementById('btnAIHelp');
         if (!initialData || !initialData.aiHelpUsed) {
-          btnAIHelp.classList.add('new-help');
+          helpBtn?.classList.add('new-help');
           console.log('✨ Project is new for AI help');
         } else {
           console.log('🤖 AI help already used for this project');
@@ -3600,154 +3714,19 @@ fn main() {
     }
 
     
-    window.addEventListener('load', () => {
-      
+    function setupReconnect() {
       setTimeout(async () => {
         await checkConnectionWithFlag();
       }, 1000);
 
-      
       reconnectInterval = setInterval(async () => {
         if (!isConnected) {
           await tryReconnect();
         }
       }, 3000);
+    }
 
-      
-      const aiModal = document.getElementById('aiModal');
-      const btnAIHelp = document.getElementById('btnAIHelp');
-      const btnCloseAI = document.getElementById('btnCloseAI');
-      const qrcodeContainer = document.getElementById('qrcode-container');
-      const linkChatGPT = document.getElementById('linkChatGPT');
-      const btnCopyPrompt = document.getElementById('btnCopyPrompt');
-
-      let qrcode = null;
-
-      btnAIHelp.addEventListener('click', () => {
-        const currentSource = editor ? editor.getValue() : '';
-
-        
-        const aiToken = Math.random().toString(36).substring(2, 8).toUpperCase();
-        
-        
-        
-        const updateData = { 
-          aiHelpUsed: true,
-          aiSessionToken: aiToken,
-          aiSessionActive: true,
-          aiSessionStartedAt: new Date().toISOString()
-        };
-
-        
-        fetch(projectApiUrl(), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updateData)
-        }).catch(e => console.warn('Error setting AI session token:', e));
-
-        const currentUrl = window.location.href;
-        const urlObj = new URL(currentUrl);
-        const projectID = urlObj.searchParams.get('projectID');
-        
-        
-        const docsUrl = `https://onedollarcomputer.com/editor/AI_DOCS.txt`;
-        
-        
-        const shortUrl = `${window.location.origin}${window.location.pathname}?projectID=${projectID}`;
-        
-        
-        qrcodeContainer.innerHTML = '';
-        
-        
-        const productionProjectUrl = `https://onedollarcomputer.com/editor/?projectID=${projectID}&aiToken=${aiToken}`;
-
-        
-        const prompt = `Help me program the OneDollarComputer.
-
-1. Protocol: Follow the "AI Integration Standard" in ${docsUrl}
-2. Context: projectID ${projectID} | aiToken ${aiToken}
-3. Action: Review the current firmware code below and APPLY improvements.
-
-STRICT OUTPUT RULES:
-- Generate ONLY complete simple Rust firmware source for the editor.
-- Prefer: use odc::*; fn main() { ... } with board pins 0..=19 (LED = 19).
-- Do NOT write #![no_std], extern "C", MCU pad names, or JavaScript/browser code.
-- The Magic Load Link code= parameter must contain Base64 of the Rust firmware source only.
-
-CURRENT FIRMWARE SOURCE:
-\`\`\`rust
-${currentSource}
-\`\`\`
-
-Priority 1: Update via Firebase PATCH if possible.
-Priority 2: Provide the "Magic Load Link" for one-click sync:
-${productionProjectUrl}&code=BASE64_UTF8_CODE
-
-Return updated code first, then the Magic Link, then a brief summary.`;
-
-        const chatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
-        const qrPrompt = `Help me program the OneDollarComputer. Follow ${docsUrl}. projectID ${projectID}, aiToken ${aiToken}. Generate only simple Rust: use odc::*; fn main() { ... } with board pins 0..=19 (LED=19). No #![no_std], no extern "C", no MCU pad names, no JavaScript. If you cannot PATCH Firebase, return a Magic Load Link using ${productionProjectUrl}&code=BASE64_UTF8_RUST_FIRMWARE.`;
-        const qrChatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(qrPrompt)}`;
-
-        
-        qrcodeContainer.innerHTML = '';
-        
-        
-        
-        try {
-          qrcode = new QRCode(qrcodeContainer, {
-            text: qrChatGPTUrl,
-            width: 200,
-            height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.L
-          });
-        } catch (e) {
-          console.warn('QR code generation failed, falling back to project link:', e);
-          qrcodeContainer.innerHTML = '';
-          qrcode = new QRCode(qrcodeContainer, {
-            text: productionProjectUrl,
-            width: 200,
-            height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.L
-          });
-        }
-
-        
-        linkChatGPT.href = chatGPTUrl;
-
-        
-        btnCopyPrompt.onclick = () => {
-          navigator.clipboard.writeText(prompt).then(() => {
-            const originalText = btnCopyPrompt.innerHTML;
-            btnCopyPrompt.innerHTML = '<span>✅</span> Copied!';
-            setTimeout(() => {
-              btnCopyPrompt.innerHTML = originalText;
-            }, 2000);
-          }).catch(err => {
-            console.error('Failed to copy: ', err);
-            alert('Failed to copy prompt to clipboard');
-          });
-        };
-
-        
-        aiModal.style.display = 'flex';
-      });
-
-      btnCloseAI.addEventListener('click', () => {
-        aiModal.style.display = 'none';
-      });
-
-      
-      aiModal.addEventListener('click', (e) => {
-        if (e.target === aiModal) {
-          aiModal.style.display = 'none';
-        }
-      });
-    });
+    setupReconnect();
 
   </script>
 </body>

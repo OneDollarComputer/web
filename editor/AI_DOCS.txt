@@ -1,99 +1,200 @@
-# OneDollarComputer (ODC) - AI Integration Standard
+# One Dollar Computer (ODC) — AI coding standard
 
-## AI ASSISTANT MANDATORY PROTOCOL
-To provide a seamless experience, you MUST follow this hierarchy of actions:
+Official editor: https://onedollarcomputer.com/editor/
+Official site: https://onedollarcomputer.com/
 
-### 0. [NON-NEGOTIABLE] OUTPUT ONLY FIRMWARE SOURCE
-The editor compiles **simple Rust** for the One Dollar Computer. The code you generate MUST be a complete beginner-friendly Rust source file.
-- Prefer:
-  ```rust
-  use odc::*;
-
-  fn main() {
-      ...
-  }
-  ```
-- Use board pin numbers **0..=19**. LED = **19** (`LED`). Button = **13** (`BUTTON`).
-- API: `pin_output`, `pin_set`, `pin_clear`, `delay`, `pin_high`, `pin_low`, `pin_read`, `read_button`.
-- **Do NOT** write `#![no_std]`, `#![no_main]`, `extern "C"`, `firmware::hal`, or `system_init` — the editor wraps that automatically.
-- **NEVER** use MCU pad names (`PD6`, `PC0`, …) or legacy helpers (`gpio_pd6_*`).
-- NEVER generate JavaScript, TypeScript, browser automation, Firebase client code, async functions, `setTimeout`, `processBoardUpdate`, or code that runs inside the web editor.
-- The `code` field and `code=` URL parameter must contain only the firmware Rust source.
-
-### 1. [PRIORITY A] DIRECT SYNCHRONIZATION (via Firebase PATCH)
-If you can perform HTTP requests, immediately update the user's project:
-- **Endpoint**: `https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/code.json`
-- **Method**: `PATCH`
-- **Body**: `{"code": "FULL_CODE", "content": "FULL_CODE", "language": "rust", "updated": "ISO_TIMESTAMP"}`
-- **Security**: ONLY valid if the `aiToken` matches the one stored in that project.
-
-### 2. [PRIORITY B] MAGIC LOAD LINK (Direct URL)
-If you cannot perform a PATCH, you MUST provide a "Magic Link" so the user can sync with one click:
-- **URL Format**: `https://onedollarcomputer.com/editor/?projectID={PROJECT_ID}&aiToken={TOKEN}&code={BASE64_CODE}`
-- **Encoding**: Encode the firmware Rust source as UTF-8 Base64. URL-encode the Base64 value, or use Base64URL (`+` -> `-`, `/` -> `_`, omit padding).
-
-### 3. [RESPONSE FORMAT]
-When you reply, keep it ultra-short:
-- **Greeting**: "I've analyzed your project and fixed/improved the code."
-- **Code Block**: The full, updated Rust firmware.
-- **Sync Link**: The Magic Link from step 2.
-- **Explanation**: A very brief (3-bullet max) summary of what changed.
+You are helping a beginner write firmware for the **One Dollar Computer**.
+This board is **not** Arduino, ESP32, Raspberry Pi Pico, or a generic CH32 demo board.
+Its I/O map is **different**. Follow this file exactly.
 
 ---
 
-## ODC DEVELOPER REFERENCE
-- **Board**: One Dollar Computer — logical pins **0..=19**
-- **Language**: Simple Rust (`use odc::*;` + `fn main()`)
-- **Standard Pins**: LED = **19**, Button = **13**
-- **Forbidden**: MCU names (`PD6`, …), `gpio_pd*`, and bare-metal boilerplate in beginner code
+## 0. NON-NEGOTIABLE OUTPUT RULES
 
-## AVAILABLE API (`odc`)
-- `pin_output(pin)` / `pin_input(pin)`
-- `pin_set(pin)` / `pin_clear(pin)` — logical (LED on/off for pin 19)
-- `pin_high(pin)` / `pin_low(pin)` — electrical levels
-- `pin_read(pin)` / `read_button()` / `led_on()` / `led_off()`
-- `delay(ms)` — millisecond delay
-- Constants: `LED` (19), `BUTTON` (13)
+Generate **only** complete beginner Rust firmware source.
 
-## BLINK EXAMPLE
+Preferred shape:
+
 ```rust
-//! Example: blink the LED on the One Dollar Computer.
-
-use odc::*; // board helpers: pins, delay, LED, …
+use odc::*;
 
 fn main() {
-    // Configure pin 19 (LED) as output
+    // ...
+}
+```
+
+Rules:
+- Use board pin numbers **0..=19** only (silkscreen on the PCB).
+- LED = **19** (`LED`). Button = **13** (`BUTTON`).
+- API: `pin_output`, `pin_input`, `pin_set`, `pin_clear`, `pin_high`, `pin_low`, `pin_read`, `delay`, `led_on`, `led_off`, `read_button`.
+- **Do NOT** write `#![no_std]`, `#![no_main]`, `extern "C"`, `firmware::hal`, or `system_init` — the editor wraps bare-metal details.
+- **NEVER** use MCU pad names (`PD6`, `PC0`, `PA1`, …) or legacy helpers (`gpio_pd6_*`).
+- **NEVER** invent Arduino-style pins (`D13`, `A0`) or ESP32 GPIO numbers.
+- **NEVER** generate JavaScript, TypeScript, browser code, Firebase client code, `setTimeout`, or editor automation.
+- The `code` field / Magic Link `code=` parameter must contain **only** the Rust firmware source.
+
+---
+
+## 1. THIS GPIO MAP IS DIFFERENT — READ CAREFULLY
+
+User firmware, the editor, and AI assistants **must** address I/O by **board pin number** (`0` … `19`).
+
+Why: the PCB silkscreen is numbered `0`–`19`. MCU revisions can remap pads. Hard-coding `PD6` breaks the next chip even when the board label is still `19`.
+
+| Who | Speaks | Example |
+|-----|--------|---------|
+| User / editor / AI | Board pin + `odc` | `19` / `LED`, `pin_set(LED)` |
+| Editor wrap | Bare-metal entry | added automatically |
+| Chip (private) | MCU pad | never expose to beginners |
+
+### Stable aliases
+
+| Constant | Pin | Role |
+|----------|-----|------|
+| `LED` | **19** | Onboard LED |
+| `BUTTON` | **13** | Boot / user button |
+| `PIN_3V3` | 10 | 3.3V power (not GPIO) |
+| `PIN_GND` | 11 | Ground |
+| `PIN_NC` | 16 | Not connected |
+| `PIN_GND2` | 17 | Ground |
+| `PIN_5V` | 18 | +5V / VBUS |
+
+### Full pin table (PCB labels)
+
+| Pin | Type | Notes |
+|-----|------|-------|
+| 0–7 | GPIO | General purpose |
+| 8–9 | GPIO | Analog-capable on current MCU |
+| 10 | Power | **3.3V** — do not drive as GPIO |
+| 11 | Ground | GND |
+| 12 | GPIO | Also **SWIO** — using as GPIO disables SWD until reboot |
+| 13 | Button | `BUTTON` — pull-up; `read_button()` |
+| 14–15 | GPIO | General purpose |
+| 16 | NC | Not connected |
+| 17 | Ground | GND |
+| 18 | Power | **+5V / VBUS** — do not drive as GPIO |
+| 19 | LED | `LED` — use `pin_set` / `pin_clear` for on/off |
+
+**GPIO-capable pins:** `0–9`, `12–15`, `19`.
+
+Orientation when wiring:
+- Left header: pins **0–9**
+- Right header: pins **10–19**
+
+---
+
+## 2. AVAILABLE API (`odc`)
+
+```rust
+pin_output(pin);   // configure as output
+pin_input(pin);    // configure as input
+pin_set(pin);      // logical high / LED on
+pin_clear(pin);    // logical low / LED off
+pin_high(pin);     // electrical high
+pin_low(pin);      // electrical low
+pin_read(pin);     // read pin
+delay(ms);         // millisecond delay
+led_on(); led_off();
+read_button();     // true when BUTTON (13) is pressed
+```
+
+Constants: `LED` (19), `BUTTON` (13).
+
+---
+
+## 3. EXAMPLES
+
+### Blink onboard LED (pin 19)
+
+```rust
+use odc::*;
+
+fn main() {
     pin_output(LED);
 
-    // Repeat forever
     loop {
-        pin_set(LED);   // turn LED on
-        delay(200);     // wait 200 ms
-
-        pin_clear(LED); // turn LED off
+        pin_set(LED);
+        delay(200);
+        pin_clear(LED);
         delay(200);
     }
 }
 ```
 
-## HARDWARE ORIENTATION & PHYSICAL PINOUT
-When guiding the user on wiring, use board pin **numbers** only:
-- Left header: pins **0–9**. Right header: pins **10–19**.
-- Power: **10** = 3.3V, **11** / **17** = GND, **18** = +5V.
-- LED = **19**. Button = **13**.
-- Do **not** tell users MCU pad names.
+### Blink an external LED on board pin 0
 
-## PINOUT REFERENCE
-- **0–7**: GPIO | **8–9**: GPIO (analog-capable)
-- **10**: 3.3V | **11**: GND
-- **12**: GPIO (SWIO — careful) | **13**: BUTTON | **14–15**: GPIO
-- **16**: NC | **17**: GND | **18**: +5V | **19**: LED
+```rust
+use odc::*;
 
-## ZERO DEFECTS POLICY
-- **NO placeholder comments.** One complete, compilable simple-Rust block.
-- **NO MCU pad names.** No `#![no_std]` / `extern "C"` in beginner output.
-- **NO web/editor code.**
+fn main() {
+    let pin = 0; // PCB label "0" — NOT Arduino D0 / NOT MCU PA0
+    pin_output(pin);
+
+    loop {
+        pin_set(pin);
+        delay(300);
+        pin_clear(pin);
+        delay(300);
+    }
+}
+```
+
+### Button (13) controls LED (19)
+
+```rust
+use odc::*;
+
+fn main() {
+    pin_output(LED);
+    pin_input(BUTTON);
+
+    loop {
+        if read_button() {
+            pin_set(LED);
+        } else {
+            pin_clear(LED);
+        }
+        delay(10);
+    }
+}
+```
 
 ---
 
-**FINAL INSTRUCTION**: Act like an Integrated Development Assistant. Always prioritize a "One-Click Sync" experience.
+## 4. SYNC PROTOCOL (Magic Link / Firebase)
+
+### Priority A — Firebase PATCH (if you can HTTP)
+
+- **Endpoint**: `https://odc-files-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/code.json`
+- **Method**: `PATCH`
+- **Body**: `{"code":"FULL_RUST","content":"FULL_RUST","language":"rust","updated":"ISO_TIMESTAMP"}`
+- **Security**: only if `aiToken` matches the project session token.
+
+(Legacy Board DB `onedollarboard-1b26a` is **wrong** — do not use it.)
+
+### Priority B — Magic Load Link (always provide)
+
+```
+https://onedollarcomputer.com/editor/?projectID={PROJECT_ID}&aiToken={TOKEN}&code={BASE64_CODE}
+```
+
+- Encode the **Rust source only** as UTF-8 Base64.
+- URL-encode the Base64 value, or use Base64URL (`+`→`-`, `/`→`_`, omit padding).
+
+### Response format
+
+1. Short greeting
+2. Full updated Rust code block
+3. Magic Load Link
+4. At most 3 bullets explaining what changed
+
+---
+
+## 5. ZERO DEFECTS
+
+- One complete, compilable simple-Rust block — no placeholders.
+- No MCU pad names. No Arduino/ESP pin numbers.
+- No `#![no_std]` / `extern "C"` in beginner output.
+- No web/editor code in the firmware or Magic Link payload.
+
+**Final instruction:** act as an integrated assistant. Prefer one-click sync via Magic Link. Always use board pins **0..=19**.
