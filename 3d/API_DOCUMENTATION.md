@@ -1,17 +1,17 @@
-# Documentação da API de Integração JavaScript (Visualizador 3D)
+# JavaScript Integration API (3D Viewer)
 
-Esta documentação descreve como incorporar o visualizador 3D do **OneDollarBoard** e controlá-lo dinamicamente através de JavaScript a partir de uma aplicação externa.
+This document describes how to embed the **One Dollar Computer** 3D viewer and control it from an external application with JavaScript.
 
-Ambos os visualizadores (`viewer.html` e `viewer_obj.html`) expõem a mesma API global sob o namespace `window.viewerAPI` e despacham eventos de ciclo de vida.
+Both viewers (`viewer.html` and `viewer_obj.html`) expose the same global API under `window.viewerAPI` and dispatch lifecycle events.
 
 ---
 
-## 1. Incorporação (Embedding)
+## 1. Embedding
 
-A maneira recomendada de embutir o visualizador é utilizando uma tag `<iframe>` HTML padrão:
+The recommended way to embed the viewer is a standard HTML `<iframe>`:
 
 ```html
-<!-- Exemplo de Incorporação em outro site -->
+<!-- Example: embed on another site -->
 <iframe 
   id="boardViewer"
   src="http://localhost:8081/viewer.html" 
@@ -24,79 +24,79 @@ A maneira recomendada de embutir o visualizador é utilizando uma tag `<iframe>`
 
 ---
 
-## 2. Eventos de Ciclo de Vida (Lifecycle Events)
+## 2. Lifecycle Events
 
-O visualizador despacha o evento customizado `viewerLoaded` no objeto global `window` assim que o modelo 3D é completamente baixado, processado e renderizado na cena.
+The viewer dispatches a custom `viewerLoaded` event on the global `window` once the 3D model is fully downloaded, processed, and rendered.
 
-### Escutando o evento de dentro do visualizador:
+### Listening from inside the viewer:
 ```javascript
 window.addEventListener('viewerLoaded', () => {
-  console.log("O modelo 3D foi carregado e está visível na tela!");
+  console.log("The 3D model is loaded and visible!");
 });
 ```
 
-### Escutando o evento a partir da página mãe (hospedeira):
+### Listening from the host page:
 ```javascript
 const iframe = document.getElementById('boardViewer');
 
 iframe.addEventListener('load', () => {
-  // O iframe carregou o HTML básico, agora escutamos a inicialização do 3D
+  // The iframe loaded the HTML; now wait for the 3D scene to initialize
   iframe.contentWindow.addEventListener('viewerLoaded', () => {
-    console.log("O 3D dentro do iframe foi inicializado!");
+    console.log("The 3D scene inside the iframe is ready!");
   });
 });
 ```
 
 ---
 
-## 3. Métodos da API (`window.viewerAPI`)
+## 3. API methods (`window.viewerAPI`)
 
-Uma vez que o visualizador esteja carregado, você pode controlar seu estado acessando o objeto `viewerAPI` no escopo global (`window.viewerAPI` ou `iframe.contentWindow.viewerAPI`).
+Once the viewer is loaded, control it through `viewerAPI` on the global scope (`window.viewerAPI` or `iframe.contentWindow.viewerAPI`).
 
 ### `onLoad(callback)`
-Garante a execução segura de um callback após o visualizador estar pronto. Se o visualizador já estiver carregado, roda o callback imediatamente.
+Runs a callback safely after the viewer is ready. If the viewer is already loaded, the callback runs immediately.
 
-- **Parâmetro**: `callback` (Função)
-- **Exemplo**:
+- **Parameter**: `callback` (Function)
+- **Example**:
 ```javascript
 viewerAPI.onLoad(() => {
-  console.log("A API está pronta para uso!");
-  viewerAPI.toggleSpin(true); // Inicia rotação automática
+  console.log("The API is ready!");
+  viewerAPI.toggleSpin(true); // Start auto-rotation
 });
 ```
 
 ---
 
 ### `applyTexture(kind)`
-Altera o modo de exibição de texturas no visualizador e sincroniza os botões do painel de controle.
+Changes how textures are shown and syncs the control-panel buttons.
 
-- **Parâmetro**: `kind` (String)
-  - `'both'`: Exibe as fotos de Topo e Base (Padrão).
-  - `'top'`: Exibe apenas a foto de Topo.
-  - `'button'`: Exibe apenas a foto de Base.
-  - `'none'`: Exibe apenas cores sólidas de PCB (Cor original).
-- **Exemplo**:
+- **Parameter**: `kind` (String)
+  - `'both'`: Show top and bottom photos (default).
+  - `'top'`: Show only the top photo.
+  - `'button'`: Show only the bottom photo.
+  - `'none'`: Show solid PCB colors only (original color).
+- **Example**:
 ```javascript
-// Remove as fotos e mostra a cor original da placa
+// Remove photos and show the board's original color
 viewerAPI.applyTexture('none');
 ```
 
 ---
 
 ### `setCalibration(layer, params)`
-Ajusta programaticamente os parâmetros de projeção e alinhamento de textura das fotos.
+Programmatically adjust photo projection and alignment.
 
-- **Parâmetros**:
-  - `layer` (String): `'top'` ou `'button'` (Base).
-  - `params` (Objeto):
-    - `scale` (Number): Escala da textura (ex: `1.0`).
-    - `offsetX` (Number): Deslocamento horizontal (ex: `0.0`).
-    - `offsetY` (Number): Deslocamento vertical (ex: `0.0`).
-    - `rotation` (Number): Rotação em graus (de `-180` a `180`).
-    - `flipV` (Boolean): Inverte verticalmente a textura (`true`/`false`).
-- **Exemplo**:
+- **Parameters**:
+  - `layer` (String): `'top'` or `'button'` (bottom).
+  - `params` (Object):
+    - `scale` (Number): Texture scale (e.g. `1.0`).
+    - `offsetX` (Number): Horizontal offset (e.g. `0.0`).
+    - `offsetY` (Number): Vertical offset (e.g. `0.0`).
+    - `rotation` (Number): Rotation in degrees (`-180` to `180`).
+    - `flipV` (Boolean): Flip the texture vertically (`true`/`false`).
+- **Example**:
 ```javascript
-// Aplica pequenos ajustes de offset e escala no topo da placa
+// Small offset and scale tweaks on the top of the board
 viewerAPI.setCalibration('top', {
   scale: 1.05,
   offsetX: 0.012,
@@ -108,81 +108,81 @@ viewerAPI.setCalibration('top', {
 ---
 
 ### `getCalibration()`
-Retorna uma cópia dos parâmetros de calibração vigentes de ambas as camadas em formato JSON.
+Returns a copy of the current calibration for both layers as JSON.
 
-- **Retorno**: Objeto de calibração.
-- **Exemplo**:
+- **Returns**: Calibration object.
+- **Example**:
 ```javascript
 const cal = viewerAPI.getCalibration();
-console.log("Calibração de topo atual:", cal.top);
-// Saída: { scale: 1.0, offsetX: 0.0, offsetY: 0.0, rotation: 0.0, flipV: false }
+console.log("Current top calibration:", cal.top);
+// Output: { scale: 1.0, offsetX: 0.0, offsetY: 0.0, rotation: 0.0, flipV: false }
 ```
 
 ---
 
 ### `toggleGrid(visible)`
-Liga ou desliga a grade de chão (GridHelper) no visualizador.
+Show or hide the floor grid (`GridHelper`) in the viewer.
 
-- **Parâmetro**: `visible` (Boolean)
-- **Exemplo**:
+- **Parameter**: `visible` (Boolean)
+- **Example**:
 ```javascript
-viewerAPI.toggleGrid(true); // Exibe a grade cinza no chão
+viewerAPI.toggleGrid(true); // Show the gray floor grid
 ```
 
 ---
 
 ### `toggleAxes(visible)`
-Exibe ou oculta as guias coloridas de eixos coordenados 3D (X: Vermelho, Y: Verde, Z: Azul).
+Show or hide the 3D axis guides (X: red, Y: green, Z: blue).
 
-- **Parâmetro**: `visible` (Boolean)
-- **Exemplo**:
+- **Parameter**: `visible` (Boolean)
+- **Example**:
 ```javascript
-viewerAPI.toggleAxes(true); // Exibe as guias de eixo
+viewerAPI.toggleAxes(true); // Show axis guides
 ```
 
 ---
 
 ### `toggleSpin(active)`
-Ativa ou desativa a rotação orbital automática lenta da câmera ao redor da placa.
+Enable or disable slow automatic orbit around the board.
 
-- **Parâmetro**: `active` (Boolean)
-- **Exemplo**:
+- **Parameter**: `active` (Boolean)
+- **Example**:
 ```javascript
-viewerAPI.toggleSpin(true); // Faz a placa girar sozinha
+viewerAPI.toggleSpin(true); // Rotate the board automatically
 ```
 
 ---
 
 ### `applyBg(theme)`
-Altera o esquema de cores e iluminação de fundo da cena 3D.
+Change the scene background color and lighting.
 
-- **Parâmetro**: `theme` (String)
-  - `'dark'`: Fundo cinza-escuro (Padrão).
-  - `'light'`: Fundo cinza-claro.
-  - `'studio'`: Iluminação realista de estúdio com neblina.
-- **Exemplo**:
+- **Parameter**: `theme` (String)
+  - `'dark'`: Dark gray background (default).
+  - `'light'`: Light gray background.
+  - `'studio'`: Studio lighting with fog.
+- **Example**:
 ```javascript
-viewerAPI.applyBg('studio'); // Aplica o fundo de estúdio
+viewerAPI.applyBg('studio'); // Apply the studio background
 ```
 
 ---
 
-## 4. Exemplo Completo de Integração
+## 4. Full integration example
 
-Abaixo está um exemplo de código completo de um painel de controle externo operando o visualizador de dentro de um iframe:
+A complete external control panel driving the viewer from an iframe:
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Painel de Controle 3D Externo</title>
+  <title>External 3D Control Panel</title>
 </head>
 <body>
 
-  <button onclick="changeTexture('none')">Sem Fotos (Cor Sólida)</button>
-  <button onclick="changeTexture('both')">Mostrar Fotos</button>
-  <button onclick="spinModel()">Girar Board</button>
-  <button onclick="zoomTop()">Ajustar Escala Topo (+5%)</button>
+  <button onclick="changeTexture('none')">No photos (solid color)</button>
+  <button onclick="changeTexture('both')">Show photos</button>
+  <button onclick="spinModel()">Spin board</button>
+  <button onclick="zoomTop()">Scale top +5%</button>
 
   <br><br>
 
@@ -196,7 +196,7 @@ Abaixo está um exemplo de código completo de um painel de controle externo ope
   <script>
     const iframe = document.getElementById('viewerFrame');
 
-    // Executa funções na API assim que o visualizador estiver carregado
+    // Call API methods once the viewer is loaded
     function getAPI() {
       if (iframe.contentWindow && iframe.contentWindow.viewerAPI) {
         return iframe.contentWindow.viewerAPI;

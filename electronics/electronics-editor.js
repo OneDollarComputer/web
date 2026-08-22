@@ -1625,10 +1625,7 @@ document.querySelectorAll('[data-mobile-section]').forEach((sectionEl) => {
 state.traceWidth = 0.25;
 
 
-document.getElementById('lang-select').onchange = (e) => setLanguage(e.target.value);
-const savedLang = localStorage.getItem('odb_pcb_lang') || 'en';
-document.getElementById('lang-select').value = savedLang;
-setLanguage(savedLang);
+setLanguage('en');
 
 renderSavedProjects();
 updateStats();

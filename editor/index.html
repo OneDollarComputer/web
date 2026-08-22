@@ -54,11 +54,14 @@
     if (projectID) {
       window.PROJECT_CODE = projectID;
     } else {
-      const params = new URLSearchParams(window.location.search);
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
       // Magic-load / AI links still get an anonymous project id.
-      if (params.get('code') || params.get('aiToken')) {
-        params.set('projectID', generateProjectID());
-        window.location.replace(`${window.location.pathname}?${params.toString()}`);
+      // Append projectID — do not rebuild the query (that corrupts Base64 +).
+      if (/[?&#](code|aiToken|m|magic)=/.test(search + hash)) {
+        const id = generateProjectID();
+        const nextSearch = search ? `${search}&projectID=${id}` : `?projectID=${id}`;
+        window.location.replace(`${window.location.pathname}${nextSearch}${hash}`);
       }
     }
   </script>
@@ -2277,13 +2280,13 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
         if (flashDevice && flashDevice.opened) return;
       }
 
-      updateStatus('Selecione o dispositivo ODB no menu HID...', '');
-      console.log('⚡ Abrindo menu WebHID para conectar ao One Dollar Computer...');
+      updateStatus('Select the One Dollar Computer in the HID menu...', '');
+      console.log('⚡ Opening WebHID picker to connect to the One Dollar Computer...');
       await connectWebHID();
       if (!flashDevice || !flashDevice.opened) {
-        throw new Error('Dispositivo não conectado via WebHID.');
+        throw new Error('Device not connected via WebHID.');
       }
-      console.log('✅ Bootloader conectado com sucesso. Iniciando gravação...');
+      console.log('✅ Bootloader connected. Starting flash...');
     }
 
     function pagePad64(srcU8, offset) {
@@ -3142,7 +3145,9 @@ fn main() {
 
       
       
-      const urlCode = window.DECODED_CODE_FROM_URL || null;
+      const urlCode = window.MAGIC_DECODE_READY
+        ? await window.MAGIC_DECODE_READY
+        : (window.DECODED_CODE_FROM_URL || null);
       if (urlCode) {
         initialCode = urlCode;
         lastSavedContent = urlCode;
