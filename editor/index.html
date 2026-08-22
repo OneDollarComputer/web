@@ -58,7 +58,7 @@
       const hash = window.location.hash || '';
       // Magic-load / AI links still get an anonymous project id.
       // Append projectID — do not rebuild the query (that corrupts Base64 +).
-      if (/[?&#](code|aiToken|m|magic)=/.test(search + hash)) {
+      if (/[?&#](code|aiToken)=/.test(search + hash)) {
         const id = generateProjectID();
         const nextSearch = search ? `${search}&projectID=${id}` : `?projectID=${id}`;
         window.location.replace(`${window.location.pathname}${nextSearch}${hash}`);
@@ -3145,9 +3145,7 @@ fn main() {
 
       
       
-      const urlCode = window.MAGIC_DECODE_READY
-        ? await window.MAGIC_DECODE_READY
-        : (window.DECODED_CODE_FROM_URL || null);
+      const urlCode = window.DECODED_CODE_FROM_URL || null;
       if (urlCode) {
         initialCode = urlCode;
         lastSavedContent = urlCode;

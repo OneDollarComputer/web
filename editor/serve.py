@@ -13,7 +13,6 @@ Env:
   ODC_EDITOR_MODE (local|firebase) — overridden by --mode
   ODC_MONOREPO — path to bootloader_odb (firmware + FlashingPro + wrap_odc).
     Auto-detected when editor sits inside the monorepo or under common clone paths.
-  APIFY_TOKEN / editor/secrets/apify.json — short Magic Link store (KV).
 """
 
 from __future__ import annotations
@@ -31,7 +30,7 @@ import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
@@ -77,64 +76,6 @@ def discover_monorepo() -> Path:
             return candidate.resolve()
 
     return parent
-
-
-APIFY_STORE_ID_DEFAULT = "ggjuIUFb4w7chkiVd"
-MAGIC_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{4,64}$")
-
-
-def load_apify() -> tuple[str, str]:
-    token = (os.environ.get("APIFY_TOKEN") or "").strip()
-    store = (os.environ.get("APIFY_STORE_ID") or APIFY_STORE_ID_DEFAULT).strip()
-    secret = ROOT / "secrets" / "apify.json"
-    if secret.is_file():
-        try:
-            data = json.loads(secret.read_text(encoding="utf-8"))
-            token = token or str(data.get("token") or data.get("apify_token") or "").strip()
-            store = str(data.get("storeId") or data.get("store_id") or store).strip()
-        except (OSError, ValueError):
-            pass
-    return token, store or APIFY_STORE_ID_DEFAULT
-
-
-def magic_id_for(code: str, requested: str | None = None) -> str:
-    if requested and MAGIC_ID_RE.fullmatch(requested):
-        return requested
-    return hashlib.sha1(code.encode("utf-8")).hexdigest()[:10]
-
-
-def apify_get_magic(mid: str) -> dict | None:
-    if not MAGIC_ID_RE.fullmatch(mid):
-        return None
-    _token, store = load_apify()
-    url = f"https://api.apify.com/v2/key-value-stores/{store}/records/{mid}"
-    try:
-        with urlopen(Request(url, method="GET"), timeout=4) as resp:
-            raw = resp.read().decode("utf-8")
-            data = json.loads(raw)
-            return data if isinstance(data, dict) else {"code": raw}
-    except (HTTPError, URLError, TimeoutError, ValueError, OSError):
-        return None
-
-
-def apify_put_magic(mid: str, code: str) -> dict:
-    token, store = load_apify()
-    if not token:
-        raise RuntimeError("APIFY_TOKEN missing (set env or editor/secrets/apify.json)")
-    url = f"https://api.apify.com/v2/key-value-stores/{store}/records/{mid}"
-    body = json.dumps({"code": code}).encode("utf-8")
-    req = Request(
-        url,
-        data=body,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        },
-        method="PUT",
-    )
-    with urlopen(req, timeout=4) as resp:
-        resp.read()
-    return {"ok": True, "id": mid, "code": code, "storeId": store}
 
 
 REPO_ROOT = discover_monorepo()
@@ -725,19 +666,6 @@ class Handler(SimpleHTTPRequestHandler):
             self._send_json(200, config_payload())
             return
 
-        if path == "/api/magic":
-            qs = parse_qs(parsed.query)
-            mid = (qs.get("id") or [None])[0]
-            if not mid:
-                self._send_json(400, {"error": "missing id"})
-                return
-            record = apify_get_magic(mid)
-            if not record or not (record.get("code") or record.get("content")):
-                self._send_json(404, {"error": "not found"})
-                return
-            self._send_json(200, {"ok": True, "id": mid, "code": record.get("code") or record.get("content")})
-            return
-
         if MODE != "local":
             if path.startswith("/api/"):
                 self._send_json(404, {"error": "local API disabled in firebase mode"})
@@ -808,25 +736,11 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:
         if self._proxy_physicalai("POST"):
             return
-        parsed = urlparse(self.path)
-        path = parsed.path
-        if path == "/api/magic":
-            data = self._read_json()
-            code = (data.get("code") or data.get("content") or "").strip()
-            if not code:
-                self._send_json(400, {"ok": False, "error": "empty code"})
-                return
-            mid = magic_id_for(code, data.get("id"))
-            try:
-                saved = apify_put_magic(mid, code)
-            except Exception as e:
-                self._send_json(502, {"ok": False, "error": str(e)})
-                return
-            self._send_json(200, saved)
-            return
         if MODE != "local":
             self._send_json(404, {"error": "local API disabled in firebase mode"})
             return
+        parsed = urlparse(self.path)
+        path = parsed.path
         data = self._read_json()
 
         if path == "/api/flash":
