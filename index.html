@@ -347,7 +347,8 @@
       display: none
     }
 
-    .nav-glass.brand-visible .nav-brand-text {
+    .nav-glass.brand-visible .nav-brand-text,
+    #site-nav.preorder-away .nav-brand-text {
       max-width: 16rem;
       opacity: 1;
       transform: none;
@@ -373,7 +374,9 @@
         gap: .625rem
       }
 
-      #site-nav.brand-visible:not(.preorder-away) .nav-brand-text {
+      /* Nav Pre-Order visible, or still in hero with page Pre-Order → short label */
+      #site-nav.brand-visible:not(.preorder-away) .nav-brand-text,
+      #site-nav.preorder-away:not(.brand-visible) .nav-brand-text {
         max-width: 100%;
         margin-left: .5rem;
         font-size: clamp(0.6875rem, 4.2cqi, 0.875rem);
@@ -381,12 +384,31 @@
         text-overflow: ellipsis
       }
 
-      #site-nav.brand-visible:not(.preorder-away) .nav-brand-full {
+      #site-nav.brand-visible:not(.preorder-away) .nav-brand-full,
+      #site-nav.preorder-away:not(.brand-visible) .nav-brand-full {
         display: none
       }
 
-      #site-nav.brand-visible:not(.preorder-away) .nav-brand-short {
+      #site-nav.brand-visible:not(.preorder-away) .nav-brand-short,
+      #site-nav.preorder-away:not(.brand-visible) .nav-brand-short {
         display: inline
+      }
+
+      /* Nav Pre-Order hidden and past hero → full name, fluid size */
+      #site-nav.brand-visible.preorder-away .nav-brand-text {
+        max-width: 100%;
+        margin-left: .5rem;
+        font-size: clamp(0.6875rem, 3.8cqi, 0.875rem);
+        letter-spacing: -.01em;
+        text-overflow: ellipsis
+      }
+
+      #site-nav.brand-visible.preorder-away .nav-brand-full {
+        display: inline
+      }
+
+      #site-nav.brand-visible.preorder-away .nav-brand-short {
+        display: none
       }
     }
 
