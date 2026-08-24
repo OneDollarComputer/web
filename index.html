@@ -321,6 +321,11 @@
       box-shadow: 0 1px 0 rgba(29, 40, 67, .5), 0 4px 24px rgba(0, 0, 0, .25)
     }
 
+    .nav-brand-link {
+      min-width: 0;
+      flex-shrink: 1
+    }
+
     .nav-brand-text {
       display: inline-block;
       max-width: 0;
@@ -333,12 +338,31 @@
       transition: opacity .35s ease, max-width .45s cubic-bezier(.16, 1, .3, 1), transform .35s ease, margin-left .35s ease
     }
 
+    .nav-brand-short {
+      display: none
+    }
+
     .nav-glass.brand-visible .nav-brand-text {
       max-width: 16rem;
       opacity: 1;
       transform: none;
       margin-left: .75rem;
       pointer-events: auto
+    }
+
+    /* Mobile: Pre-Order in the bar → short brand so the title stays readable */
+    @media (max-width: 767px) {
+      #site-nav.brand-visible:not(.preorder-away) .nav-brand-text {
+        max-width: 7.5rem
+      }
+
+      #site-nav.brand-visible:not(.preorder-away) .nav-brand-full {
+        display: none
+      }
+
+      #site-nav.brand-visible:not(.preorder-away) .nav-brand-short {
+        display: inline
+      }
     }
 
     .nav-link {
@@ -1063,7 +1087,10 @@
     <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <a class="nav-brand-link flex items-center group" href="/" aria-label="One Dollar Computer home">
         <img src="/odc_logo_white.svg" width="36" height="36" alt="" class="h-9 w-9" decoding="async" />
-        <span class="nav-brand-text text-lg tracking-tight font-semibold">One Dollar Computer</span>
+        <span class="nav-brand-text text-lg tracking-tight font-semibold">
+          <span class="nav-brand-full">One Dollar Computer</span>
+          <span class="nav-brand-short" aria-hidden="true">1$Computer</span>
+        </span>
       </a>
       <div class="flex items-center gap-4 md:gap-7">
         <div class="hidden md:flex items-center gap-7 text-sm text-base-sub font-medium">
