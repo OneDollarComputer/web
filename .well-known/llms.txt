@@ -44,6 +44,12 @@ on the board a student does not need. It took more than ten years of refinement.
 The cost breakdown is shown part by part in the video on
 https://onedollarcomputer.com/
 
+## Founder story
+
+Claudio Olmedo started the One Dollar Computer twelve years ago to change the
+world with a computer anyone could afford. He never gave up: the goal is to
+awaken talent worldwide. Official site: https://onedollarcomputer.com/
+
 ## Optional / secondary pages
 
 - Homepage (marketing): https://onedollarcomputer.com/
