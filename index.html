@@ -507,6 +507,12 @@
       display: none !important
     }
 
+    /* Avoid a flash of the nav Pre-Order before intersection state is known */
+    #site-nav.preorder-nav-pending .preorder-btn--nav {
+      visibility: hidden;
+      pointer-events: none
+    }
+
     .preorder-btn--hero {
       margin-top: 0;
       box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45)
@@ -1130,7 +1136,7 @@
     class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-base-card border border-base-line/60 rounded-md px-3 py-2">Skip
     to content</a>
 
-  <header id="site-nav" class="fixed top-0 left-0 right-0 z-50 nav-glass">
+  <header id="site-nav" class="fixed top-0 left-0 right-0 z-50 nav-glass preorder-nav-pending preorder-away">
     <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <a class="nav-brand-link flex items-center group" href="/" aria-label="One Dollar Computer home">
         <img src="/odc_logo_white.svg" width="36" height="36" alt="" class="h-9 w-9" decoding="async" />
@@ -1597,14 +1603,32 @@
     (function () {
       var navBtn = nav && nav.querySelector('.preorder-btn--nav');
       var mains = document.querySelectorAll('[data-preorder-main]');
-      if (!nav || !navBtn || !mains.length) return;
+      var navStrip = 72;
+
+      function pagePreorderVisible(el) {
+        var r = el.getBoundingClientRect();
+        return r.bottom > navStrip && r.top < window.innerHeight && r.width > 0 && r.height > 0;
+      }
+
+      if (!nav || !navBtn || !mains.length) {
+        if (nav) nav.classList.remove('preorder-nav-pending');
+        return;
+      }
+
       var shown = new Set();
       var sync = function () {
         var away = shown.size > 0;
         nav.classList.toggle('preorder-away', away);
         navBtn.hidden = away;
         navBtn.setAttribute('aria-hidden', away ? 'true' : 'false');
+        nav.classList.remove('preorder-nav-pending');
       };
+
+      mains.forEach(function (el) {
+        if (pagePreorderVisible(el)) shown.add(el);
+      });
+      sync();
+
       var po = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (e.isIntersecting) shown.add(e.target);
@@ -1617,7 +1641,6 @@
         threshold: 0
       });
       mains.forEach(function (el) { po.observe(el); });
-      sync();
     })();
 
     // Cost video: play in place — picture + sound only, no player chrome
