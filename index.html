@@ -350,10 +350,24 @@
       pointer-events: auto
     }
 
-    /* Mobile: Pre-Order in the bar → short brand so the title stays readable */
+    /* Mobile: Pre-Order in the bar → short brand; logo already shows the 1 */
     @media (max-width: 767px) {
+      #site-nav nav {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        gap: .5rem
+      }
+
+      #site-nav .nav-actions {
+        flex-shrink: 0;
+        gap: .625rem
+      }
+
       #site-nav.brand-visible:not(.preorder-away) .nav-brand-text {
-        max-width: 7.5rem
+        max-width: 5.75rem;
+        margin-left: .5rem;
+        font-size: .8125rem;
+        letter-spacing: -.01em
       }
 
       #site-nav.brand-visible:not(.preorder-away) .nav-brand-full {
@@ -1089,10 +1103,10 @@
         <img src="/odc_logo_white.svg" width="36" height="36" alt="" class="h-9 w-9" decoding="async" />
         <span class="nav-brand-text text-lg tracking-tight font-semibold">
           <span class="nav-brand-full">One Dollar Computer</span>
-          <span class="nav-brand-short" aria-hidden="true">1$Computer</span>
+          <span class="nav-brand-short" aria-hidden="true">$Computer</span>
         </span>
       </a>
-      <div class="flex items-center gap-4 md:gap-7">
+      <div class="nav-actions flex items-center gap-4 md:gap-7">
         <div class="hidden md:flex items-center gap-7 text-sm text-base-sub font-medium">
           <a href="#philosophy" class="nav-link">Philosophy</a>
           <a href="#vision" class="nav-link">Vision</a>
