@@ -38,12 +38,16 @@
     },
     "curriculum": {
       "agentPairing": {
-        ".read": false,
-        ".write": false
+        "$code": {
+          ".read": true,
+          ".write": "auth != null && ((!data.exists() && newData.child('createdBy').val() === auth.uid && newData.child('status').val() === 'pending') || (data.exists() && data.child('status').val() === 'pending' && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('createdBy').val() === auth.uid))"
+        }
       },
       "agentTokens": {
-        ".read": false,
-        ".write": false
+        "$hash": {
+          ".read": false,
+          ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || data.child('uid').val() === auth.uid)"
+        }
       },
       "byUser": {
         "$uid": {

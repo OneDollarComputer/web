@@ -17,6 +17,10 @@ const DEFAULT_API =
   process.env.ODC_CURRICULUM_API ||
   "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent";
 
+const RTDB_URL =
+  process.env.ODC_RTDB_URL ||
+  "https://odc-files-default-rtdb.firebaseio.com";
+
 const TOKEN_PATH = path.join(os.homedir(), ".config", "odc", "curriculum-agent.json");
 
 function loadStore() {
@@ -89,7 +93,7 @@ server.tool(
   "curriculum_pair",
   "Pair with One Dollar Computer curriculum. Pass the connect URL or code from the site (Connect agent). Polls until you confirm in the browser, then stores the agent token locally.",
   {
-    connect_url_or_code: z.string().describe("URL like https://onedollarcomputer.com/curriculum/?connect=... or the raw code")
+    connect_url_or_code: z.string().describe("URL like https://odc.rs/curriculum/?connect=... or the raw code")
   },
   async ({ connect_url_or_code }) => {
     const code = extractCode(connect_url_or_code);
@@ -100,14 +104,45 @@ server.tool(
     let last = "pending";
 
     while (Date.now() < deadline) {
-      const st = await api("GET", `/pair/status?code=${encodeURIComponent(code)}`);
-      last = st.status;
+      // Prefer RTDB (site writes pairing here); fall back to Cloud Function
+      let st = null;
+      try {
+        const res = await fetch(
+          `${RTDB_URL}/curriculum/agentPairing/${encodeURIComponent(code)}.json`
+        );
+        if (res.ok) {
+          const row = await res.json();
+          if (row) {
+            st = {
+              status: row.status,
+              token: row.tokenPending || null
+            };
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!st) {
+        try {
+          st = await api("GET", `/pair/status?code=${encodeURIComponent(code)}`);
+        } catch (err) {
+          st = { status: "error", error: err.message };
+        }
+      }
+
+      last = st.status || last;
       if (st.token) {
         saveStore({
           token: st.token,
           api: DEFAULT_API,
           pairedAt: new Date().toISOString()
         });
+        // Best-effort: mark claimed via API so token is one-time when possible
+        try {
+          await api("GET", `/pair/status?code=${encodeURIComponent(code)}`);
+        } catch {
+          /* ignore */
+        }
         return textResult({
           ok: true,
           status: "connected",

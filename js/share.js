@@ -31,12 +31,21 @@
 
   function shareUrl() {
     var path = publicPath();
-    return SHARE_ORIGIN + (path === '/' ? '/' : path);
+    var base = SHARE_ORIGIN + (path === '/' ? '/' : path);
+    // Keep lesson / connect query on curriculum so Share copies the real target
+    if (/^\/curriculum\/?$/.test(path) && location.search) {
+      return base + location.search;
+    }
+    return base;
   }
 
   function qrUrl() {
     var path = publicPath();
-    return LIVE_ORIGIN + (path === '/' ? '/' : path);
+    var base = LIVE_ORIGIN + (path === '/' ? '/' : path);
+    if (/^\/curriculum\/?$/.test(path) && location.search) {
+      return base + location.search;
+    }
+    return base;
   }
 
   function css() {

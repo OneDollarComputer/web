@@ -40,6 +40,8 @@ const PRESENCE_COLORS = ["#0f766e", "#1d4ed8", "#b45309", "#be123c", "#7c3aed", 
 
 const AGENT_API =
   "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent";
+const SHORT_ORIGIN = "https://odc.rs";
+const PAIR_TTL_MS = 10 * 60 * 1000;
 
 const app = initializeApp(FIREBASE);
 const auth = getAuth(app);
@@ -162,24 +164,51 @@ function setConnectStatus(msg) {
   if (connectStatus) connectStatus.textContent = msg || "";
 }
 
+function randomSecret(bytes = 18) {
+  const a = new Uint8Array(bytes);
+  crypto.getRandomValues(a);
+  let s = "";
+  for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function agentConnectUrl(code) {
+  return `${SHORT_ORIGIN}/curriculum/?connect=${encodeURIComponent(code)}`;
+}
+
 let pendingAgentCode = null;
+let pendingAgentTokenHashes = [];
 
 async function startAgentPair() {
   if (!me) return;
-  agentPanel.hidden = false;
+  if (agentPanel) agentPanel.hidden = false;
   setAgentStatus("Creating link…");
-  btnAgentConfirm.hidden = true;
-  btnAgentDeny.hidden = true;
+  if (btnAgentConfirm) btnAgentConfirm.hidden = true;
+  if (btnAgentDeny) btnAgentDeny.hidden = true;
+  if (btnAgentConfirm) btnAgentConfirm.disabled = false;
   try {
-    const data = await agentFetch("POST", "/pair/start", {});
-    pendingAgentCode = data.code;
-    agentLink.value = data.connectUrl;
-    setAgentStatus("Waiting for agent — copy the link, then Confirm when ready.");
-    btnAgentConfirm.hidden = false;
-    btnAgentDeny.hidden = false;
+    const code = randomSecret(18);
+    const now = Date.now();
+    await set(ref(db, `curriculum/agentPairing/${code}`), {
+      status: "pending",
+      createdBy: me.uid,
+      createdAt: now,
+      expiresAt: now + PAIR_TTL_MS
+    });
+    pendingAgentCode = code;
+    const url = agentConnectUrl(code);
+    if (agentLink) agentLink.value = url;
+    setAgentStatus("Copy the link into your agent, then Confirm here.");
+    if (btnAgentConfirm) btnAgentConfirm.hidden = false;
+    if (btnAgentDeny) btnAgentDeny.hidden = false;
   } catch (err) {
     console.error(err);
-    setAgentStatus("Could not start pairing. Try again later.");
+    setAgentStatus(err?.message || "Could not start pairing. Try again.");
   }
 }
 
@@ -187,8 +216,33 @@ async function confirmAgentPair(code) {
   const c = code || pendingAgentCode || connectQueryCode();
   if (!c || !me) return;
   try {
-    await agentFetch("POST", "/pair/confirm", { code: c });
-    setAgentStatus("Confirmed — the agent can finish pairing.");
+    const snap = await get(ref(db, `curriculum/agentPairing/${c}`));
+    if (!snap.exists()) throw new Error("Unknown or expired code");
+    const row = snap.val();
+    if (row.status !== "pending") throw new Error(`Pairing is ${row.status}`);
+    if (row.expiresAt && Date.now() > row.expiresAt) {
+      await update(ref(db, `curriculum/agentPairing/${c}`), { status: "expired" });
+      throw new Error("Code expired — start again");
+    }
+
+    const token = `odc_agent_${randomSecret(32)}`;
+    const tokenHash = await sha256Hex(token);
+    const now = Date.now();
+    await set(ref(db, `curriculum/agentTokens/${tokenHash}`), {
+      uid: me.uid,
+      createdAt: now,
+      pairingCode: c
+    });
+    await set(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes/${tokenHash}`), true);
+    await update(ref(db, `curriculum/agentPairing/${c}`), {
+      status: "approved",
+      uid: me.uid,
+      tokenHash,
+      tokenPending: token,
+      confirmedAt: now
+    });
+    pendingAgentTokenHashes.push(tokenHash);
+    setAgentStatus("Confirmed — tell the agent to finish pairing.");
     setConnectStatus("Confirmed. You can close this.");
     if (btnConnectConfirm) btnConnectConfirm.disabled = true;
     if (btnAgentConfirm) btnAgentConfirm.disabled = true;
@@ -204,7 +258,11 @@ async function denyAgentPair(code) {
   const c = code || pendingAgentCode || connectQueryCode();
   if (!c || !me) return;
   try {
-    await agentFetch("POST", "/pair/deny", { code: c });
+    await update(ref(db, `curriculum/agentPairing/${c}`), {
+      status: "denied",
+      uid: me.uid,
+      deniedAt: Date.now()
+    });
     setAgentStatus("Denied.");
     setConnectStatus("Denied.");
     clearConnectQuery();
@@ -219,8 +277,23 @@ async function revokeAgentTokens() {
   if (!me) return;
   if (!confirm("Revoke all agent tokens for your account?")) return;
   try {
-    const data = await agentFetch("POST", "/pair/revoke", {});
-    setAgentStatus(`Revoked ${data.revoked || 0} token(s).`);
+    const snap = await get(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes`));
+    const hashes = snap.exists() ? Object.keys(snap.val()) : [];
+    const updates = {};
+    const now = Date.now();
+    hashes.forEach((th) => {
+      updates[`curriculum/agentTokens/${th}/revoked`] = true;
+      updates[`curriculum/agentTokens/${th}/revokedAt`] = now;
+      updates[`curriculum/byUser/${me.uid}/agentTokenHashes/${th}`] = null;
+    });
+    if (hashes.length) await update(ref(db), updates);
+    // Also ask API (covers tokens created only via Cloud Function)
+    try {
+      await agentFetch("POST", "/pair/revoke", {});
+    } catch {
+      /* optional */
+    }
+    setAgentStatus(`Revoked ${hashes.length || 0} token(s).`);
   } catch (err) {
     console.error(err);
     setAgentStatus(err.message || "Revoke failed.");
@@ -991,7 +1064,7 @@ function shareLink() {
     setStatus("Save the lesson first.");
     return;
   }
-  const url = `${location.origin}/curriculum/?lesson=${encodeURIComponent(currentId)}`;
+  const url = `${SHORT_ORIGIN}/curriculum/?lesson=${encodeURIComponent(currentId)}`;
   navigator.clipboard?.writeText(url).then(
     () => setStatus("Link copied."),
     () => setStatus(url)
@@ -1101,10 +1174,14 @@ modeSuggest?.addEventListener("click", () => {
 
 btnAgent?.addEventListener("click", () => startAgentPair());
 btnCopyAgent?.addEventListener("click", () => {
-  if (!agentLink?.value) return;
-  navigator.clipboard?.writeText(agentLink.value).then(
+  const url = agentLink?.value?.trim();
+  if (!url) {
+    setAgentStatus("No link yet — click Connect agent.");
+    return;
+  }
+  navigator.clipboard?.writeText(url).then(
     () => setAgentStatus("Link copied — paste it into your agent."),
-    () => setAgentStatus(agentLink.value)
+    () => setAgentStatus(url)
   );
 });
 btnAgentConfirm?.addEventListener("click", () => confirmAgentPair());
