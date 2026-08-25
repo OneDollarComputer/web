@@ -65,9 +65,34 @@
             <p class="user-meta" id="userMeta"></p>
           </div>
           <div id="presenceBar" class="presence-bar" aria-live="polite"></div>
+          <button type="button" id="btnAgent" class="ghost-sm">Connect agent</button>
           <button type="button" id="btnSignOut" class="ghost">Sign out</button>
         </div>
+        <div id="agentPanel" class="agent-panel" hidden>
+          <p class="agent-lede">Paste this link into Cursor, Codex, or another agent. Confirm here when it asks.</p>
+          <div class="agent-link-row">
+            <input id="agentLink" type="text" readonly />
+            <button type="button" id="btnCopyAgent" class="primary-sm">Copy</button>
+          </div>
+          <p id="agentStatus" class="agent-status" role="status"></p>
+          <div class="agent-actions">
+            <button type="button" id="btnAgentConfirm" class="primary-sm" hidden>Confirm</button>
+            <button type="button" id="btnAgentDeny" class="ghost-sm" hidden>Deny</button>
+            <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke tokens</button>
+            <button type="button" id="btnAgentClose" class="ghost-sm">Close</button>
+          </div>
+        </div>
       </div>
+
+      <section id="connectPanel" class="panel connect-panel" hidden>
+        <h2>Connect agent</h2>
+        <p id="connectLede" class="lede">An agent wants access to your curriculum lessons.</p>
+        <div class="form-actions">
+          <button type="button" id="btnConnectConfirm" class="primary">Confirm</button>
+          <button type="button" id="btnConnectDeny" class="ghost">Deny</button>
+        </div>
+        <p id="connectStatus" class="status" role="status"></p>
+      </section>
 
       <div class="studio-grid">
         <aside class="panel side">

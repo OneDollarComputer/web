@@ -17,7 +17,7 @@
 - **Brand identity page:** https://onedollarcomputer.com/brand/
 - **About / mission:** https://onedollarcomputer.com/about/
 - **Sign in / your page:** https://onedollarcomputer.com/project/ (Google → public URL `/{username}/` with published projects)
-- **Curriculum (teachers):** https://onedollarcomputer.com/curriculum/ — share `?lesson=id` shows title only until Google sign-in; authors co-edit, others suggest
+- **Curriculum (teachers):** https://onedollarcomputer.com/curriculum/ — share `?lesson=id` shows title only until Google sign-in; authors co-edit, others suggest; agents can pair via Connect agent (MCP under `/curriculum/mcp/`)
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
 - **Founder:** Claudio Olmedo — https://claudioolmedo.com/

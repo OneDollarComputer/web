@@ -37,6 +37,14 @@
       ".write": true
     },
     "curriculum": {
+      "agentPairing": {
+        ".read": false,
+        ".write": false
+      },
+      "agentTokens": {
+        ".read": false,
+        ".write": false
+      },
       "byUser": {
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",

@@ -38,6 +38,9 @@ const FIREBASE = {
 
 const PRESENCE_COLORS = ["#0f766e", "#1d4ed8", "#b45309", "#be123c", "#7c3aed", "#0369a1"];
 
+const AGENT_API =
+  "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent";
+
 const app = initializeApp(FIREBASE);
 const auth = getAuth(app);
 const db = getDatabase(app);
@@ -75,6 +78,20 @@ const modeSuggest = document.getElementById("modeSuggest");
 const suggestPanel = document.getElementById("suggestPanel");
 const suggestForm = document.getElementById("suggestForm");
 const sugList = document.getElementById("sugList");
+const btnAgent = document.getElementById("btnAgent");
+const agentPanel = document.getElementById("agentPanel");
+const agentLink = document.getElementById("agentLink");
+const agentStatus = document.getElementById("agentStatus");
+const btnCopyAgent = document.getElementById("btnCopyAgent");
+const btnAgentConfirm = document.getElementById("btnAgentConfirm");
+const btnAgentDeny = document.getElementById("btnAgentDeny");
+const btnAgentRevoke = document.getElementById("btnAgentRevoke");
+const btnAgentClose = document.getElementById("btnAgentClose");
+const connectPanel = document.getElementById("connectPanel");
+const connectLede = document.getElementById("connectLede");
+const connectStatus = document.getElementById("connectStatus");
+const btnConnectConfirm = document.getElementById("btnConnectConfirm");
+const btnConnectDeny = document.getElementById("btnConnectDeny");
 
 let me = null;
 let myUsername = null;
@@ -94,11 +111,158 @@ function lessonQueryId() {
   return new URLSearchParams(location.search).get("lesson") || null;
 }
 
+function connectQueryCode() {
+  return new URLSearchParams(location.search).get("connect") || null;
+}
+
 function setLessonQuery(id) {
   const url = new URL(location.href);
   if (id) url.searchParams.set("lesson", id);
   else url.searchParams.delete("lesson");
+  // keep connect param until confirm finishes
   history.replaceState({}, "", url);
+}
+
+function clearConnectQuery() {
+  const url = new URL(location.href);
+  url.searchParams.delete("connect");
+  history.replaceState({}, "", url);
+}
+
+async function agentFetch(method, path, body) {
+  const headers = { Accept: "application/json" };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (me) {
+    headers.Authorization = `Bearer ${await me.getIdToken()}`;
+  }
+  const res = await fetch(`${AGENT_API}${path}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const err = new Error(data.error || res.statusText);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function setAgentStatus(msg) {
+  if (agentStatus) agentStatus.textContent = msg || "";
+}
+
+function setConnectStatus(msg) {
+  if (connectStatus) connectStatus.textContent = msg || "";
+}
+
+let pendingAgentCode = null;
+
+async function startAgentPair() {
+  if (!me) return;
+  agentPanel.hidden = false;
+  setAgentStatus("Creating link…");
+  btnAgentConfirm.hidden = true;
+  btnAgentDeny.hidden = true;
+  try {
+    const data = await agentFetch("POST", "/pair/start", {});
+    pendingAgentCode = data.code;
+    agentLink.value = data.connectUrl;
+    setAgentStatus("Waiting for agent — copy the link, then Confirm when ready.");
+    btnAgentConfirm.hidden = false;
+    btnAgentDeny.hidden = false;
+  } catch (err) {
+    console.error(err);
+    setAgentStatus("Could not start pairing. Try again later.");
+  }
+}
+
+async function confirmAgentPair(code) {
+  const c = code || pendingAgentCode || connectQueryCode();
+  if (!c || !me) return;
+  try {
+    await agentFetch("POST", "/pair/confirm", { code: c });
+    setAgentStatus("Confirmed — the agent can finish pairing.");
+    setConnectStatus("Confirmed. You can close this.");
+    if (btnConnectConfirm) btnConnectConfirm.disabled = true;
+    if (btnAgentConfirm) btnAgentConfirm.disabled = true;
+    clearConnectQuery();
+  } catch (err) {
+    console.error(err);
+    setAgentStatus(err.message || "Confirm failed.");
+    setConnectStatus(err.message || "Confirm failed.");
+  }
+}
+
+async function denyAgentPair(code) {
+  const c = code || pendingAgentCode || connectQueryCode();
+  if (!c || !me) return;
+  try {
+    await agentFetch("POST", "/pair/deny", { code: c });
+    setAgentStatus("Denied.");
+    setConnectStatus("Denied.");
+    clearConnectQuery();
+    if (connectPanel) connectPanel.hidden = true;
+  } catch (err) {
+    console.error(err);
+    setAgentStatus(err.message || "Deny failed.");
+  }
+}
+
+async function revokeAgentTokens() {
+  if (!me) return;
+  if (!confirm("Revoke all agent tokens for your account?")) return;
+  try {
+    const data = await agentFetch("POST", "/pair/revoke", {});
+    setAgentStatus(`Revoked ${data.revoked || 0} token(s).`);
+  } catch (err) {
+    console.error(err);
+    setAgentStatus(err.message || "Revoke failed.");
+  }
+}
+
+function showConnectConfirm(code) {
+  if (!connectPanel) return;
+  pendingAgentCode = code;
+  connectPanel.hidden = false;
+  connectLede.textContent = "An agent wants access to edit your curriculum lessons.";
+  setConnectStatus("");
+  if (btnConnectConfirm) btnConnectConfirm.disabled = false;
+}
+
+async function showGate() {
+  gate.hidden = false;
+  studio.hidden = true;
+  if (connectPanel) connectPanel.hidden = true;
+  me = null;
+  detachLesson();
+
+  const connectCode = connectQueryCode();
+  const lid = lessonQueryId();
+  if (connectCode) {
+    gateTitle.textContent = "Connect agent";
+    gateLede.textContent = "Sign in with Google to confirm or deny agent access.";
+  } else if (lid) {
+    const meta = await loadPublicTitle(lid);
+    if (meta) {
+      gateTitle.textContent = meta.title;
+      gateLede.textContent = meta.ownerName
+        ? `Lesson by ${meta.ownerName}. Sign in with Google to view the full lesson.`
+        : "Sign in with Google to view the full lesson.";
+    } else {
+      gateTitle.textContent = "Curriculum";
+      gateLede.textContent = "This lesson link was not found. Sign in to open your lessons.";
+    }
+  } else {
+    gateTitle.textContent = "Curriculum";
+    gateLede.textContent = "Sign in with Google to view lessons and co-edit with other instructors.";
+  }
 }
 
 function showError(msg) {
@@ -387,30 +551,6 @@ async function loadPublicTitle(lessonId) {
   }
 }
 
-async function showGate() {
-  gate.hidden = false;
-  studio.hidden = true;
-  me = null;
-  detachLesson();
-
-  const lid = lessonQueryId();
-  if (lid) {
-    const meta = await loadPublicTitle(lid);
-    if (meta) {
-      gateTitle.textContent = meta.title;
-      gateLede.textContent = meta.ownerName
-        ? `Lesson by ${meta.ownerName}. Sign in with Google to view the full lesson.`
-        : "Sign in with Google to view the full lesson.";
-    } else {
-      gateTitle.textContent = "Curriculum";
-      gateLede.textContent = "This lesson link was not found. Sign in to open your lessons.";
-    }
-  } else {
-    gateTitle.textContent = "Curriculum";
-    gateLede.textContent = "Sign in with Google to view lessons and co-edit with other instructors.";
-  }
-}
-
 async function showStudio(user) {
   me = user;
   gate.hidden = true;
@@ -430,6 +570,12 @@ async function showStudio(user) {
     : (user.email || "Signed in with Google");
 
   await refreshLessonIndex();
+
+  const connectCode = connectQueryCode();
+  if (connectCode) {
+    showConnectConfirm(connectCode);
+  }
+
   const wanted = lessonQueryId();
   if (wanted) await openLesson(wanted);
   else if (lessons.length) await openLesson(lessons[0].id);
@@ -952,6 +1098,23 @@ modeSuggest?.addEventListener("click", () => {
   setFormEditable(false);
   suggestForm.hidden = false;
 });
+
+btnAgent?.addEventListener("click", () => startAgentPair());
+btnCopyAgent?.addEventListener("click", () => {
+  if (!agentLink?.value) return;
+  navigator.clipboard?.writeText(agentLink.value).then(
+    () => setAgentStatus("Link copied — paste it into your agent."),
+    () => setAgentStatus(agentLink.value)
+  );
+});
+btnAgentConfirm?.addEventListener("click", () => confirmAgentPair());
+btnAgentDeny?.addEventListener("click", () => denyAgentPair());
+btnAgentRevoke?.addEventListener("click", () => revokeAgentTokens());
+btnAgentClose?.addEventListener("click", () => {
+  if (agentPanel) agentPanel.hidden = true;
+});
+btnConnectConfirm?.addEventListener("click", () => confirmAgentPair());
+btnConnectDeny?.addEventListener("click", () => denyAgentPair());
 
 onAuthStateChanged(auth, (user) => {
   if (user) showStudio(user);

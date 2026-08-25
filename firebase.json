@@ -2,6 +2,19 @@
   "database": {
     "rules": "editor/database.rules.json"
   },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
   "hosting": {
     "public": "firebase-hosting",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],

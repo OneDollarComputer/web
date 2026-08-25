@@ -566,3 +566,59 @@ h3 {
   background: #f1f5f9;
   color: var(--text)
 }
+
+.agent-panel {
+  margin-top: .85rem;
+  padding-top: .85rem;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: .55rem
+}
+
+.agent-lede {
+  margin: 0;
+  color: var(--sub);
+  font-size: .9rem
+}
+
+.agent-link-row {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap
+}
+
+.agent-link-row input {
+  flex: 1;
+  min-width: 12rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .45rem .65rem;
+  font: inherit;
+  font-size: .85rem;
+  background: #f8fafc
+}
+
+.agent-status {
+  margin: 0;
+  color: var(--sub);
+  font-size: .85rem
+}
+
+.agent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem
+}
+
+.connect-panel {
+  margin-bottom: 1rem
+}
+
+.user-row .ghost-sm {
+  margin-top: 0
+}
+
+.user-row .ghost {
+  margin-left: 0
+}
+
