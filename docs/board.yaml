@@ -1,0 +1,120 @@
+# One Dollar Computer — board pins (logical)
+
+version: 1.004 R2
+connector: ODC Port
+rj_connector: RJ45
+
+# User firmware must use these numbers only (0..=19).
+# MCU pad names are NOT part of the public API.
+# Chip mapping: mcu/CH32V003F4U6.yaml (internal).
+
+pins:
+  0:
+    printed_label: "0"
+    type: gpio
+    description: "GPIO — PCB label 0"
+
+  1:
+    printed_label: "1"
+    type: gpio
+    description: "GPIO — PCB label 1"
+    rj_pin: RJ45-3
+
+  2:
+    printed_label: "2"
+    type: gpio
+    description: "GPIO — PCB label 2"
+
+  3:
+    printed_label: "3"
+    type: gpio
+    description: "GPIO — PCB label 3"
+
+  4:
+    printed_label: "4"
+    type: gpio
+    description: "GPIO — PCB label 4"
+    rj_pin: RJ45-6
+
+  5:
+    printed_label: "5"
+    type: gpio
+    description: "GPIO — PCB label 5"
+
+  6:
+    printed_label: "6"
+    type: gpio
+    description: "GPIO — PCB label 6"
+    rj_pin: RJ45-2
+
+  7:
+    printed_label: "7"
+    type: gpio
+    description: "GPIO — PCB label 7"
+    rj_pin: RJ45-1
+
+  8:
+    printed_label: "8"
+    type: gpio
+    description: "GPIO (analog-capable on current MCU) — PCB label 8"
+
+  9:
+    printed_label: "9"
+    type: gpio
+    description: "GPIO (analog-capable on current MCU) — PCB label 9"
+
+  10:
+    printed_label: "10"
+    type: power
+    description: "3.3V power output"
+    rj_pin: RJ45-8
+
+  11:
+    printed_label: "11"
+    type: ground
+    description: "Ground"
+
+  12:
+    printed_label: "12"
+    type: gpio
+    description: "GPIO — also SWIO; using as GPIO disables SWD until reboot"
+
+  13:
+    printed_label: "13"
+    type: button
+    alias: BUTTON
+    description: "Boot / user button (pull-up). Firmware owns HID bootloader re-entry."
+
+  14:
+    printed_label: "14"
+    type: gpio
+    description: "GPIO — PCB label 14"
+    rj_pin: RJ45-4
+
+  15:
+    printed_label: "15"
+    type: gpio
+    description: "GPIO — PCB label 15"
+
+  16:
+    printed_label: "16"
+    type: nc
+    description: "Not connected"
+
+  17:
+    printed_label: "17"
+    type: ground
+    description: "Ground"
+    rj_pin: RJ45-7
+
+  18:
+    printed_label: "18"
+    type: power
+    description: "+5V power output / VBUS"
+    rj_pin: RJ45-5
+
+  19:
+    printed_label: "19"
+    type: led
+    alias: LED
+    description: "Onboard LED (BLINK). Use pin_set/pin_clear for logical on/off."

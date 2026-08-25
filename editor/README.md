@@ -24,7 +24,7 @@ editor/
   serve.py       # Local/firebase server + Cargo + host flash
   decode.js      # Early Base64 ?code= decode
   AI_DOCS.txt    # AI assistant protocol (Rust firmware only)
-  docs/          # Pinout YAML + SVG
+  docs/          # Pinout SVG (board map: /docs/board.yaml)
   projects/      # Local JSON projects (gitignored except demo)
   _legacy_c/     # Old C/CH32 editor snapshot
   README.md

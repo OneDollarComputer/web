@@ -50,7 +50,19 @@
       "path": "/docs/",
       "changefreq": "monthly",
       "priority": 0.5,
-      "lastmod": "2026-08-15"
+      "lastmod": "2026-08-24"
+    },
+    {
+      "path": "/docs/pinout.html",
+      "changefreq": "monthly",
+      "priority": 0.55,
+      "lastmod": "2026-08-24"
+    },
+    {
+      "path": "/docs/board.yaml",
+      "changefreq": "monthly",
+      "priority": 0.55,
+      "lastmod": "2026-08-24"
     },
     {
       "path": "/docs/seo/",

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Documentation — One Dollar Computer</title>
-  <meta name="description" content="Documentation hub for One Dollar Computer. Brand facts, AI briefs, pinouts, and guides. Official site: onedollarcomputer.com" />
+  <meta name="description" content="Pinout, board map, and docs for the One Dollar Computer. Official: onedollarcomputer.com" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://onedollarcomputer.com/docs/" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
@@ -12,29 +12,163 @@
   <script defer src="/js/analytics.js"></script>
   <script defer src="/js/share.js"></script>
   <style>
-    body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; background: #07090F; color: #E8ECF4;
-      display: grid; place-items: center; padding: 2rem; }
-    a { color: #48E1A7; }
-    p, li { color: #9AA3B5; max-width: 32rem; line-height: 1.5; }
-    h1 { margin: 0 0 0.75rem; font-size: 1.75rem; }
-    ul { padding-left: 1.2rem; }
+    :root {
+      --bg: #07090F;
+      --text: #E8EEF8;
+      --sub: #A9B4C7;
+      --accent: #48E1A7;
+      --line: #1D2843;
+      --card: #0D1220;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55
+    }
+
+    a { color: var(--accent); text-decoration: none }
+    a:hover { text-decoration: underline }
+
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      color: var(--text);
+      font-weight: 600
+    }
+
+    .top nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-left: auto;
+      font-size: .95rem
+    }
+
+    .top button[data-odc-share] {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: var(--accent);
+      font: inherit;
+      cursor: pointer
+    }
+
+    main {
+      max-width: 44rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem
+    }
+
+    h1 {
+      margin: 0 0 .75rem;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      line-height: 1.2
+    }
+
+    h2 {
+      margin: 2.25rem 0 .75rem;
+      font-size: 1.15rem;
+      color: var(--accent)
+    }
+
+    p, li { color: var(--sub) }
+    strong { color: var(--text) }
+    ul { padding-left: 1.2rem }
+
+    .pinout-card {
+      margin-top: 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: .75rem;
+      overflow: hidden;
+      background: #fff
+    }
+
+    .pinout-card a.frame {
+      display: block;
+      text-decoration: none
+    }
+
+    .pinout-card img {
+      display: block;
+      width: 100%;
+      max-width: 28rem;
+      height: auto;
+      margin: 0 auto;
+      background: #fff
+    }
+
+    .pinout-meta {
+      padding: .85rem 1rem;
+      border-top: 1px solid #e6e8ee;
+      background: #f7f8fb;
+      color: #4b5568;
+      font-size: .9rem
+    }
+
+    .pinout-meta a { color: #0f766e }
   </style>
 </head>
 <body>
-  <div>
+  <header class="top">
+    <a class="brand" href="/">
+      <img src="/odc_logo_white.svg" width="28" height="28" alt="" />
+      One Dollar Computer
+    </a>
+    <nav aria-label="Docs">
+      <a href="/brand/">Brand</a>
+      <a href="/about/">About</a>
+      <button type="button" data-odc-share>Share</button>
+      <a href="/">Home</a>
+    </nav>
+  </header>
+
+  <main>
     <h1>Documentation</h1>
-    <p>Official documentation hub for <strong style="color:#E8ECF4">One Dollar Computer</strong>
-      (<a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>). Full product docs are expanding; start here:</p>
+    <p>Official docs for the <strong>One Dollar Computer</strong>
+      (<a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>).
+      Firmware uses board pins <strong>0–19</strong> only — never MCU pad names.</p>
+
+    <h2>Pinout</h2>
+    <p>Canonical board map:
+      <a href="/docs/board.yaml"><code>board.yaml</code></a>
+      (v1.004 R2). LED = <strong>19</strong>, button = <strong>13</strong>.</p>
+
+    <div class="pinout-card">
+      <a class="frame" href="/docs/pinout.html" aria-label="Open pinout diagram full size">
+        <img src="/editor/docs/OneDollarComputer.com.v1.004.r1.pinout_ai_doc.svg"
+          alt="One Dollar Computer pinout diagram — pins 0 to 19"
+          width="389" height="642" loading="lazy" decoding="async" />
+      </a>
+      <div class="pinout-meta">
+        Pin diagram ·
+        <a href="/docs/pinout.html">Full preview</a> ·
+        <a href="/editor/docs/OneDollarComputer.com.v1.004.r1.pinout_ai_doc.svg">SVG</a>
+      </div>
+    </div>
+
+    <h2>Also useful</h2>
     <ul>
-      <li><a href="/brand/">Brand &amp; identity</a> (canonical facts)</li>
+      <li><a href="/brand/">Brand &amp; identity</a></li>
       <li><a href="/about/">About &amp; mission</a></li>
       <li><a href="/llms.txt">llms.txt</a> — AI / LLM brief</li>
       <li><a href="/seo/entity.json">entity.json</a> — machine-readable brand</li>
       <li><a href="/docs/seo/">SEO &amp; Analytics playbook</a></li>
-      <li><a href="/docs/onedollarcomputer.1.004.r1.pinout.yaml">Pinout YAML</a></li>
+      <li><a href="/editor/AI_DOCS.txt">Editor AI protocol</a> — firmware rules for assistants</li>
     </ul>
-    <p><button type="button" data-odc-share style="background:transparent;border:0;padding:0;color:#48E1A7;font:inherit;cursor:pointer">Share</button>
-      · <a href="/">← Home</a></p>
-  </div>
+  </main>
 </body>
 </html>
