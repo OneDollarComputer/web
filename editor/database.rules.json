@@ -35,6 +35,67 @@
     "cache": {
       ".read": true,
       ".write": true
+    },
+    "curriculum": {
+      "byUser": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          "$lid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          }
+        }
+      },
+      "lessons": {
+        "$lid": {
+          ".write": "auth != null && !newData.exists() && data.child('ownerUid').val() === auth.uid",
+          "title": {
+            ".read": true,
+            ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "ownerUid": {
+            ".read": true,
+            ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || data.val() === auth.uid)"
+          },
+          "ownerName": {
+            ".read": true,
+            ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "createdAt": {
+            ".read": true,
+            ".write": "auth != null && (!data.exists() || data.parent().child('ownerUid').val() === auth.uid)"
+          },
+          "updatedAt": {
+            ".read": "auth != null",
+            ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "updatedBy": {
+            ".read": "auth != null",
+            ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "authors": {
+            ".read": "auth != null",
+            "$uid": {
+              ".write": "auth != null && (auth.uid === $uid || newData.parent().parent().child('ownerUid').val() === auth.uid || data.parent().parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid)"
+            }
+          },
+          "body": {
+            ".read": "auth != null",
+            ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "presence": {
+            ".read": "auth != null",
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          },
+          "suggestions": {
+            ".read": "auth != null",
+            "$sid": {
+              ".write": "auth != null && ((!data.exists() && newData.child('authorUid').val() === auth.uid) || data.child('authorUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+            }
+          }
+        }
+      }
     }
   }
 }

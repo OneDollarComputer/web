@@ -403,3 +403,166 @@ h3 {
   border-color: rgba(15, 118, 110, 0.35) !important;
   background: #ecfdf5 !important
 }
+
+/* Collab */
+.presence-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-left: auto;
+  align-items: center
+}
+
+.presence-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid var(--pcolor, #64748b);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-size: .7rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--pcolor, #64748b)
+}
+
+.presence-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block
+}
+
+.collab-bar {
+  display: grid;
+  gap: .75rem;
+  margin-bottom: 1.15rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line)
+}
+
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden
+}
+
+.mode-btn {
+  border: 0;
+  background: transparent;
+  padding: .4rem .75rem;
+  font: inherit;
+  font-size: .85rem;
+  color: var(--sub);
+  cursor: pointer
+}
+
+.mode-btn.active {
+  background: #eff6ff;
+  color: #1e40af;
+  font-weight: 600
+}
+
+.author-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  align-items: end
+}
+
+.invite {
+  display: grid;
+  gap: .3rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--sub)
+}
+
+.invite-row {
+  display: flex;
+  gap: .4rem
+}
+
+.invite-row input {
+  width: 9rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .4rem .6rem;
+  font: inherit
+}
+
+.role-hint {
+  margin: 0;
+  color: var(--sub);
+  font-size: .85rem
+}
+
+.field-label {
+  display: flex;
+  gap: .35rem;
+  align-items: baseline
+}
+
+.who {
+  font-weight: 500;
+  font-size: .78rem;
+  color: var(--sub)
+}
+
+.suggest-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line)
+}
+
+.suggest-form {
+  margin-bottom: 1rem
+}
+
+.sug-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .75rem
+}
+
+.sug-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .75rem .85rem;
+  background: #f8fafc
+}
+
+.sug-meta {
+  margin: 0 0 .4rem;
+  font-size: .85rem;
+  color: var(--sub)
+}
+
+.sug-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: .92rem;
+  color: var(--text)
+}
+
+.sug-actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: .65rem
+}
+
+.empty-sug {
+  color: var(--sub);
+  font-size: .9rem
+}
+
+.field input[readonly],
+.field textarea[readonly] {
+  background: #f1f5f9;
+  color: var(--text)
+}
