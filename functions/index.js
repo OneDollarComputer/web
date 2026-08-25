@@ -241,7 +241,9 @@ async function handleListLessons(req, res) {
   if (!agent) return json(res, 401, { error: "Agent token required" });
 
   const index = await db.ref(`curriculum/byUser/${agent.uid}`).get();
-  const ids = index.exists() ? Object.keys(index.val()) : [];
+  const ids = index.exists()
+    ? Object.keys(index.val()).filter((id) => id.startsWith("l_"))
+    : [];
   const lessons = [];
   for (const id of ids) {
     const [title, updatedAt] = await Promise.all([

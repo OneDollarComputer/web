@@ -683,7 +683,9 @@ function fillBlankNew() {
 async function refreshLessonIndex() {
   if (!me) return;
   const snap = await get(ref(db, `curriculum/byUser/${me.uid}`));
-  const ids = snap.exists() ? Object.keys(snap.val()) : [];
+  const ids = snap.exists()
+    ? Object.keys(snap.val()).filter((id) => id.startsWith("l_"))
+    : [];
   const rows = await Promise.all(ids.map(async (id) => {
     try {
       const [t, u] = await Promise.all([
