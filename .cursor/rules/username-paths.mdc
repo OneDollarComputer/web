@@ -12,3 +12,5 @@ Public usernames and future short links share path shape (`/name`). Keep namespa
 - **Short links (future):** may start with a digit and/or mix case (`63lsK`)
 
 Do not weaken `isValidUsername` in `profile/app.js` without updating `editor/serve.py` SPA routing the same way.
+
+Keep product paths reserved in both lists (e.g. `curriculum`, `editor`, `docs`, `project`) so they cannot be claimed as usernames.

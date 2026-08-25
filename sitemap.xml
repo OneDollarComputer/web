@@ -49,6 +49,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://onedollarcomputer.com/curriculum/</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://onedollarcomputer.com/docs/pinout.html</loc>
     <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>

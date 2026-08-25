@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Curriculum — One Dollar Computer</title>
+  <meta name="description" content="Curriculum for teachers: adapt robotics lessons to the One Dollar Computer. Sign in with Google." />
+  <link rel="canonical" href="https://onedollarcomputer.com/curriculum/" />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://onedollarcomputer.com/curriculum/" />
+  <meta property="og:title" content="Curriculum — One Dollar Computer" />
+  <meta property="og:description" content="Teacher tools to adapt robotics lessons for the One Dollar Computer. Sign in with Google." />
+  <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
+  <meta property="og:site_name" content="One Dollar Computer" />
+  <meta name="theme-color" content="#F8FAFC" />
+  <script defer src="/js/analytics.js"></script>
+  <script defer src="/js/share.js"></script>
+  <link rel="stylesheet" href="/js/auth-nav.css" />
+  <script type="module" src="/js/auth-nav.js"></script>
+  <link rel="stylesheet" href="/curriculum/curriculum.css" />
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">
+      <img src="/odc_logo_black.svg" width="28" height="28" alt="" />
+      <span>One Dollar Computer</span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="/docs/">Docs</a>
+      <a href="/about/">About</a>
+      <button type="button" data-odc-share>Share</button>
+      <span class="odc-auth-slot">
+        <a href="/project/" data-odc-signin>Sign in</a>
+      </span>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Guest: landing -->
+    <section id="gate" class="panel" hidden>
+      <p class="kicker">For teachers</p>
+      <h1>Curriculum</h1>
+      <p class="lede">Adapt robotics lessons for the One Dollar Computer — then try them in class.
+        Sign in with Google to get started.</p>
+      <button type="button" id="btnGoogle" class="google-btn">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Sign in with Google
+      </button>
+      <p id="gateError" class="error" hidden></p>
+      <p class="fine">Same Google account as the rest of One Dollar Computer.</p>
+    </section>
+
+    <!-- Signed in: studio shell -->
+    <section id="studio" class="panel" hidden>
+      <div class="user-row">
+        <img id="userPhoto" alt="" width="48" height="48" />
+        <div>
+          <p class="user-name" id="userName">Teacher</p>
+          <p class="user-meta" id="userMeta"></p>
+        </div>
+        <button type="button" id="btnSignOut" class="ghost">Sign out</button>
+      </div>
+
+      <h1>Your classroom studio</h1>
+      <p class="lede">You’re signed in. Next we’ll add lesson adaptation, class trials, and sharing —
+        built to feel familiar if you already use Google for school.</p>
+
+      <div class="next-grid">
+        <div class="next-card">
+          <h2>1. Profile</h2>
+          <p id="profileHint">Claim a public name so students and other teachers can find you.</p>
+          <a id="profileLink" class="text-link" href="/project/">Choose your name →</a>
+        </div>
+        <div class="next-card muted">
+          <h2>2. Lessons</h2>
+          <p>Upload a workbook or topic — AI will draft a One Dollar Computer lesson. Coming next.</p>
+        </div>
+        <div class="next-card muted">
+          <h2>3. Classroom</h2>
+          <p>Try it with students, then share with other teachers. Coming next.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/curriculum/app.js"></script>
+</body>
+</html>

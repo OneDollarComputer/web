@@ -524,6 +524,17 @@ PROFILE_RESERVED = frozenset(
         "index",
         "agents",
         "well-known",
+        "blog",
+        "shop",
+        "store",
+        "support",
+        "help",
+        "legal",
+        "privacy",
+        "account",
+        "settings",
+        "new",
+        "curriculum",
     }
 )
 
