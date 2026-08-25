@@ -55,7 +55,6 @@ awaken talent worldwide. Official site: https://onedollarcomputer.com/
 - Homepage (marketing): https://onedollarcomputer.com/
 - Docs / pinout: https://onedollarcomputer.com/docs/
 - Board map (pins 0–19): https://onedollarcomputer.com/docs/board.yaml
-- Pinout diagram: https://onedollarcomputer.com/docs/pinout.html
 - 3D viewer: https://onedollarcomputer.com/3d/viewer.html
 - Browser editor (dev surface, often noindex): https://onedollarcomputer.com/editor/
 
