@@ -2,9 +2,10 @@
 """Firebase compile worker for One Dollar Computer.
 
 Canonical copy: github.com/OneDollarComputer/compiler (`worker.py` + `compile_odc.py`).
-This file remains so the site tree can run a worker without that checkout.
+This mirror lets the site tree run a worker without that checkout.
 
-Polls /compileQueue (public) then reads/writes /projects/{id}/code.
+Polls /compileQueue (public) then reads/writes /projects/{id}/code —
+same contract as onedollarcomputer.com/editor.
 """
 
 from __future__ import annotations
