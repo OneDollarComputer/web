@@ -16,7 +16,8 @@
 - **Machine-readable entity:** https://onedollarcomputer.com/seo/entity.json
 - **Brand identity page:** https://onedollarcomputer.com/brand/
 - **About / mission:** https://onedollarcomputer.com/about/
-- **Sign in / your page:** https://onedollarcomputer.com/project/ (Google account → public URL `/{username}/`)
+- **Sign in / your page:** https://onedollarcomputer.com/project/ (Google → public URL `/{username}/` with published projects)
+- **Curriculum (teachers):** https://onedollarcomputer.com/curriculum/ (sign-in required; classroom lessons — not the same as public projects)
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
 - **Founder:** Claudio Olmedo — https://claudioolmedo.com/
@@ -55,7 +56,6 @@ awaken talent worldwide. Official site: https://onedollarcomputer.com/
 - Homepage (marketing): https://onedollarcomputer.com/
 - Docs / pinout: https://onedollarcomputer.com/docs/
 - Board map (pins 0–19): https://onedollarcomputer.com/docs/board.yaml
-- Curriculum (teachers): https://onedollarcomputer.com/curriculum/
 - 3D viewer: https://onedollarcomputer.com/3d/viewer.html
 - Browser editor (dev surface, often noindex): https://onedollarcomputer.com/editor/
 

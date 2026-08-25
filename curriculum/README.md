@@ -1,19 +1,28 @@
 # Curriculum (`/curriculum/`)
 
-Teacher surface for One Dollar Computer lessons.
+Workspace for **teachers and instructors** to build One Dollar Computer lessons.
 
 **Live:** https://onedollarcomputer.com/curriculum/
 
-## Status
+## How it differs from Projects
 
-First slice: landing + **Google Sign-in** (same Firebase Auth as `/project/` — `odc-files`).
+| | Projects (`/project/`, `/{user}/`) | Curriculum (`/curriculum/`) |
+|---|---|---|
+| Who | Anyone | Teachers & instructors |
+| Access | Public pages — anyone can open | Sign-in required |
+| What | Personal published builds | Classroom lessons |
 
-Next: lesson adaptation, classroom trials, sharing — Google-familiar for educators.
+## Lesson materials
 
-Prototype UI history lives in the sibling repo `~/github/curriculum` (Vite). New work ships here as static pages first; we may fold the Vite app in later with `base: '/curriculum/'`.
+Each lesson can include:
+
+- Title, overview, materials list, steps
+- **Photo** URLs
+- **YouTube** / Shorts links
+- Other **links** (PDF, docs, worksheets)
+
+Drafts save in the browser for now (`localStorage`). Cloud sync comes next.
 
 ## Auth
 
-- Sign in with Google via `auth.onedollarcomputer.com`
-- Username claim still happens at `/project/`
-- Path `curriculum` is reserved (not a public username)
+Same Google account as the rest of One Dollar Computer (`odc-files`).

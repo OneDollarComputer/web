@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Curriculum — One Dollar Computer</title>
-  <meta name="description" content="Curriculum for teachers: adapt robotics lessons to the One Dollar Computer. Sign in with Google." />
+  <meta name="description" content="Curriculum workspace for teachers and instructors. Sign in with Google to build One Dollar Computer lessons with photos, videos, and materials." />
   <link rel="canonical" href="https://onedollarcomputer.com/curriculum/" />
   <meta name="robots" content="index, follow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
@@ -12,7 +12,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://onedollarcomputer.com/curriculum/" />
   <meta property="og:title" content="Curriculum — One Dollar Computer" />
-  <meta property="og:description" content="Teacher tools to adapt robotics lessons for the One Dollar Computer. Sign in with Google." />
+  <meta property="og:description" content="Teacher and instructor workspace for One Dollar Computer lessons." />
   <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
   <meta property="og:site_name" content="One Dollar Computer" />
   <meta name="theme-color" content="#F8FAFC" />
@@ -39,12 +39,11 @@
   </header>
 
   <main>
-    <!-- Guest: landing -->
     <section id="gate" class="panel" hidden>
-      <p class="kicker">For teachers</p>
+      <p class="kicker">Teachers &amp; instructors</p>
       <h1>Curriculum</h1>
-      <p class="lede">Adapt robotics lessons for the One Dollar Computer — then try them in class.
-        Sign in with Google to get started.</p>
+      <p class="lede">Build classroom lessons for the One Dollar Computer — steps, materials, photos, and videos.
+        Sign in with Google to open your workspace.</p>
       <button type="button" id="btnGoogle" class="google-btn">
         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -55,38 +54,89 @@
         Sign in with Google
       </button>
       <p id="gateError" class="error" hidden></p>
-      <p class="fine">Same Google account as the rest of One Dollar Computer.</p>
     </section>
 
-    <!-- Signed in: studio shell -->
-    <section id="studio" class="panel" hidden>
-      <div class="user-row">
-        <img id="userPhoto" alt="" width="48" height="48" />
-        <div>
-          <p class="user-name" id="userName">Teacher</p>
-          <p class="user-meta" id="userMeta"></p>
+    <section id="studio" hidden>
+      <div class="studio-bar panel">
+        <div class="user-row compact">
+          <img id="userPhoto" alt="" width="40" height="40" />
+          <div>
+            <p class="user-name" id="userName">Teacher</p>
+            <p class="user-meta" id="userMeta"></p>
+          </div>
+          <button type="button" id="btnSignOut" class="ghost">Sign out</button>
         </div>
-        <button type="button" id="btnSignOut" class="ghost">Sign out</button>
       </div>
 
-      <h1>Your classroom studio</h1>
-      <p class="lede">You’re signed in. Next we’ll add lesson adaptation, class trials, and sharing —
-        built to feel familiar if you already use Google for school.</p>
+      <div class="studio-grid">
+        <aside class="panel side">
+          <div class="side-head">
+            <h2>Lessons</h2>
+            <button type="button" id="btnNew" class="primary-sm">New</button>
+          </div>
+          <ul id="lessonList" class="lesson-list"></ul>
+          <p id="emptyList" class="empty">No lessons yet.</p>
+        </aside>
 
-      <div class="next-grid">
-        <div class="next-card">
-          <h2>1. Profile</h2>
-          <p id="profileHint">Claim a public name so students and other teachers can find you.</p>
-          <a id="profileLink" class="text-link" href="/project/">Choose your name →</a>
-        </div>
-        <div class="next-card muted">
-          <h2>2. Lessons</h2>
-          <p>Upload a workbook or topic — AI will draft a One Dollar Computer lesson. Coming next.</p>
-        </div>
-        <div class="next-card muted">
-          <h2>3. Classroom</h2>
-          <p>Try it with students, then share with other teachers. Coming next.</p>
-        </div>
+        <section class="panel editor">
+          <form id="lessonForm">
+            <label class="field">
+              <span>Title</span>
+              <input id="fTitle" name="title" type="text" maxlength="120" required
+                placeholder="e.g. Blink an LED in 10 minutes" autocomplete="off" />
+            </label>
+
+            <label class="field">
+              <span>Overview</span>
+              <textarea id="fOverview" name="overview" rows="3"
+                placeholder="What students will build and learn"></textarea>
+            </label>
+
+            <label class="field">
+              <span>Materials</span>
+              <textarea id="fMaterials" name="materials" rows="3"
+                placeholder="One item per line — e.g. One Dollar Computer, LED, popsicle sticks"></textarea>
+            </label>
+
+            <label class="field">
+              <span>Steps</span>
+              <textarea id="fSteps" name="steps" rows="5"
+                placeholder="One step per line"></textarea>
+            </label>
+
+            <fieldset class="media-block">
+              <legend>Photos</legend>
+              <p class="hint">Image URLs for now (upload comes next).</p>
+              <div id="photoRows" class="media-rows"></div>
+              <button type="button" class="ghost-sm" data-add="photo">Add photo URL</button>
+            </fieldset>
+
+            <fieldset class="media-block">
+              <legend>YouTube</legend>
+              <p class="hint">Paste a YouTube or Shorts link.</p>
+              <div id="videoRows" class="media-rows"></div>
+              <button type="button" class="ghost-sm" data-add="video">Add video</button>
+            </fieldset>
+
+            <fieldset class="media-block">
+              <legend>Other materials</legend>
+              <p class="hint">PDFs, docs, worksheets — any link.</p>
+              <div id="linkRows" class="media-rows"></div>
+              <button type="button" class="ghost-sm" data-add="link">Add link</button>
+            </fieldset>
+
+            <div class="form-actions">
+              <button type="submit" class="primary" id="btnSave">Save lesson</button>
+              <button type="button" class="ghost" id="btnDelete" hidden>Delete</button>
+              <span id="saveStatus" class="status" role="status"></span>
+            </div>
+          </form>
+
+          <div id="preview" class="preview" hidden>
+            <h3>Preview</h3>
+            <div id="previewBody"></div>
+          </div>
+        </section>
       </div>
     </section>
   </main>
