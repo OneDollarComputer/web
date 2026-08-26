@@ -78,13 +78,10 @@ const modeSuggest = document.getElementById("modeSuggest");
 const suggestPanel = document.getElementById("suggestPanel");
 const suggestForm = document.getElementById("suggestForm");
 const sugList = document.getElementById("sugList");
-const btnAgent = document.getElementById("btnAgent");
-const agentPanel = document.getElementById("agentPanel");
 const agentLink = document.getElementById("agentLink");
 const agentStatus = document.getElementById("agentStatus");
 const btnCopyAgent = document.getElementById("btnCopyAgent");
 const btnAgentRevoke = document.getElementById("btnAgentRevoke");
-const btnAgentClose = document.getElementById("btnAgentClose");
 const connectPanel = document.getElementById("connectPanel");
 const connectLede = document.getElementById("connectLede");
 const connectStatus = document.getElementById("connectStatus");
@@ -161,7 +158,9 @@ async function agentFetch(method, path, body) {
 }
 
 function setAgentStatus(msg) {
-  if (agentStatus) agentStatus.textContent = msg || "";
+  if (!agentStatus) return;
+  agentStatus.hidden = !msg;
+  agentStatus.textContent = msg || "";
 }
 
 function setConnectStatus(msg) {
@@ -186,6 +185,7 @@ function agentConnectUrl(code) {
 }
 
 let pendingAgentCode = null;
+let pendingAgentExpiresAt = 0;
 
 function copyAgentLink() {
   const url = agentLink?.value?.trim();
@@ -194,19 +194,37 @@ function copyAgentLink() {
   return Promise.reject(new Error("Clipboard unavailable"));
 }
 
-/** Ensure a fresh pending pair link is in the input (and preferably copied). */
-async function ensureAgentLink({ autoCopy = true } = {}) {
+/** Keep one pending link ready; reuse until near expiry. */
+async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   if (!me) return null;
-  setAgentStatus("Preparing link…");
+  const stillValid =
+    !forceNew &&
+    pendingAgentCode &&
+    agentLink?.value &&
+    pendingAgentExpiresAt - Date.now() > 60_000;
+  if (stillValid) {
+    if (autoCopy) {
+      try {
+        await copyAgentLink();
+        setAgentStatus("Copied — paste into your agent.");
+      } catch {
+        setAgentStatus("Copy the link, then paste into your agent.");
+      }
+    }
+    return agentLink.value;
+  }
+
   const code = randomSecret(18);
   const now = Date.now();
+  const expiresAt = now + PAIR_TTL_MS;
   await set(ref(db, `curriculum/agentPairing/${code}`), {
     status: "pending",
     createdBy: me.uid,
     createdAt: now,
-    expiresAt: now + PAIR_TTL_MS
+    expiresAt
   });
   pendingAgentCode = code;
+  pendingAgentExpiresAt = expiresAt;
   const url = agentConnectUrl(code);
   if (agentLink) agentLink.value = url;
   if (autoCopy) {
@@ -220,17 +238,6 @@ async function ensureAgentLink({ autoCopy = true } = {}) {
     setAgentStatus("");
   }
   return url;
-}
-
-async function openAgentPanel() {
-  if (!me) return;
-  if (agentPanel) agentPanel.hidden = false;
-  try {
-    await ensureAgentLink({ autoCopy: true });
-  } catch (err) {
-    console.error(err);
-    setAgentStatus(err?.message || "Could not create link.");
-  }
 }
 
 async function confirmAgentPair(code) {
@@ -674,6 +681,10 @@ async function showStudio(user) {
     : (user.email || "Signed in with Google");
 
   await refreshLessonIndex();
+  ensureAgentLink({ autoCopy: false }).catch((err) => {
+    console.error(err);
+    setAgentStatus("Could not prepare agent link.");
+  });
 
   const connectCode = connectQueryCode();
   if (connectCode) {
@@ -1206,20 +1217,15 @@ modeSuggest?.addEventListener("click", () => {
   suggestForm.hidden = false;
 });
 
-btnAgent?.addEventListener("click", () => openAgentPanel());
 btnCopyAgent?.addEventListener("click", async () => {
   try {
-    if (!agentLink?.value?.trim()) await ensureAgentLink({ autoCopy: false });
-    await copyAgentLink();
-    setAgentStatus("Copied — paste into your agent.");
+    await ensureAgentLink({ autoCopy: true });
   } catch (err) {
-    setAgentStatus(err?.message || agentLink?.value || "Could not copy.");
+    console.error(err);
+    setAgentStatus(err?.message || "Could not copy.");
   }
 });
 btnAgentRevoke?.addEventListener("click", () => revokeAllAgents());
-btnAgentClose?.addEventListener("click", () => {
-  if (agentPanel) agentPanel.hidden = true;
-});
 btnConnectConfirm?.addEventListener("click", () => confirmAgentPair());
 btnConnectDeny?.addEventListener("click", () => denyAgentPair());
 

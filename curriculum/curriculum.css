@@ -656,48 +656,39 @@ h3 {
   font-size: .9rem
 }
 
-.agent-panel {
-  margin-top: .85rem;
-  padding-top: .85rem;
-  border-top: 1px solid var(--line);
-  display: grid;
-  gap: .65rem
-}
-
-.agent-lede {
-  margin: 0;
-  color: var(--sub);
-  font-size: .95rem;
-  line-height: 1.45
-}
-
-.agent-link-row {
-  display: flex;
-  gap: .4rem;
-  flex-wrap: wrap
-}
-
-.agent-link-row input {
-  flex: 1;
-  min-width: 12rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: .55rem .7rem;
-  font: inherit;
-  font-size: .88rem;
-  background: #f8fafc
-}
-
-.agent-status {
-  margin: 0;
-  color: var(--sub);
-  font-size: .85rem
-}
-
-.agent-actions {
+.agent-ready {
   display: flex;
   flex-wrap: wrap;
-  gap: .45rem
+  align-items: center;
+  gap: .35rem;
+  margin-left: auto;
+  min-width: 0;
+  max-width: min(100%, 28rem)
+}
+
+.agent-ready-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--sub)
+}
+
+.agent-ready input {
+  flex: 1;
+  min-width: 8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .4rem .55rem;
+  font: inherit;
+  font-size: .78rem;
+  background: #f8fafc;
+  color: var(--text)
+}
+
+.agent-status-inline {
+  width: 100%;
+  margin: .35rem 0 0;
+  color: var(--sub);
+  font-size: .82rem
 }
 
 .connect-panel {

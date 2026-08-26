@@ -64,21 +64,15 @@
             <p class="user-meta" id="userMeta"></p>
           </div>
           <div id="presenceBar" class="presence-bar" aria-live="polite"></div>
-          <button type="button" id="btnAgent" class="ghost-sm">Agent</button>
-          <button type="button" id="btnSignOut" class="ghost">Sign out</button>
-        </div>
-        <div id="agentPanel" class="agent-panel" hidden>
-          <p class="agent-lede">Paste this link into your agent. You’ll confirm in the browser when it connects.</p>
-          <div class="agent-link-row">
-            <input id="agentLink" type="text" readonly placeholder="Preparing link…" />
+          <div class="agent-ready" title="Agent link">
+            <span class="agent-ready-label">Agent</span>
+            <input id="agentLink" type="text" readonly placeholder="…" aria-label="Agent link" />
             <button type="button" id="btnCopyAgent" class="primary-sm">Copy</button>
           </div>
-          <p id="agentStatus" class="agent-status" role="status"></p>
-          <div class="agent-actions">
-            <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke access</button>
-            <button type="button" id="btnAgentClose" class="ghost-sm">Close</button>
-          </div>
+          <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke</button>
+          <button type="button" id="btnSignOut" class="ghost">Sign out</button>
         </div>
+        <p id="agentStatus" class="agent-status-inline" hidden></p>
       </div>
 
       <section id="connectPanel" class="panel connect-panel" hidden>
