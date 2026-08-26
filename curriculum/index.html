@@ -68,38 +68,14 @@
           <button type="button" id="btnSignOut" class="ghost">Sign out</button>
         </div>
         <div id="agentPanel" class="agent-panel" hidden>
-          <div class="agent-section">
-            <p class="agent-section-title">Connected</p>
-            <ul id="agentSessionList" class="agent-session-list"></ul>
-            <p id="agentNone" class="agent-none">No agent connected</p>
+          <p class="agent-lede">Paste this link into your agent. You’ll confirm in the browser when it connects.</p>
+          <div class="agent-link-row">
+            <input id="agentLink" type="text" readonly placeholder="Preparing link…" />
+            <button type="button" id="btnCopyAgent" class="primary-sm">Copy</button>
           </div>
-
-          <div class="agent-section">
-            <p class="agent-section-title">Connect new</p>
-            <div class="agent-pick-row">
-              <select id="agentClient" aria-label="Agent">
-                <option value="Cursor">Cursor</option>
-                <option value="Codex">Codex</option>
-                <option value="Antigravity">Antigravity</option>
-                <option value="Other">Other</option>
-              </select>
-              <button type="button" id="btnAgentCreate" class="primary-sm">Create link</button>
-            </div>
-            <div id="agentLinkBox" class="agent-link-box" hidden>
-              <p class="agent-steps">Link copied. Paste it into the agent, then confirm.</p>
-              <div class="agent-link-row">
-                <input id="agentLink" type="text" readonly />
-                <button type="button" id="btnCopyAgent" class="ghost-sm">Copy</button>
-              </div>
-              <div class="agent-actions">
-                <button type="button" id="btnAgentConfirm" class="primary-sm">Confirm</button>
-                <button type="button" id="btnAgentDeny" class="ghost-sm">Cancel</button>
-              </div>
-            </div>
-            <p id="agentStatus" class="agent-status" role="status"></p>
-          </div>
-
+          <p id="agentStatus" class="agent-status" role="status"></p>
           <div class="agent-actions">
+            <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke access</button>
             <button type="button" id="btnAgentClose" class="ghost-sm">Close</button>
           </div>
         </div>

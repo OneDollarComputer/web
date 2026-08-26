@@ -82,14 +82,8 @@ const btnAgent = document.getElementById("btnAgent");
 const agentPanel = document.getElementById("agentPanel");
 const agentLink = document.getElementById("agentLink");
 const agentStatus = document.getElementById("agentStatus");
-const agentClient = document.getElementById("agentClient");
-const agentLinkBox = document.getElementById("agentLinkBox");
-const agentSessionList = document.getElementById("agentSessionList");
-const agentNone = document.getElementById("agentNone");
-const btnAgentCreate = document.getElementById("btnAgentCreate");
 const btnCopyAgent = document.getElementById("btnCopyAgent");
-const btnAgentConfirm = document.getElementById("btnAgentConfirm");
-const btnAgentDeny = document.getElementById("btnAgentDeny");
+const btnAgentRevoke = document.getElementById("btnAgentRevoke");
 const btnAgentClose = document.getElementById("btnAgentClose");
 const connectPanel = document.getElementById("connectPanel");
 const connectLede = document.getElementById("connectLede");
@@ -192,11 +186,6 @@ function agentConnectUrl(code) {
 }
 
 let pendingAgentCode = null;
-let pendingAgentLabel = "Cursor";
-
-function selectedAgentLabel() {
-  return (agentClient?.value || "Other").trim() || "Other";
-}
 
 function copyAgentLink() {
   const url = agentLink?.value?.trim();
@@ -205,104 +194,42 @@ function copyAgentLink() {
   return Promise.reject(new Error("Clipboard unavailable"));
 }
 
-async function refreshAgentSessions() {
-  if (!me || !agentSessionList) return [];
-  agentSessionList.replaceChildren();
-  const snap = await get(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes`));
-  const map = snap.exists() ? snap.val() : {};
-  const sessions = [];
-  for (const [th, meta] of Object.entries(map)) {
-    const tokenSnap = await get(ref(db, `curriculum/agentTokens/${th}`));
-    if (!tokenSnap.exists() || tokenSnap.val()?.revoked) continue;
-    const t = tokenSnap.val();
-    const label =
-      (typeof meta === "object" && meta?.label) ||
-      t.label ||
-      "Agent";
-    const createdAt =
-      (typeof meta === "object" && meta?.createdAt) ||
-      t.createdAt ||
-      0;
-    sessions.push({ hash: th, label, createdAt });
-  }
-  sessions.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-  if (agentNone) agentNone.hidden = sessions.length > 0;
-  sessions.forEach((s) => {
-    const li = document.createElement("li");
-    li.className = "agent-session";
-    const when = s.createdAt
-      ? new Date(s.createdAt).toLocaleString(undefined, {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      })
-      : "";
-    li.innerHTML =
-      `<span class="agent-session-name">${escapeHtml(s.label)}</span>` +
-      `<span class="agent-session-meta">${escapeHtml(when)}</span>`;
-    const revoke = document.createElement("button");
-    revoke.type = "button";
-    revoke.className = "ghost-sm";
-    revoke.textContent = "Revoke";
-    revoke.addEventListener("click", () => revokeOneAgent(s.hash, s.label));
-    li.appendChild(revoke);
-    agentSessionList.appendChild(li);
+/** Ensure a fresh pending pair link is in the input (and preferably copied). */
+async function ensureAgentLink({ autoCopy = true } = {}) {
+  if (!me) return null;
+  setAgentStatus("Preparing link…");
+  const code = randomSecret(18);
+  const now = Date.now();
+  await set(ref(db, `curriculum/agentPairing/${code}`), {
+    status: "pending",
+    createdBy: me.uid,
+    createdAt: now,
+    expiresAt: now + PAIR_TTL_MS
   });
-
-  if (btnAgent) {
-    if (sessions.length === 0) {
-      btnAgent.textContent = "Agent";
-      btnAgent.classList.remove("btn-agent-on");
-    } else if (sessions.length === 1) {
-      btnAgent.textContent = sessions[0].label;
-      btnAgent.classList.add("btn-agent-on");
-    } else {
-      btnAgent.textContent = `${sessions.length} agents`;
-      btnAgent.classList.add("btn-agent-on");
+  pendingAgentCode = code;
+  const url = agentConnectUrl(code);
+  if (agentLink) agentLink.value = url;
+  if (autoCopy) {
+    try {
+      await copyAgentLink();
+      setAgentStatus("Copied — paste into your agent.");
+    } catch {
+      setAgentStatus("Copy the link, then paste into your agent.");
     }
+  } else {
+    setAgentStatus("");
   }
-  return sessions;
+  return url;
 }
 
 async function openAgentPanel() {
   if (!me) return;
   if (agentPanel) agentPanel.hidden = false;
-  if (agentLinkBox) agentLinkBox.hidden = true;
-  setAgentStatus("");
-  await refreshAgentSessions();
-}
-
-async function startAgentPair() {
-  if (!me) return;
-  if (agentPanel) agentPanel.hidden = false;
-  pendingAgentLabel = selectedAgentLabel();
-  setAgentStatus("Creating link…");
-  if (btnAgentConfirm) btnAgentConfirm.disabled = false;
   try {
-    const code = randomSecret(18);
-    const now = Date.now();
-    await set(ref(db, `curriculum/agentPairing/${code}`), {
-      status: "pending",
-      createdBy: me.uid,
-      createdAt: now,
-      expiresAt: now + PAIR_TTL_MS,
-      label: pendingAgentLabel
-    });
-    pendingAgentCode = code;
-    const url = agentConnectUrl(code);
-    if (agentLink) agentLink.value = url;
-    if (agentLinkBox) agentLinkBox.hidden = false;
-    try {
-      await copyAgentLink();
-      setAgentStatus(`${pendingAgentLabel} link copied.`);
-    } catch {
-      setAgentStatus("Copy the link, paste into the agent, then Confirm.");
-    }
+    await ensureAgentLink({ autoCopy: true });
   } catch (err) {
     console.error(err);
-    setAgentStatus(err?.message || "Could not start pairing. Try again.");
+    setAgentStatus(err?.message || "Could not create link.");
   }
 }
 
@@ -316,21 +243,18 @@ async function confirmAgentPair(code) {
     if (row.status !== "pending") throw new Error(`Pairing is ${row.status}`);
     if (row.expiresAt && Date.now() > row.expiresAt) {
       await update(ref(db, `curriculum/agentPairing/${c}`), { status: "expired" });
-      throw new Error("Code expired — start again");
+      throw new Error("Code expired — open Agent again for a new link");
     }
 
-    const label = row.label || pendingAgentLabel || selectedAgentLabel();
     const token = `odc_agent_${randomSecret(32)}`;
     const tokenHash = await sha256Hex(token);
     const now = Date.now();
     await set(ref(db, `curriculum/agentTokens/${tokenHash}`), {
       uid: me.uid,
       createdAt: now,
-      pairingCode: c,
-      label
+      pairingCode: c
     });
     await set(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes/${tokenHash}`), {
-      label,
       createdAt: now
     });
     await update(ref(db, `curriculum/agentPairing/${c}`), {
@@ -338,19 +262,13 @@ async function confirmAgentPair(code) {
       uid: me.uid,
       tokenHash,
       tokenPending: token,
-      confirmedAt: now,
-      label
+      confirmedAt: now
     });
-    setAgentStatus(`${label} connected — the agent can finish pairing.`);
-    setConnectStatus(`${label} confirmed.`);
+    setConnectStatus("Connected. You can close this.");
     if (btnConnectConfirm) btnConnectConfirm.disabled = true;
-    if (btnAgentConfirm) btnAgentConfirm.disabled = true;
-    if (agentLinkBox) agentLinkBox.hidden = true;
     clearConnectQuery();
-    await refreshAgentSessions();
   } catch (err) {
     console.error(err);
-    setAgentStatus(err.message || "Confirm failed.");
     setConnectStatus(err.message || "Confirm failed.");
   }
 }
@@ -364,29 +282,35 @@ async function denyAgentPair(code) {
       uid: me.uid,
       deniedAt: Date.now()
     });
-    setAgentStatus("Cancelled.");
     setConnectStatus("Denied.");
     clearConnectQuery();
     if (connectPanel) connectPanel.hidden = true;
-    if (agentLinkBox) agentLinkBox.hidden = true;
   } catch (err) {
     console.error(err);
-    setAgentStatus(err.message || "Cancel failed.");
+    setConnectStatus(err.message || "Deny failed.");
   }
 }
 
-async function revokeOneAgent(tokenHash, label) {
-  if (!me || !tokenHash) return;
-  if (!confirm(`Revoke ${label || "this agent"}?`)) return;
-  const now = Date.now();
+async function revokeAllAgents() {
+  if (!me) return;
+  if (!confirm("Revoke all agent access?")) return;
   try {
-    await update(ref(db), {
-      [`curriculum/agentTokens/${tokenHash}/revoked`]: true,
-      [`curriculum/agentTokens/${tokenHash}/revokedAt`]: now,
-      [`curriculum/byUser/${me.uid}/agentTokenHashes/${tokenHash}`]: null
+    const snap = await get(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes`));
+    const hashes = snap.exists() ? Object.keys(snap.val()) : [];
+    const updates = {};
+    const now = Date.now();
+    hashes.forEach((th) => {
+      updates[`curriculum/agentTokens/${th}/revoked`] = true;
+      updates[`curriculum/agentTokens/${th}/revokedAt`] = now;
+      updates[`curriculum/byUser/${me.uid}/agentTokenHashes/${th}`] = null;
     });
-    setAgentStatus(`${label || "Agent"} revoked.`);
-    await refreshAgentSessions();
+    if (hashes.length) await update(ref(db), updates);
+    try {
+      await agentFetch("POST", "/pair/revoke", {});
+    } catch {
+      /* optional */
+    }
+    setAgentStatus(hashes.length ? "Access revoked." : "Nothing to revoke.");
   } catch (err) {
     console.error(err);
     setAgentStatus(err.message || "Revoke failed.");
@@ -397,14 +321,7 @@ function showConnectConfirm(code) {
   if (!connectPanel) return;
   pendingAgentCode = code;
   connectPanel.hidden = false;
-  get(ref(db, `curriculum/agentPairing/${code}/label`)).then((snap) => {
-    const label = snap.val();
-    connectLede.textContent = label
-      ? `${label} wants access to your curriculum lessons.`
-      : "An agent wants access to your curriculum lessons.";
-  }).catch(() => {
-    connectLede.textContent = "An agent wants access to your curriculum lessons.";
-  });
+  connectLede.textContent = "An agent wants to edit your curriculum. Confirm to allow it.";
   setConnectStatus("");
   if (btnConnectConfirm) btnConnectConfirm.disabled = false;
 }
@@ -757,7 +674,6 @@ async function showStudio(user) {
     : (user.email || "Signed in with Google");
 
   await refreshLessonIndex();
-  await refreshAgentSessions();
 
   const connectCode = connectQueryCode();
   if (connectCode) {
@@ -1291,15 +1207,16 @@ modeSuggest?.addEventListener("click", () => {
 });
 
 btnAgent?.addEventListener("click", () => openAgentPanel());
-btnAgentCreate?.addEventListener("click", () => startAgentPair());
-btnCopyAgent?.addEventListener("click", () => {
-  copyAgentLink().then(
-    () => setAgentStatus("Link copied."),
-    () => setAgentStatus(agentLink?.value || "No link yet.")
-  );
+btnCopyAgent?.addEventListener("click", async () => {
+  try {
+    if (!agentLink?.value?.trim()) await ensureAgentLink({ autoCopy: false });
+    await copyAgentLink();
+    setAgentStatus("Copied — paste into your agent.");
+  } catch (err) {
+    setAgentStatus(err?.message || agentLink?.value || "Could not copy.");
+  }
 });
-btnAgentConfirm?.addEventListener("click", () => confirmAgentPair());
-btnAgentDeny?.addEventListener("click", () => denyAgentPair());
+btnAgentRevoke?.addEventListener("click", () => revokeAllAgents());
 btnAgentClose?.addEventListener("click", () => {
   if (agentPanel) agentPanel.hidden = true;
 });
