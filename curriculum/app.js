@@ -63,11 +63,9 @@ const lessonList = document.getElementById("lessonList");
 const emptyList = document.getElementById("emptyList");
 const form = document.getElementById("lessonForm");
 const btnNew = document.getElementById("btnNew");
-const btnDelete = document.getElementById("btnDelete");
 const btnSave = document.getElementById("btnSave");
+const btnDelete = document.getElementById("btnDelete");
 const saveStatus = document.getElementById("saveStatus");
-const preview = document.getElementById("preview");
-const previewBody = document.getElementById("previewBody");
 const collabBar = document.getElementById("collabBar");
 const authorTools = document.getElementById("authorTools");
 const roleHint = document.getElementById("roleHint");
@@ -94,6 +92,14 @@ const connectLede = document.getElementById("connectLede");
 const connectStatus = document.getElementById("connectStatus");
 const btnConnectConfirm = document.getElementById("btnConnectConfirm");
 const btnConnectDeny = document.getElementById("btnConnectDeny");
+
+function el(id) {
+  return document.getElementById(id);
+}
+
+function field(id) {
+  return form?.elements?.namedItem?.(id) || el(id);
+}
 
 let me = null;
 let myUsername = null;
@@ -408,7 +414,10 @@ function addMediaRow(kind, values = {}) {
   if (!host) return;
 
   const row = document.createElement("div");
-  row.className = kind === "link" ? "media-row two" : "media-row";
+  row.className =
+    kind === "link" ? "media-row two"
+      : kind === "video" ? "media-row video-row"
+        : "media-row";
   row.dataset.kind = kind;
 
   if (kind === "link") {
@@ -416,24 +425,66 @@ function addMediaRow(kind, values = {}) {
       `<input class="label-input" type="text" placeholder="Label (optional)" value="${escapeAttr(values.label || "")}" />` +
       `<input class="url-input" type="url" placeholder="https://…" value="${escapeAttr(values.url || "")}" />` +
       `<button type="button" class="remove" aria-label="Remove">✕</button>`;
-  } else {
-    const ph = kind === "video" ? "https://www.youtube.com/watch?v=…" : "https://…/photo.jpg";
+  } else if (kind === "video") {
     row.innerHTML =
-      `<input class="url-input" type="url" placeholder="${ph}" value="${escapeAttr(values.url || "")}" />` +
-      `<button type="button" class="remove" aria-label="Remove">✕</button>`;
+      `<div class="yt-embed" hidden></div>` +
+      `<div class="video-controls">` +
+      `<input class="url-input" type="url" placeholder="Paste YouTube link…" value="${escapeAttr(values.url || "")}" />` +
+      `<button type="button" class="remove" aria-label="Remove">✕</button>` +
+      `</div>`;
+  } else {
+    row.className = "media-row video-row";
+    row.innerHTML =
+      `<img class="photo-preview" alt="" hidden />` +
+      `<div class="video-controls">` +
+      `<input class="url-input" type="url" placeholder="https://…/photo.jpg" value="${escapeAttr(values.url || "")}" />` +
+      `<button type="button" class="remove" aria-label="Remove">✕</button>` +
+      `</div>`;
   }
 
+  const urlInput = row.querySelector(".url-input");
+  const syncPreview = () => {
+    if (kind === "video") {
+      const box = row.querySelector(".yt-embed");
+      const id = youtubeId(urlInput.value.trim());
+      if (id) {
+        box.hidden = false;
+        box.innerHTML =
+          `<iframe src="https://www.youtube-nocookie.com/embed/${escapeAttr(id)}" ` +
+          `title="Lesson video" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+      } else {
+        box.hidden = true;
+        box.innerHTML = "";
+      }
+    } else if (kind === "photo") {
+      const img = row.querySelector(".photo-preview");
+      const u = urlInput.value.trim();
+      if (u) {
+        img.hidden = false;
+        img.src = u;
+      } else {
+        img.hidden = true;
+        img.removeAttribute("src");
+      }
+    }
+  };
+
+  urlInput?.addEventListener("input", () => {
+    syncPreview();
+    if (isAuthor && editMode === "edit") scheduleSave();
+  });
   row.querySelector(".remove").addEventListener("click", () => {
     row.remove();
     if (isAuthor && editMode === "edit") scheduleSave();
   });
   host.appendChild(row);
+  syncPreview();
 }
 
 function clearMedia() {
   ["photoRows", "videoRows", "linkRows"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.replaceChildren();
+    const node = document.getElementById(id);
+    if (node) node.replaceChildren();
   });
 }
 
@@ -463,12 +514,19 @@ function blankBody() {
   };
 }
 
+function autosizeAll() {
+  form?.querySelectorAll("textarea.doc-body").forEach((ta) => {
+    ta.style.height = "auto";
+    ta.style.height = `${Math.max(ta.scrollHeight, 28)}px`;
+  });
+}
+
 function collectForm() {
   return {
-    title: form.fTitle.value.trim(),
-    overview: form.fOverview.value.trim(),
-    materials: lines(form.fMaterials.value),
-    steps: lines(form.fSteps.value),
+    title: (field("fTitle") || field("title"))?.value?.trim() || "",
+    overview: (field("fOverview") || field("overview"))?.value?.trim() || "",
+    materials: lines((field("fMaterials") || field("materials"))?.value),
+    steps: lines((field("fSteps") || field("steps"))?.value),
     photos: readMedia("photo"),
     videos: readMedia("video"),
     links: readMedia("link")
@@ -478,11 +536,15 @@ function collectForm() {
 function fillFormFromLesson(lesson) {
   applyingRemote = true;
   currentId = lesson.id;
-  form.fTitle.value = lesson.title || "";
+  const titleEl = field("fTitle") || field("title");
+  const overviewEl = field("fOverview") || field("overview");
+  const materialsEl = field("fMaterials") || field("materials");
+  const stepsEl = field("fSteps") || field("steps");
+  if (titleEl) titleEl.value = lesson.title || "";
   const body = lesson.body || blankBody();
-  form.fOverview.value = body.overview || "";
-  form.fMaterials.value = (body.materials || []).join("\n");
-  form.fSteps.value = (body.steps || []).join("\n");
+  if (overviewEl) overviewEl.value = body.overview || "";
+  if (materialsEl) materialsEl.value = (body.materials || []).join("\n");
+  if (stepsEl) stepsEl.value = (body.steps || []).join("\n");
   clearMedia();
   (body.photos || []).forEach((p) => addMediaRow("photo", p));
   (body.videos || []).forEach((v) => addMediaRow("video", v));
@@ -492,7 +554,7 @@ function fillFormFromLesson(lesson) {
   if (!(body.links || []).length) addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = !(isAuthor && currentMeta?.ownerUid === me?.uid);
-  renderPreview(collectForm());
+  autosizeAll();
   renderList();
   updateCollabChrome();
 }
@@ -518,60 +580,14 @@ function renderList() {
     });
 }
 
-function renderPreview(lesson) {
-  const hasMedia =
-    (lesson.photos || []).length ||
-    (lesson.videos || []).length ||
-    (lesson.links || []).length;
-  if (!lesson.title && !lesson.overview && !(lesson.steps || []).length && !hasMedia) {
-    preview.hidden = true;
-    return;
-  }
-  preview.hidden = false;
-  const parts = [];
-  if (lesson.title) parts.push(`<h2>${escapeHtml(lesson.title)}</h2>`);
-  if (lesson.overview) parts.push(`<p>${escapeHtml(lesson.overview)}</p>`);
-  if ((lesson.materials || []).length) {
-    parts.push("<p><strong>Materials</strong></p><ul>" +
-      lesson.materials.map((m) => `<li>${escapeHtml(m)}</li>`).join("") + "</ul>");
-  }
-  if ((lesson.steps || []).length) {
-    parts.push("<p><strong>Steps</strong></p><ol>" +
-      lesson.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("") + "</ol>");
-  }
-  (lesson.photos || []).forEach((p) => {
-    parts.push(`<img src="${escapeAttr(p.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`);
-  });
-  (lesson.videos || []).forEach((v) => {
-    const id = youtubeId(v.url);
-    if (id) {
-      parts.push(
-        `<div class="yt"><iframe src="https://www.youtube-nocookie.com/embed/${escapeAttr(id)}" ` +
-        `title="Lesson video" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
-      );
-    } else {
-      parts.push(`<p><a href="${escapeAttr(v.url)}" target="_blank" rel="noopener">Video</a></p>`);
-    }
-  });
-  if ((lesson.links || []).length) {
-    parts.push("<p><strong>Materials &amp; links</strong></p><ul>" +
-      lesson.links.map((l) => {
-        const label = l.label || l.url;
-        return `<li><a href="${escapeAttr(l.url)}" target="_blank" rel="noopener">${escapeHtml(label)}</a></li>`;
-      }).join("") + "</ul>");
-  }
-  previewBody.innerHTML = parts.join("");
-}
-
 function setFormEditable(canEdit) {
-  const inputs = form.querySelectorAll("input, textarea, button.remove, [data-add]");
-  inputs.forEach((el) => {
-    if (el === btnSave || el === btnDelete) return;
-    if (el.tagName === "BUTTON") el.disabled = !canEdit;
-    else el.readOnly = !canEdit;
+  form?.querySelectorAll("input, textarea, button.remove, [data-add], .doc-insert").forEach((node) => {
+    if (node === btnSave || node === btnDelete) return;
+    if (node.tagName === "BUTTON") node.disabled = !canEdit;
+    else node.readOnly = !canEdit;
   });
-  btnSave.hidden = !canEdit;
-  document.querySelectorAll("[data-add]").forEach((b) => {
+  if (btnSave) btnSave.hidden = !canEdit;
+  document.querySelectorAll("[data-add], .doc-insert").forEach((b) => {
     b.hidden = !canEdit;
   });
 }
@@ -666,10 +682,14 @@ function fillBlankNew() {
   isAuthor = true;
   setLessonQuery(null);
   applyingRemote = true;
-  form.fTitle.value = "";
-  form.fOverview.value = "";
-  form.fMaterials.value = "";
-  form.fSteps.value = "";
+  const titleEl = field("fTitle") || field("title");
+  const overviewEl = field("fOverview") || field("overview");
+  const materialsEl = field("fMaterials") || field("materials");
+  const stepsEl = field("fSteps") || field("steps");
+  if (titleEl) titleEl.value = "";
+  if (overviewEl) overviewEl.value = "";
+  if (materialsEl) materialsEl.value = "";
+  if (stepsEl) stepsEl.value = "";
   clearMedia();
   addMediaRow("photo");
   addMediaRow("video");
@@ -680,7 +700,7 @@ function fillBlankNew() {
   suggestPanel.hidden = true;
   setFormEditable(true);
   setStatus("");
-  preview.hidden = true;
+  autosizeAll();
   renderList();
 }
 
@@ -1115,9 +1135,9 @@ document.querySelectorAll("[data-add]").forEach((btn) => {
 
 form?.addEventListener("input", (e) => {
   if (applyingRemote) return;
-  renderPreview(collectForm());
-  const field = e.target?.closest?.("[data-field]")?.dataset?.field;
-  if (field) updateMyPresenceField(field);
+  if (e.target?.matches?.("textarea.doc-body")) autosizeAll();
+  const f = e.target?.closest?.("[data-field]")?.dataset?.field;
+  if (f) updateMyPresenceField(f);
   if (isAuthor && editMode === "edit") scheduleSave();
 });
 

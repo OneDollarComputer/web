@@ -39,7 +39,6 @@
   </header>
 
   <main>
-    <!-- Logged out: title may show if ?lesson= ; body always gated -->
     <section id="gate" class="panel" hidden>
       <p class="kicker">Teachers &amp; instructors</p>
       <h1 id="gateTitle">Curriculum</h1>
@@ -95,7 +94,7 @@
       </section>
 
       <div class="studio-grid">
-        <aside class="panel side">
+        <aside class="side">
           <div class="side-head">
             <h2>Lessons</h2>
             <button type="button" id="btnNew" class="primary-sm">New</button>
@@ -104,76 +103,71 @@
           <p id="emptyList" class="empty">No lessons yet.</p>
         </aside>
 
-        <section class="panel editor">
-          <div id="collabBar" class="collab-bar" hidden>
+        <section class="doc-shell">
+          <div id="collabBar" class="doc-toolbar" hidden>
             <div class="mode-toggle" role="group" aria-label="Edit mode">
               <button type="button" id="modeEdit" class="mode-btn active">Editing</button>
               <button type="button" id="modeSuggest" class="mode-btn">Suggesting</button>
             </div>
             <div id="authorTools" class="author-tools">
               <label class="invite">
-                <span>Invite co-author</span>
+                <span class="sr-only">Invite co-author</span>
                 <span class="invite-row">
-                  <input id="inviteUser" type="text" placeholder="username" autocomplete="off" spellcheck="false" />
-                  <button type="button" id="btnInvite" class="primary-sm">Add</button>
+                  <input id="inviteUser" type="text" placeholder="Invite username" autocomplete="off" spellcheck="false" />
+                  <button type="button" id="btnInvite" class="ghost-sm">Add</button>
                 </span>
               </label>
-              <button type="button" id="btnShare" class="ghost-sm">Copy link</button>
+              <button type="button" id="btnShare" class="ghost-sm">Share</button>
             </div>
             <p id="roleHint" class="role-hint"></p>
+            <span id="saveStatus" class="status doc-status" role="status"></span>
+            <button type="button" id="btnDelete" class="ghost-sm danger" hidden>Delete</button>
           </div>
 
-          <form id="lessonForm">
-            <label class="field" data-field="title">
-              <span class="field-label">Title <span class="who" data-who="title"></span></span>
-              <input id="fTitle" name="title" type="text" maxlength="120" required
-                placeholder="e.g. Blink an LED in 10 minutes" autocomplete="off" />
-            </label>
-
-            <label class="field" data-field="overview">
-              <span class="field-label">Overview <span class="who" data-who="overview"></span></span>
-              <textarea id="fOverview" name="overview" rows="3"
-                placeholder="What students will build and learn"></textarea>
-            </label>
-
-            <label class="field" data-field="materials">
-              <span class="field-label">Materials <span class="who" data-who="materials"></span></span>
-              <textarea id="fMaterials" name="materials" rows="3"
-                placeholder="One item per line"></textarea>
-            </label>
-
-            <label class="field" data-field="steps">
-              <span class="field-label">Steps <span class="who" data-who="steps"></span></span>
-              <textarea id="fSteps" name="steps" rows="5"
-                placeholder="One step per line"></textarea>
-            </label>
-
-            <fieldset class="media-block">
-              <legend>Photos</legend>
-              <p class="hint">Image URLs for now (upload comes next).</p>
-              <div id="photoRows" class="media-rows"></div>
-              <button type="button" class="ghost-sm" data-add="photo">Add photo URL</button>
-            </fieldset>
-
-            <fieldset class="media-block">
-              <legend>YouTube</legend>
-              <p class="hint">Paste a YouTube or Shorts link.</p>
-              <div id="videoRows" class="media-rows"></div>
-              <button type="button" class="ghost-sm" data-add="video">Add video</button>
-            </fieldset>
-
-            <fieldset class="media-block">
-              <legend>Other materials</legend>
-              <p class="hint">PDFs, docs, worksheets — any link.</p>
-              <div id="linkRows" class="media-rows"></div>
-              <button type="button" class="ghost-sm" data-add="link">Add link</button>
-            </fieldset>
-
-            <div class="form-actions">
-              <button type="submit" class="primary" id="btnSave">Save</button>
-              <button type="button" class="ghost" id="btnDelete" hidden>Delete</button>
-              <span id="saveStatus" class="status" role="status"></span>
+          <form id="lessonForm" class="doc-page">
+            <div class="doc-block" data-field="title">
+              <span class="who" data-who="title"></span>
+              <input id="fTitle" name="title" class="doc-title" type="text" maxlength="120" required
+                placeholder="Untitled lesson" autocomplete="off" />
             </div>
+
+            <div class="doc-block" data-field="overview">
+              <div class="doc-label">Overview <span class="who" data-who="overview"></span></div>
+              <textarea id="fOverview" name="overview" class="doc-body" rows="1"
+                placeholder="What students will build and learn…"></textarea>
+            </div>
+
+            <div class="doc-block" data-field="materials">
+              <div class="doc-label">Materials <span class="who" data-who="materials"></span></div>
+              <textarea id="fMaterials" name="materials" class="doc-body" rows="1"
+                placeholder="One item per line…"></textarea>
+            </div>
+
+            <div class="doc-block" data-field="steps">
+              <div class="doc-label">Steps <span class="who" data-who="steps"></span></div>
+              <textarea id="fSteps" name="steps" class="doc-body" rows="1"
+                placeholder="One step per line…"></textarea>
+            </div>
+
+            <div class="doc-block media-section">
+              <div class="doc-label">Photos</div>
+              <div id="photoRows" class="media-rows"></div>
+              <button type="button" class="doc-insert" data-add="photo">+ Photo URL</button>
+            </div>
+
+            <div class="doc-block media-section">
+              <div class="doc-label">YouTube</div>
+              <div id="videoRows" class="media-rows"></div>
+              <button type="button" class="doc-insert" data-add="video">+ Video</button>
+            </div>
+
+            <div class="doc-block media-section">
+              <div class="doc-label">Links</div>
+              <div id="linkRows" class="media-rows"></div>
+              <button type="button" class="doc-insert" data-add="link">+ Link</button>
+            </div>
+
+            <button type="submit" class="sr-only" id="btnSave">Save</button>
           </form>
 
           <div id="suggestPanel" class="suggest-panel" hidden>
@@ -194,11 +188,6 @@
               <button type="submit" class="primary">Send suggestion</button>
             </form>
             <ul id="sugList" class="sug-list"></ul>
-          </div>
-
-          <div id="preview" class="preview" hidden>
-            <h3>Preview</h3>
-            <div id="previewBody"></div>
           </div>
         </section>
       </div>
