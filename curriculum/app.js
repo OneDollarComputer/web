@@ -1064,25 +1064,33 @@ async function inviteCoAuthor() {
     setStatus("Only the owner can invite.");
     return;
   }
-  const name = (inviteUser.value || "").trim().toLowerCase();
-  if (!name) {
-    setStatus("Enter a username.");
+  let name = (inviteUser.value || "").trim().toLowerCase().replace(/^@+/, "");
+  if (name.includes("@") || name.includes(".")) {
+    setStatus("Use their username (e.g. cloud), not an email.");
+    return;
+  }
+  if (!/^[a-z][a-z0-9-]{0,22}[a-z0-9]$/.test(name) || name.length < 2) {
+    setStatus("Username: 2–24 chars, start with a letter.");
     return;
   }
   try {
     const snap = await get(ref(db, `usernames/${name}`));
     if (!snap.exists()) {
-      setStatus("Username not found.");
+      setStatus(`No account with username “${name}”.`);
       return;
     }
     const uid = snap.val()?.uid || snap.val();
     const otherUid = typeof uid === "string" ? uid : uid?.uid;
     if (!otherUid) {
-      setStatus("Username not found.");
+      setStatus(`No account with username “${name}”.`);
       return;
     }
     if (otherUid === me.uid) {
       setStatus("That’s you.");
+      return;
+    }
+    if (currentMeta?.authors?.[otherUid]) {
+      setStatus(`“${name}” is already an author.`);
       return;
     }
     const profile = await get(ref(db, `profiles/${name}`));
@@ -1097,10 +1105,10 @@ async function inviteCoAuthor() {
     updates[`curriculum/byUser/${otherUid}/${currentId}`] = true;
     await update(ref(db), updates);
     inviteUser.value = "";
-    setStatus(`Added ${name}.`);
+    setStatus(`Added /${name}/.`);
   } catch (err) {
     console.error(err);
-    setStatus("Invite failed.");
+    setStatus(err?.message || "Invite failed.");
   }
 }
 
