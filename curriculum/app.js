@@ -519,7 +519,11 @@ function renderList() {
 }
 
 function renderPreview(lesson) {
-  if (!lesson.title && !lesson.overview && !(lesson.steps || []).length) {
+  const hasMedia =
+    (lesson.photos || []).length ||
+    (lesson.videos || []).length ||
+    (lesson.links || []).length;
+  if (!lesson.title && !lesson.overview && !(lesson.steps || []).length && !hasMedia) {
     preview.hidden = true;
     return;
   }
@@ -741,32 +745,29 @@ async function openLesson(id) {
       updatedBy: data.updatedBy
     };
 
-    if (!data.body) {
-      setStatus("Could not load lesson body.");
-      updateCollabChrome();
-      return;
-    }
-
-    const contentKey = `${data.updatedAt || 0}:${data.updatedBy || ""}:${data.title || ""}`;
-    // Skip re-fill when only presence/suggestions changed (same content stamp)
-    // Still apply when another author saved, or first load.
+    const body = data.body || blankBody();
+    const contentKey = `${data.updatedAt || 0}:${data.updatedBy || ""}:${data.title || ""}:${JSON.stringify(body)}`;
     if (contentKey === lastContentKey) {
       updateCollabChrome();
       return;
     }
-    // Don't clobber while this user is mid-edit save debounce
     if (saveTimer && data.updatedBy === me.uid) {
       lastContentKey = contentKey;
       updateCollabChrome();
       return;
     }
     lastContentKey = contentKey;
-    fillFormFromLesson({
-      id,
-      title: data.title || "",
-      body: data.body || blankBody()
-    });
-    setStatus(isAuthor ? "Synced." : "Viewing (suggest mode).");
+    try {
+      fillFormFromLesson({
+        id,
+        title: data.title || "",
+        body
+      });
+      setStatus(isAuthor ? "Synced." : "Viewing (suggest mode).");
+    } catch (err) {
+      console.error(err);
+      setStatus("Could not render lesson.");
+    }
   }, (err) => {
     console.error(err);
     setStatus("Could not open lesson.");

@@ -59,6 +59,7 @@
       },
       "lessons": {
         "$lid": {
+          ".read": "auth != null",
           ".write": "auth != null && !newData.exists() && data.child('ownerUid').val() === auth.uid",
           "title": {
             ".read": true,
