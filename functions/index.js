@@ -339,7 +339,8 @@ async function handlePatchLesson(req, res, lid) {
       photos: Array.isArray(body.body.photos) ? body.body.photos : (prev.photos || []),
       videos: Array.isArray(body.body.videos) ? body.body.videos : (prev.videos || []),
       html: nextHtml,
-      links: Array.isArray(body.body.links) ? body.body.links : (prev.links || [])
+      links: Array.isArray(body.body.links) ? body.body.links : (prev.links || []),
+      games: null
     };
   }
   // Allow top-level field patches
@@ -360,7 +361,8 @@ async function handlePatchLesson(req, res, lid) {
       photos: body.photos !== undefined ? body.photos : (prev.photos || []),
       videos: body.videos !== undefined ? body.videos : (prev.videos || []),
       html: nextHtml,
-      links: body.links !== undefined ? body.links : (prev.links || [])
+      links: body.links !== undefined ? body.links : (prev.links || []),
+      games: null
     };
   }
 

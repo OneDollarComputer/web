@@ -1184,6 +1184,7 @@ async function saveCurrent() {
         html: data.html,
         links: data.links
       };
+      updates[`curriculum/lessons/${id}/body/games`] = null;
       updates[`curriculum/byUser/${me.uid}/${id}`] = true;
       await update(ref(db), updates);
       currentId = id;
@@ -1212,6 +1213,7 @@ async function saveCurrent() {
       html: data.html,
       links: data.links
     };
+    updates[`curriculum/lessons/${currentId}/body/games`] = null;
     await update(ref(db), updates);
     // Refresh list title
     const row = lessons.find((l) => l.id === currentId);
