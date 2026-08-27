@@ -280,7 +280,7 @@ async function handleGetLesson(req, res, lid) {
   });
 }
 
-function normalizeGames(list) {
+function normalizeHtmlBlocks(list) {
   if (!Array.isArray(list)) return [];
   const out = [];
   for (const item of list) {
@@ -293,6 +293,12 @@ function normalizeGames(list) {
     out.push(row);
   }
   return out;
+}
+
+function htmlBlocksFromBody(body) {
+  if (body?.html !== undefined) return normalizeHtmlBlocks(body.html);
+  if (body?.games !== undefined) return normalizeHtmlBlocks(body.games);
+  return [];
 }
 
 async function handlePatchLesson(req, res, lid) {
@@ -320,28 +326,40 @@ async function handlePatchLesson(req, res, lid) {
   }
   if (body.body && typeof body.body === "object") {
     const prev = lesson.body || {};
+    const prevHtml = htmlBlocksFromBody(prev);
+    const nextHtml = body.body.html !== undefined
+      ? normalizeHtmlBlocks(body.body.html)
+      : body.body.games !== undefined
+        ? normalizeHtmlBlocks(body.body.games)
+        : prevHtml;
     updates.body = {
       overview: body.body.overview !== undefined ? String(body.body.overview) : (prev.overview || ""),
       materials: Array.isArray(body.body.materials) ? body.body.materials : (prev.materials || []),
       steps: Array.isArray(body.body.steps) ? body.body.steps : (prev.steps || []),
       photos: Array.isArray(body.body.photos) ? body.body.photos : (prev.photos || []),
       videos: Array.isArray(body.body.videos) ? body.body.videos : (prev.videos || []),
-      games: body.body.games !== undefined ? normalizeGames(body.body.games) : (prev.games || []),
+      html: nextHtml,
       links: Array.isArray(body.body.links) ? body.body.links : (prev.links || [])
     };
   }
   // Allow top-level field patches
   if (body.overview !== undefined || body.materials !== undefined || body.steps !== undefined
-      || body.photos !== undefined || body.videos !== undefined || body.games !== undefined
-      || body.links !== undefined) {
+      || body.photos !== undefined || body.videos !== undefined || body.html !== undefined
+      || body.games !== undefined || body.links !== undefined) {
     const prev = updates.body || lesson.body || {};
+    const prevHtml = htmlBlocksFromBody(prev);
+    const nextHtml = body.html !== undefined
+      ? normalizeHtmlBlocks(body.html)
+      : body.games !== undefined
+        ? normalizeHtmlBlocks(body.games)
+        : prevHtml;
     updates.body = {
       overview: body.overview !== undefined ? String(body.overview) : (prev.overview || ""),
       materials: body.materials !== undefined ? body.materials : (prev.materials || []),
       steps: body.steps !== undefined ? body.steps : (prev.steps || []),
       photos: body.photos !== undefined ? body.photos : (prev.photos || []),
       videos: body.videos !== undefined ? body.videos : (prev.videos || []),
-      games: body.games !== undefined ? normalizeGames(body.games) : (prev.games || []),
+      html: nextHtml,
       links: body.links !== undefined ? body.links : (prev.links || [])
     };
   }

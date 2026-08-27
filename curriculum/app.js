@@ -499,25 +499,40 @@ function addMediaRow(kind, values = {}) {
   syncPreview();
 }
 
-const MAX_GAME_HTML = 512 * 1024;
+const MAX_HTML_BYTES = 512 * 1024;
 
-function addGameRow(values = {}) {
-  const host = document.getElementById("gameRows");
+function lessonHtmlBlocks(body) {
+  return body?.html || body?.games || [];
+}
+
+function setHtmlEditorOpen(row, open) {
+  const editor = row.querySelector(".html-editor");
+  const editBtn = row.querySelector(".html-edit");
+  const doneBtn = row.querySelector(".html-done");
+  if (!editor || !editBtn || !doneBtn) return;
+  editor.hidden = !open;
+  editBtn.hidden = open;
+  doneBtn.hidden = !open;
+  row.dataset.editing = open ? "1" : "";
+}
+
+function addHtmlRow(values = {}, startEditing = false) {
+  const host = document.getElementById("htmlRows");
   if (!host) return;
 
   const row = document.createElement("div");
-  row.className = "media-row game-row";
-  row.dataset.kind = "game";
+  row.className = "media-row html-row";
+  row.dataset.kind = "html";
 
-  const embedWrap = document.createElement("div");
-  embedWrap.className = "game-embed-wrap";
+  const wrap = document.createElement("div");
+  wrap.className = "html-embed-wrap";
 
   const embed = document.createElement("div");
-  embed.className = "game-embed";
+  embed.className = "html-embed";
   embed.hidden = true;
 
   const iframe = document.createElement("iframe");
-  iframe.title = values.title || "Lesson game";
+  iframe.title = values.title || "Lesson HTML";
   iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
   iframe.setAttribute("allow", "fullscreen");
   iframe.setAttribute("allowfullscreen", "");
@@ -525,52 +540,70 @@ function addGameRow(values = {}) {
 
   const fsBtn = document.createElement("button");
   fsBtn.type = "button";
-  fsBtn.className = "game-fullscreen";
+  fsBtn.className = "html-fullscreen";
   fsBtn.setAttribute("aria-label", "Fullscreen");
   fsBtn.textContent = "⛶";
 
   embed.appendChild(iframe);
   embed.appendChild(fsBtn);
 
-  const controls = document.createElement("div");
-  controls.className = "game-controls";
+  const toolbar = document.createElement("div");
+  toolbar.className = "html-toolbar";
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "html-edit";
+  editBtn.textContent = "Edit";
+
+  const doneBtn = document.createElement("button");
+  doneBtn.type = "button";
+  doneBtn.className = "html-done";
+  doneBtn.textContent = "Done";
+  doneBtn.hidden = true;
+
+  toolbar.appendChild(editBtn);
+  toolbar.appendChild(doneBtn);
+
+  const editor = document.createElement("div");
+  editor.className = "html-editor";
+  editor.hidden = true;
 
   const titleInput = document.createElement("input");
   titleInput.className = "title-input";
   titleInput.type = "text";
-  titleInput.placeholder = "Game title (optional)";
+  titleInput.placeholder = "Title (optional)";
   titleInput.value = values.title || "";
 
   const htmlInput = document.createElement("textarea");
   htmlInput.className = "html-input";
-  htmlInput.rows = 6;
-  htmlInput.placeholder = "HTML5 — stored in Firebase, plays inline below";
+  htmlInput.rows = 8;
+  htmlInput.placeholder = "HTML5 markup — stored in Firebase, shown inline in this lesson";
   htmlInput.value = values.html || "";
 
-  const bar = document.createElement("div");
-  bar.className = "game-control-bar";
+  const editorBar = document.createElement("div");
+  editorBar.className = "html-editor-bar";
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
   removeBtn.className = "remove";
   removeBtn.setAttribute("aria-label", "Remove");
-  removeBtn.textContent = "✕";
+  removeBtn.textContent = "Remove";
 
-  bar.appendChild(removeBtn);
-  controls.appendChild(titleInput);
-  controls.appendChild(htmlInput);
-  controls.appendChild(bar);
+  editorBar.appendChild(removeBtn);
+  editor.appendChild(titleInput);
+  editor.appendChild(htmlInput);
+  editor.appendChild(editorBar);
 
-  embedWrap.appendChild(embed);
-  embedWrap.appendChild(controls);
-  row.appendChild(embedWrap);
+  wrap.appendChild(embed);
+  wrap.appendChild(toolbar);
+  wrap.appendChild(editor);
+  row.appendChild(wrap);
 
   const syncPreview = () => {
     const html = htmlInput.value.trim();
-    iframe.title = titleInput.value.trim() || "Lesson game";
+    iframe.title = titleInput.value.trim() || "Lesson HTML";
     if (html) {
       embed.hidden = false;
-      iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
       iframe.removeAttribute("src");
       iframe.srcdoc = html;
     } else {
@@ -588,6 +621,17 @@ function addGameRow(values = {}) {
     }
   });
 
+  editBtn.addEventListener("click", () => {
+    setHtmlEditorOpen(row, true);
+    htmlInput.focus();
+  });
+
+  doneBtn.addEventListener("click", () => {
+    setHtmlEditorOpen(row, false);
+    syncPreview();
+    if (isAuthor && editMode === "edit") scheduleSave();
+  });
+
   for (const el of [titleInput, htmlInput]) {
     el.addEventListener("input", () => {
       syncPreview();
@@ -602,10 +646,12 @@ function addGameRow(values = {}) {
 
   host.appendChild(row);
   syncPreview();
+  if (startEditing || !htmlInput.value.trim()) setHtmlEditorOpen(row, true);
+  else setHtmlEditorOpen(row, false);
 }
 
 function clearMedia() {
-  ["photoRows", "videoRows", "gameRows", "linkRows"].forEach((id) => {
+  ["photoRows", "videoRows", "htmlRows", "linkRows"].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.replaceChildren();
   });
@@ -626,10 +672,10 @@ function readMedia(kind) {
   }).filter((x) => x.url);
 }
 
-function readGames() {
-  const host = document.getElementById("gameRows");
+function readHtmlBlocks() {
+  const host = document.getElementById("htmlRows");
   if (!host) return [];
-  return [...host.querySelectorAll(".game-row")].map((row) => {
+  return [...host.querySelectorAll(".html-row")].map((row) => {
     const title = row.querySelector(".title-input")?.value.trim() || "";
     const html = row.querySelector(".html-input")?.value.trim() || "";
     const item = { html };
@@ -645,7 +691,7 @@ function blankBody() {
     steps: [],
     photos: [],
     videos: [],
-    games: [],
+    html: [],
     links: []
   };
 }
@@ -665,7 +711,7 @@ function collectForm() {
     steps: lines((field("fSteps") || field("steps"))?.value),
     photos: readMedia("photo"),
     videos: readMedia("video"),
-    games: readGames(),
+    html: readHtmlBlocks(),
     links: readMedia("link")
   };
 }
@@ -685,11 +731,11 @@ function fillFormFromLesson(lesson) {
   clearMedia();
   (body.photos || []).forEach((p) => addMediaRow("photo", p));
   (body.videos || []).forEach((v) => addMediaRow("video", v));
-  (body.games || []).forEach((g) => addGameRow(g));
+  lessonHtmlBlocks(body).forEach((block) => addHtmlRow(block));
   (body.links || []).forEach((l) => addMediaRow("link", l));
   if (!(body.photos || []).length) addMediaRow("photo");
   if (!(body.videos || []).length) addMediaRow("video");
-  if (!(body.games || []).length && isAuthor) addGameRow();
+  if (!lessonHtmlBlocks(body).length && isAuthor) addHtmlRow({}, true);
   if (!(body.links || []).length) addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = !(isAuthor && currentMeta?.ownerUid === me?.uid);
@@ -722,12 +768,23 @@ function renderList() {
 function setFormEditable(canEdit) {
   form?.querySelectorAll("input, textarea, button.remove, [data-add], .doc-insert").forEach((node) => {
     if (node === btnSave || node === btnDelete) return;
-    if (node.classList?.contains("game-fullscreen")) return;
+    if (node.classList?.contains("html-fullscreen")) return;
     if (node.tagName === "BUTTON") node.disabled = !canEdit;
     else node.readOnly = !canEdit;
   });
-  document.querySelectorAll(".game-row .game-controls").forEach((panel) => {
-    panel.hidden = !canEdit;
+  document.querySelectorAll(".html-row").forEach((row) => {
+    const toolbar = row.querySelector(".html-toolbar");
+    if (toolbar) toolbar.hidden = !canEdit;
+    toolbar?.querySelectorAll(".html-edit, .html-done").forEach((btn) => {
+      btn.hidden = !canEdit;
+    });
+    if (!canEdit) {
+      setHtmlEditorOpen(row, false);
+    } else if (row.dataset.editing !== "1") {
+      setHtmlEditorOpen(row, false);
+    }
+    const editor = row.querySelector(".html-editor");
+    if (editor && !canEdit) editor.hidden = true;
   });
   if (btnSave) btnSave.hidden = !canEdit;
   document.querySelectorAll("[data-add], .doc-insert").forEach((b) => {
@@ -841,7 +898,7 @@ function fillBlankNew() {
   clearMedia();
   addMediaRow("photo");
   addMediaRow("video");
-  addGameRow();
+  addHtmlRow({}, true);
   addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = true;
@@ -1095,9 +1152,9 @@ async function saveCurrent() {
     setStatus("Add a title first.");
     return;
   }
-  for (const game of data.games) {
-    if (game.html && game.html.length > MAX_GAME_HTML) {
-      setStatus("Game HTML is too large (max 512 KB).");
+  for (const block of data.html) {
+    if (block.html && block.html.length > MAX_HTML_BYTES) {
+      setStatus("HTML block is too large (max 512 KB).");
       return;
     }
   }
@@ -1124,7 +1181,7 @@ async function saveCurrent() {
         steps: data.steps,
         photos: data.photos,
         videos: data.videos,
-        games: data.games,
+        html: data.html,
         links: data.links
       };
       updates[`curriculum/byUser/${me.uid}/${id}`] = true;
@@ -1152,7 +1209,7 @@ async function saveCurrent() {
       steps: data.steps,
       photos: data.photos,
       videos: data.videos,
-      games: data.games,
+      html: data.html,
       links: data.links
     };
     await update(ref(db), updates);
@@ -1309,7 +1366,7 @@ btnShare?.addEventListener("click", () => shareLink());
 document.querySelectorAll("[data-add]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const kind = btn.getAttribute("data-add");
-    if (kind === "game") addGameRow();
+    if (kind === "html") addHtmlRow({}, true);
     else addMediaRow(kind);
     if (isAuthor && editMode === "edit") scheduleSave();
   });
