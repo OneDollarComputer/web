@@ -91,20 +91,19 @@ const server = new McpServer({
 
 server.tool(
   "curriculum_pair",
-  "Pair with One Dollar Computer curriculum. Pass the connect URL or code from the site (Connect agent). Polls until you confirm in the browser, then stores the agent token locally.",
+  "Connect to curriculum. Pass the Agent link from the site (odc.rs/curriculum/?connect=…). Works as soon as the instructor copied the link while signed in.",
   {
-    connect_url_or_code: z.string().describe("URL like https://odc.rs/curriculum/?connect=... or the raw code")
+    connect_url_or_code: z.string().describe("Full Agent link or the connect code")
   },
   async ({ connect_url_or_code }) => {
     const code = extractCode(connect_url_or_code);
-    if (!code) return textResult({ error: "Missing code" });
+    if (!code) return textResult({ error: "Missing link — copy Agent from /curriculum/ while signed in." });
 
     const connectUrl = `https://odc.rs/curriculum/?connect=${encodeURIComponent(code)}`;
-    const deadline = Date.now() + 10 * 60 * 1000;
+    const deadline = Date.now() + 3 * 60 * 1000;
     let last = "pending";
 
     while (Date.now() < deadline) {
-      // Prefer RTDB (site writes pairing here); fall back to Cloud Function
       let st = null;
       try {
         const res = await fetch(
@@ -137,7 +136,6 @@ server.tool(
           api: DEFAULT_API,
           pairedAt: new Date().toISOString()
         });
-        // Best-effort: mark claimed via API so token is one-time when possible
         try {
           await api("GET", `/pair/status?code=${encodeURIComponent(code)}`);
         } catch {
@@ -146,19 +144,19 @@ server.tool(
         return textResult({
           ok: true,
           status: "connected",
-          message: "Paired. Token saved to ~/.config/odc/curriculum-agent.json",
+          message: "Connected. Use curriculum_list_lessons and curriculum_update_lesson.",
           connectUrl
         });
       }
       if (st.status === "denied" || st.status === "expired" || st.status === "unknown") {
         return textResult({ ok: false, status: st.status, connectUrl });
       }
-      await new Promise((r) => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 400));
     }
     return textResult({
       ok: false,
       status: last,
-      message: "Timed out waiting for confirm. Open the connect URL while signed in and click Confirm.",
+      message: "Could not connect. Ask the instructor to copy a fresh Agent link from /curriculum/ (signed in), then paste it here.",
       connectUrl
     });
   }

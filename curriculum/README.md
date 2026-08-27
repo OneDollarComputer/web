@@ -26,14 +26,13 @@ Workspace for **teachers and instructors** to build One Dollar Computer lessons.
 
 Owner invites by **username** (must already claim a username on `/project/`).
 
-## Connect agent (MCP / API)
+## Agent (MCP / Codex / Cursor)
 
-Edit lessons from Cursor, Codex, Antigravity, or any tool that speaks MCP or HTTP.
+1. Sign in on `/curriculum/` → **Agent** → **Copy** the link  
+2. Paste the link into Codex, Cursor, or any MCP client → `curriculum_pair`  
+3. Agent lists and edits your lessons — no extra confirm step  
 
-1. Sign in on `/curriculum/` → **Connect agent** → **Copy** the link (`odc.rs/curriculum/?connect=…` → opens onedollarcomputer.com)  
-2. Give the link to your agent (or call `curriculum_pair` with it)  
-3. Click **Confirm** on the site when the agent is waiting  
-4. Agent can list / get / update your lessons  
+The link is ready as soon as you copy it (while signed in). **Revoke** on the site to disconnect.
 
 ### Cursor MCP (`~/.cursor/mcp.json`)
 
@@ -62,7 +61,7 @@ Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair
 ```bash
 API=https://us-central1-odc-files.cloudfunctions.net/curriculumAgent
 
-# After you Confirm on the site, poll until token appears:
+# After copy (instructor signed in on /curriculum/):
 curl "$API/pair/status?code=YOUR_CODE"
 
 # Then:
@@ -78,6 +77,7 @@ curl -X PATCH -H "Authorization: Bearer odc_agent_…" -H "Content-Type: applica
 
 - Title, overview, materials list, steps
 - Photo URLs, YouTube / Shorts, other links
+- **HTML** blocks (HTML5 markup, inline in the lesson)
 
 ## Auth & data
 

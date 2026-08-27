@@ -82,11 +82,6 @@ const agentLink = document.getElementById("agentLink");
 const agentStatus = document.getElementById("agentStatus");
 const btnCopyAgent = document.getElementById("btnCopyAgent");
 const btnAgentRevoke = document.getElementById("btnAgentRevoke");
-const connectPanel = document.getElementById("connectPanel");
-const connectLede = document.getElementById("connectLede");
-const connectStatus = document.getElementById("connectStatus");
-const btnConnectConfirm = document.getElementById("btnConnectConfirm");
-const btnConnectDeny = document.getElementById("btnConnectDeny");
 
 function el(id) {
   return document.getElementById(id);
@@ -163,10 +158,6 @@ function setAgentStatus(msg) {
   agentStatus.textContent = msg || "";
 }
 
-function setConnectStatus(msg) {
-  if (connectStatus) connectStatus.textContent = msg || "";
-}
-
 function randomSecret(bytes = 18) {
   const a = new Uint8Array(bytes);
   crypto.getRandomValues(a);
@@ -194,24 +185,67 @@ function copyAgentLink() {
   return Promise.reject(new Error("Clipboard unavailable"));
 }
 
-/** Keep one pending link ready; reuse until near expiry. */
+async function approveAgentPairingCode(c) {
+  if (!c || !me) return;
+  const snap = await get(ref(db, `curriculum/agentPairing/${c}`));
+  if (!snap.exists()) throw new Error("Unknown or expired code");
+  const row = snap.val();
+  if (row.expiresAt && Date.now() > row.expiresAt) {
+    await update(ref(db, `curriculum/agentPairing/${c}`), { status: "expired" });
+    throw new Error("Code expired");
+  }
+  if (row.status === "connected") return;
+  if (row.status === "approved" && row.tokenPending) return;
+  if (row.status !== "pending") {
+    throw new Error(`Pairing is ${row.status}`);
+  }
+  const token = `odc_agent_${randomSecret(32)}`;
+  const tokenHash = await sha256Hex(token);
+  const now = Date.now();
+  await set(ref(db, `curriculum/agentTokens/${tokenHash}`), {
+    uid: me.uid,
+    createdAt: now,
+    pairingCode: c
+  });
+  await set(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes/${tokenHash}`), {
+    createdAt: now
+  });
+  await update(ref(db, `curriculum/agentPairing/${c}`), {
+    status: "approved",
+    uid: me.uid,
+    tokenHash,
+    tokenPending: token,
+    confirmedAt: now
+  });
+}
+
+function pairingLinkReady(row) {
+  if (!row) return false;
+  if (row.expiresAt && Date.now() > row.expiresAt) return false;
+  return row.status === "approved" && !!row.tokenPending;
+}
+
+/** Keep one agent link ready; reuse until claimed or near expiry. */
 async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   if (!me) return null;
-  const stillValid =
-    !forceNew &&
-    pendingAgentCode &&
-    agentLink?.value &&
-    pendingAgentExpiresAt - Date.now() > 60_000;
-  if (stillValid) {
-    if (autoCopy) {
-      try {
-        await copyAgentLink();
-        setAgentStatus("Copied — paste into your agent.");
-      } catch {
-        setAgentStatus("Copy the link, then paste into your agent.");
+  if (!forceNew && pendingAgentCode && agentLink?.value && pendingAgentExpiresAt - Date.now() > 60_000) {
+    try {
+      const snap = await get(ref(db, `curriculum/agentPairing/${pendingAgentCode}`));
+      if (pairingLinkReady(snap.val())) {
+        if (autoCopy) {
+          try {
+            await copyAgentLink();
+            setAgentStatus("Copied — paste into Codex or Cursor.");
+          } catch {
+            setAgentStatus("Paste the link into your agent.");
+          }
+        }
+        return agentLink.value;
       }
+    } catch {
+      /* new link below */
     }
-    return agentLink.value;
+    forceNew = true;
   }
 
   const code = randomSecret(18);
@@ -223,6 +257,7 @@ async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
     createdAt: now,
     expiresAt
   });
+  await approveAgentPairingCode(code);
   pendingAgentCode = code;
   pendingAgentExpiresAt = expiresAt;
   const url = agentConnectUrl(code);
@@ -230,9 +265,9 @@ async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   if (autoCopy) {
     try {
       await copyAgentLink();
-      setAgentStatus("Copied — paste into your agent.");
+      setAgentStatus("Copied — paste into Codex or Cursor.");
     } catch {
-      setAgentStatus("Copy the link, then paste into your agent.");
+      setAgentStatus("Paste the link into your agent.");
     }
   } else {
     setAgentStatus("");
@@ -240,62 +275,17 @@ async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   return url;
 }
 
-async function confirmAgentPair(code) {
-  const c = code || pendingAgentCode || connectQueryCode();
-  if (!c || !me) return;
+async function finishConnectVisit(code) {
+  if (!code || !me) return;
   try {
-    const snap = await get(ref(db, `curriculum/agentPairing/${c}`));
-    if (!snap.exists()) throw new Error("Unknown or expired code");
-    const row = snap.val();
-    if (row.status !== "pending") throw new Error(`Pairing is ${row.status}`);
-    if (row.expiresAt && Date.now() > row.expiresAt) {
-      await update(ref(db, `curriculum/agentPairing/${c}`), { status: "expired" });
-      throw new Error("Code expired — open Agent again for a new link");
+    const snap = await get(ref(db, `curriculum/agentPairing/${code}`));
+    if (snap.exists() && snap.val()?.status === "pending") {
+      await approveAgentPairingCode(code);
     }
-
-    const token = `odc_agent_${randomSecret(32)}`;
-    const tokenHash = await sha256Hex(token);
-    const now = Date.now();
-    await set(ref(db, `curriculum/agentTokens/${tokenHash}`), {
-      uid: me.uid,
-      createdAt: now,
-      pairingCode: c
-    });
-    await set(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes/${tokenHash}`), {
-      createdAt: now
-    });
-    await update(ref(db, `curriculum/agentPairing/${c}`), {
-      status: "approved",
-      uid: me.uid,
-      tokenHash,
-      tokenPending: token,
-      confirmedAt: now
-    });
-    setConnectStatus("Connected. You can close this.");
-    if (btnConnectConfirm) btnConnectConfirm.disabled = true;
-    clearConnectQuery();
   } catch (err) {
     console.error(err);
-    setConnectStatus(err.message || "Confirm failed.");
   }
-}
-
-async function denyAgentPair(code) {
-  const c = code || pendingAgentCode || connectQueryCode();
-  if (!c || !me) return;
-  try {
-    await update(ref(db, `curriculum/agentPairing/${c}`), {
-      status: "denied",
-      uid: me.uid,
-      deniedAt: Date.now()
-    });
-    setConnectStatus("Denied.");
-    clearConnectQuery();
-    if (connectPanel) connectPanel.hidden = true;
-  } catch (err) {
-    console.error(err);
-    setConnectStatus(err.message || "Deny failed.");
-  }
+  clearConnectQuery();
 }
 
 async function revokeAllAgents() {
@@ -324,27 +314,17 @@ async function revokeAllAgents() {
   }
 }
 
-function showConnectConfirm(code) {
-  if (!connectPanel) return;
-  pendingAgentCode = code;
-  connectPanel.hidden = false;
-  connectLede.textContent = "An agent wants to edit your curriculum. Confirm to allow it.";
-  setConnectStatus("");
-  if (btnConnectConfirm) btnConnectConfirm.disabled = false;
-}
-
 async function showGate() {
   gate.hidden = false;
   studio.hidden = true;
-  if (connectPanel) connectPanel.hidden = true;
   me = null;
   detachLesson();
 
   const connectCode = connectQueryCode();
   const lid = lessonQueryId();
   if (connectCode) {
-    gateTitle.textContent = "Connect agent";
-    gateLede.textContent = "Sign in with Google to confirm or deny agent access.";
+    gateTitle.textContent = "Curriculum";
+    gateLede.textContent = "Sign in with Google — then paste the Agent link into Codex or Cursor.";
   } else if (lid) {
     const meta = await loadPublicTitle(lid);
     if (meta) {
@@ -577,7 +557,7 @@ function addHtmlRow(values = {}, startEditing = false) {
   const htmlInput = document.createElement("textarea");
   htmlInput.className = "html-input";
   htmlInput.rows = 8;
-  htmlInput.placeholder = "HTML5 markup — stored in Firebase, shown inline in this lesson";
+  htmlInput.placeholder = "HTML5 only for now";
   htmlInput.value = values.html || "";
 
   const editorBar = document.createElement("div");
@@ -870,9 +850,7 @@ async function showStudio(user) {
   });
 
   const connectCode = connectQueryCode();
-  if (connectCode) {
-    showConnectConfirm(connectCode);
-  }
+  if (connectCode) await finishConnectVisit(connectCode);
 
   const wanted = lessonQueryId();
   if (wanted) await openLesson(wanted);
@@ -1445,8 +1423,6 @@ btnCopyAgent?.addEventListener("click", async () => {
   }
 });
 btnAgentRevoke?.addEventListener("click", () => revokeAllAgents());
-btnConnectConfirm?.addEventListener("click", () => confirmAgentPair());
-btnConnectDeny?.addEventListener("click", () => denyAgentPair());
 
 onAuthStateChanged(auth, (user) => {
   if (user) showStudio(user);
