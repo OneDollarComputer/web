@@ -235,7 +235,7 @@ async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
         if (autoCopy) {
           try {
             await copyAgentLink();
-            setAgentStatus("Copied — paste into Codex or Cursor.");
+            setAgentStatus("Copied — paste into your agent.");
           } catch {
             setAgentStatus("Paste the link into your agent.");
           }
@@ -265,7 +265,7 @@ async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   if (autoCopy) {
     try {
       await copyAgentLink();
-      setAgentStatus("Copied — paste into Codex or Cursor.");
+      setAgentStatus("Copied — paste into your agent.");
     } catch {
       setAgentStatus("Paste the link into your agent.");
     }
@@ -324,7 +324,7 @@ async function showGate() {
   const lid = lessonQueryId();
   if (connectCode) {
     gateTitle.textContent = "Curriculum";
-    gateLede.textContent = "Sign in with Google — then paste the Agent link into Codex or Cursor.";
+    gateLede.textContent = "Sign in with Google — then paste the Agent link into your agent.";
   } else if (lid) {
     const meta = await loadPublicTitle(lid);
     if (meta) {

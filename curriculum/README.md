@@ -26,10 +26,10 @@ Workspace for **teachers and instructors** to build One Dollar Computer lessons.
 
 Owner invites by **username** (must already claim a username on `/project/`).
 
-## Agent (MCP / Codex / Cursor)
+## Agent (MCP)
 
 1. Sign in on `/curriculum/` → **Agent** → **Copy** the link  
-2. Paste the link into Codex, Cursor, or any MCP client → `curriculum_pair`  
+2. Paste the link into your agent → `curriculum_pair`  
 3. Agent lists and edits your lessons — no extra confirm step  
 
 The link is ready as soon as you copy it (while signed in). **Revoke** on the site to disconnect.
