@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper speaker — electromagnetism</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: .85rem;
+    min-height: 100vh;
+  }
+  h1 { font-size: 1.05rem; margin: 0 0 .25rem; font-weight: 600; }
+  .lead { margin: 0 0 .65rem; color: #94a3b8; font-size: .88rem; line-height: 1.45; }
+  canvas {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background: #1e293b;
+    touch-action: none;
+  }
+  .panel {
+    margin-top: .65rem;
+    padding: .65rem .75rem;
+    background: #1e293b;
+    border-radius: 8px;
+    font-size: .86rem;
+    line-height: 1.5;
+    min-height: 3.2rem;
+  }
+  .panel strong { color: #93c5fd; }
+  .controls {
+    display: grid;
+    gap: .55rem;
+    margin-top: .65rem;
+  }
+  label {
+    display: grid;
+    gap: .3rem;
+    font-size: .82rem;
+    color: #94a3b8;
+  }
+  input[type=range] { width: 100%; accent-color: #3b82f6; }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+  }
+  button {
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: .5rem .75rem;
+    font: inherit;
+    font-size: .84rem;
+    cursor: pointer;
+  }
+  button:hover { border-color: #64748b; }
+  button.active { border-color: #3b82f6; background: #1e3a5f; }
+  .meter {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .82rem;
+    color: #94a3b8;
+  }
+  .meter span {
+    font-family: ui-monospace, monospace;
+    color: #e2e8f0;
+    min-width: 4.5rem;
+  }
+</style>
+</head>
+<body>
+<h1>How a paper speaker works</h1>
+<p class="lead">Electric current in the coil creates a magnetic field. It pushes and pulls against the permanent magnet — moving the paper cone and the air around it.</p>
+<canvas id="c" width="640" height="360"></canvas>
+<div class="panel" id="info"><strong>Step 1.</strong> Drag the current slider. Watch the coil field flip when current reverses.</div>
+<div class="controls">
+  <label>Current through coil
+    <input id="current" type="range" min="-100" max="100" value="0">
+  </label>
+  <div class="meter">Current: <span id="curVal">0 mA</span> · Cone: <span id="coneVal">0 mm</span></div>
+  <div class="row">
+    <button id="btnPlay" type="button">▶ Play tone (AC)</button>
+    <button id="btnStep1" type="button" class="active">1 Field</button>
+    <button id="btnStep2" type="button">2 Motion</button>
+    <button id="btnStep3" type="button">3 Sound</button>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const currentSlider = document.getElementById("current");
+const info = document.getElementById("info");
+const curVal = document.getElementById("curVal");
+const coneVal = document.getElementById("coneVal");
+const btnPlay = document.getElementById("btnPlay");
+
+let current = 0;
+let coneOffset = 0;
+let playing = false;
+let phase = 0;
+let stepMode = 1;
+let animId = 0;
+let lastT = 0;
+
+const INFO = {
+  1: "<strong>Magnetic field.</strong> Current in the coil wraps wire with a field (right-hand rule). Flip the slider — the field reverses.",
+  2: "<strong>Force on the coil.</strong> The coil field interacts with the permanent magnet: like poles repel, opposites attract. The coil slides left or right.",
+  3: "<strong>Sound.</strong> Music is alternating current (AC). The cone vibrates hundreds of times per second — each push pulls on air molecules. That vibration is sound."
+};
+
+function setStep(n) {
+  stepMode = n;
+  document.querySelectorAll(".row button:not(#btnPlay)").forEach((b, i) => {
+    b.classList.toggle("active", i + 1 === n);
+  });
+  info.innerHTML = INFO[n];
+}
+
+document.getElementById("btnStep1").onclick = () => setStep(1);
+document.getElementById("btnStep2").onclick = () => setStep(2);
+document.getElementById("btnStep3").onclick = () => setStep(3);
+
+currentSlider.addEventListener("input", () => {
+  if (playing) return;
+  current = currentSlider.value / 100;
+  coneOffset = current * 18;
+  updateReadout();
+});
+
+btnPlay.addEventListener("click", () => {
+  playing = !playing;
+  btnPlay.textContent = playing ? "⏸ Stop tone" : "▶ Play tone (AC)";
+  btnPlay.classList.toggle("active", playing);
+  if (playing) {
+    setStep(3);
+    lastT = performance.now();
+    animId = requestAnimationFrame(tick);
+  } else {
+    cancelAnimationFrame(animId);
+    current = currentSlider.value / 100;
+    coneOffset = current * 18;
+    updateReadout();
+  }
+});
+
+function updateReadout() {
+  curVal.textContent = `${Math.round(current * 100)} mA`;
+  coneVal.textContent = `${coneOffset.toFixed(1)} mm`;
+}
+
+function tick(t) {
+  if (!playing) return;
+  const dt = (t - lastT) / 1000;
+  lastT = t;
+  phase += dt * 440 * Math.PI * 2;
+  current = Math.sin(phase) * 0.85;
+  coneOffset = current * 18;
+  currentSlider.value = Math.round(current * 100);
+  updateReadout();
+  draw();
+  animId = requestAnimationFrame(tick);
+}
+
+function drawFieldLines(cx, cy, dir, color, spread) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.55 + Math.abs(current) * 0.35;
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    const y0 = cy + i * spread;
+    if (dir > 0) {
+      ctx.arc(cx - 20, y0, 28, -0.5, 0.5);
+      ctx.arc(cx + 36, y0, 28, Math.PI - 0.5, Math.PI + 0.5);
+    } else {
+      ctx.arc(cx + 36, y0, 28, -0.5, 0.5);
+      ctx.arc(cx - 20, y0, 28, Math.PI - 0.5, Math.PI + 0.5);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawWave(yBase) {
+  if (stepMode < 3 && !playing) return;
+  ctx.strokeStyle = "#22d3ee";
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  for (let x = 40; x < 600; x += 4) {
+    const t = (x - 40) / 560;
+    const y = yBase + Math.sin(t * 14 + phase * 0.15) * (playing ? 10 : 4);
+    if (x === 40) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function draw() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const magnetX = 180;
+  const magnetY = h / 2 + 10;
+  const coilX = 280 + coneOffset;
+  const coilY = h / 2 + 10;
+
+  ctx.fillStyle = "#475569";
+  ctx.font = "12px system-ui";
+  ctx.fillText("Permanent magnet (N ↔ S)", magnetX - 70, magnetY + 72);
+
+  ctx.fillStyle = "#dc2626";
+  ctx.fillRect(magnetX - 55, magnetY - 35, 28, 70);
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(magnetX - 27, magnetY - 35, 28, 70);
+  ctx.fillStyle = "#f8fafc";
+  ctx.font = "bold 14px system-ui";
+  ctx.fillText("N", magnetX - 48, magnetY + 5);
+  ctx.fillText("S", magnetX - 20, magnetY + 5);
+
+  if (stepMode >= 1 || playing) {
+    drawFieldLines(magnetX - 10, magnetY, 1, "#64748b", 14);
+    if (Math.abs(current) > 0.02) {
+      drawFieldLines(coilX, coilY, current > 0 ? 1 : -1, current > 0 ? "#fbbf24" : "#a78bfa", 10);
+    }
+  }
+
+  ctx.strokeStyle = "#cbd5e1";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(coilX - 8, coilY - 42);
+  ctx.lineTo(coilX - 8, coilY + 42);
+  ctx.stroke();
+  ctx.strokeStyle = "#f59e0b";
+  ctx.lineWidth = 5;
+  for (let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.arc(coilX, coilY + i * 11, 14, Math.PI * 0.5, Math.PI * 1.5);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "12px system-ui";
+  ctx.fillText("Voice coil (electromagnet)", coilX - 52, coilY + 72);
+
+  const coneTip = coilX + 95;
+  const coneTop = coilY - 55 - coneOffset * 0.3;
+  const coneBot = coilY + 55 + coneOffset * 0.3;
+  ctx.fillStyle = "#fde68a";
+  ctx.strokeStyle = "#d97706";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(coilX + 12, coilY - 8);
+  ctx.lineTo(coneTip, coneTop);
+  ctx.lineTo(coneTip, coneBot);
+  ctx.lineTo(coilX + 12, coilY + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#92400e";
+  ctx.font = "12px system-ui";
+  ctx.fillText("Paper cone", coneTip - 18, coilY + 72);
+
+  if (stepMode >= 2 || playing) {
+    const arrowDir = current >= 0 ? 1 : -1;
+    ctx.strokeStyle = current === 0 ? "#64748b" : "#34d399";
+    ctx.fillStyle = current === 0 ? "#64748b" : "#34d399";
+    ctx.lineWidth = 3;
+    const ax = coilX + 35;
+    const ay = coilY - 55;
+    ctx.beginPath();
+    ctx.moveTo(ax - 25 * arrowDir, ay);
+    ctx.lineTo(ax + 25 * arrowDir, ay);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ax + 25 * arrowDir, ay);
+    ctx.lineTo(ax + (25 - 8) * arrowDir, ay - 6);
+    ctx.lineTo(ax + (25 - 8) * arrowDir, ay + 6);
+    ctx.fill();
+    ctx.fillStyle = "#34d399";
+    ctx.font = "11px system-ui";
+    ctx.fillText(current === 0 ? "no force" : "Lorentz force →", ax - 38, ay - 10);
+  }
+
+  if (stepMode >= 3 || playing) {
+    drawWave(48);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font="11px system-ui";
+    ctx.fillText("Air pressure waves (sound)", 42, 38);
+    if (playing) {
+      for (let i = 0; i < 4; i++) {
+        ctx.strokeStyle = `rgba(34,211,238,${0.35 - i * 0.07})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(coneTip + 20, (coneTop + coneBot) / 2, 20 + i * 22 + Math.sin(phase) * 3, -0.4, 0.4);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.fillStyle = "#64748b";
+  ctx.font = "11px system-ui";
+  ctx.fillText("+  wire", coilX - 55, coilY - 52);
+  ctx.fillText("−  wire", coilX - 55, coilY + 58);
+}
+
+draw();
+updateReadout();
+window.addEventListener("resize", () => draw());
+currentSlider.addEventListener("input", draw);
+</script>
+</body>
+</html>
