@@ -540,8 +540,7 @@ h3 {
   gap: .4rem
 }
 
-.game-controls .title-input,
-.game-controls .url-input {
+.game-controls .title-input {
   width: 100%;
   border: 0;
   border-bottom: 1px solid #e2e8f0;
@@ -565,9 +564,8 @@ h3 {
   min-height: 7rem
 }
 
-.game-controls .html-input:focus,
 .game-controls .title-input:focus,
-.game-controls .url-input:focus {
+.game-controls .html-input:focus {
   outline: none;
   border-color: #93c5fd
 }

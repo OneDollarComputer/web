@@ -544,14 +544,8 @@ function addGameRow(values = {}) {
   const htmlInput = document.createElement("textarea");
   htmlInput.className = "html-input";
   htmlInput.rows = 6;
-  htmlInput.placeholder = "HTML5 — paste a page or snippet with <style> and <script>";
+  htmlInput.placeholder = "HTML5 — stored in Firebase, plays inline below";
   htmlInput.value = values.html || "";
-
-  const urlInput = document.createElement("input");
-  urlInput.className = "url-input";
-  urlInput.type = "url";
-  urlInput.placeholder = "Or external URL (e.g. games.riscvthai.org/instpressure/)";
-  urlInput.value = values.url || "";
 
   const bar = document.createElement("div");
   bar.className = "game-control-bar";
@@ -565,7 +559,6 @@ function addGameRow(values = {}) {
   bar.appendChild(removeBtn);
   controls.appendChild(titleInput);
   controls.appendChild(htmlInput);
-  controls.appendChild(urlInput);
   controls.appendChild(bar);
 
   embedWrap.appendChild(embed);
@@ -574,18 +567,12 @@ function addGameRow(values = {}) {
 
   const syncPreview = () => {
     const html = htmlInput.value.trim();
-    const url = urlInput.value.trim();
     iframe.title = titleInput.value.trim() || "Lesson game";
     if (html) {
       embed.hidden = false;
       iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
       iframe.removeAttribute("src");
       iframe.srcdoc = html;
-    } else if (url) {
-      embed.hidden = false;
-      iframe.removeAttribute("sandbox");
-      iframe.removeAttribute("srcdoc");
-      iframe.src = url;
     } else {
       embed.hidden = true;
       iframe.removeAttribute("src");
@@ -601,7 +588,7 @@ function addGameRow(values = {}) {
     }
   });
 
-  for (const el of [titleInput, htmlInput, urlInput]) {
+  for (const el of [titleInput, htmlInput]) {
     el.addEventListener("input", () => {
       syncPreview();
       if (isAuthor && editMode === "edit") scheduleSave();
@@ -645,13 +632,10 @@ function readGames() {
   return [...host.querySelectorAll(".game-row")].map((row) => {
     const title = row.querySelector(".title-input")?.value.trim() || "";
     const html = row.querySelector(".html-input")?.value.trim() || "";
-    const url = row.querySelector(".url-input")?.value.trim() || "";
-    const item = {};
+    const item = { html };
     if (title) item.title = title;
-    if (html) item.html = html;
-    else if (url) item.url = url;
     return item;
-  }).filter((x) => x.html || x.url);
+  }).filter((x) => x.html);
 }
 
 function blankBody() {
@@ -705,7 +689,7 @@ function fillFormFromLesson(lesson) {
   (body.links || []).forEach((l) => addMediaRow("link", l));
   if (!(body.photos || []).length) addMediaRow("photo");
   if (!(body.videos || []).length) addMediaRow("video");
-  if (!(body.games || []).length) addGameRow();
+  if (!(body.games || []).length && isAuthor) addGameRow();
   if (!(body.links || []).length) addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = !(isAuthor && currentMeta?.ownerUid === me?.uid);
@@ -741,6 +725,9 @@ function setFormEditable(canEdit) {
     if (node.classList?.contains("game-fullscreen")) return;
     if (node.tagName === "BUTTON") node.disabled = !canEdit;
     else node.readOnly = !canEdit;
+  });
+  document.querySelectorAll(".game-row .game-controls").forEach((panel) => {
+    panel.hidden = !canEdit;
   });
   if (btnSave) btnSave.hidden = !canEdit;
   document.querySelectorAll("[data-add], .doc-insert").forEach((b) => {

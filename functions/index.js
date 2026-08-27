@@ -286,18 +286,11 @@ function normalizeGames(list) {
   for (const item of list) {
     if (!item || typeof item !== "object") continue;
     const title = typeof item.title === "string" ? item.title.trim().slice(0, 120) : "";
-    const html = typeof item.html === "string" ? item.html : "";
-    const url = typeof item.url === "string" ? item.url.trim() : "";
-    if (html) {
-      if (html.length > 512 * 1024) continue;
-      const row = { html };
-      if (title) row.title = title;
-      out.push(row);
-    } else if (url && /^https?:\/\//i.test(url)) {
-      const row = { url };
-      if (title) row.title = title;
-      out.push(row);
-    }
+    const html = typeof item.html === "string" ? item.html.trim() : "";
+    if (!html || html.length > 512 * 1024) continue;
+    const row = { html };
+    if (title) row.title = title;
+    out.push(row);
   }
   return out;
 }

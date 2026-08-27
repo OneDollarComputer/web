@@ -215,7 +215,7 @@ server.tool(
 
 server.tool(
   "curriculum_update_lesson",
-  "Update a curriculum lesson. Pass title and/or body fields (overview, materials[], steps[], photos, videos, games, links). Games: { title?, html? } stored in Firebase, or { title?, url? } for external HTML5.",
+  "Update a curriculum lesson. Pass title and/or body fields (overview, materials[], steps[], photos, videos, games, links). Games: { title?, html } stored in Firebase RTDB.",
   {
     lesson_id: z.string(),
     title: z.string().optional(),
@@ -226,8 +226,7 @@ server.tool(
     videos: z.array(z.object({ url: z.string() })).optional(),
     games: z.array(z.object({
       title: z.string().optional(),
-      html: z.string().optional(),
-      url: z.string().optional()
+      html: z.string()
     })).optional(),
     links: z.array(z.object({ label: z.string().optional(), url: z.string() })).optional()
   },
