@@ -280,6 +280,28 @@ async function handleGetLesson(req, res, lid) {
   });
 }
 
+function normalizeGames(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const item of list) {
+    if (!item || typeof item !== "object") continue;
+    const title = typeof item.title === "string" ? item.title.trim().slice(0, 120) : "";
+    const html = typeof item.html === "string" ? item.html : "";
+    const url = typeof item.url === "string" ? item.url.trim() : "";
+    if (html) {
+      if (html.length > 512 * 1024) continue;
+      const row = { html };
+      if (title) row.title = title;
+      out.push(row);
+    } else if (url && /^https?:\/\//i.test(url)) {
+      const row = { url };
+      if (title) row.title = title;
+      out.push(row);
+    }
+  }
+  return out;
+}
+
 async function handlePatchLesson(req, res, lid) {
   const agent = await verifyAgentToken(req);
   if (!agent) return json(res, 401, { error: "Agent token required" });
@@ -311,11 +333,14 @@ async function handlePatchLesson(req, res, lid) {
       steps: Array.isArray(body.body.steps) ? body.body.steps : (prev.steps || []),
       photos: Array.isArray(body.body.photos) ? body.body.photos : (prev.photos || []),
       videos: Array.isArray(body.body.videos) ? body.body.videos : (prev.videos || []),
+      games: body.body.games !== undefined ? normalizeGames(body.body.games) : (prev.games || []),
       links: Array.isArray(body.body.links) ? body.body.links : (prev.links || [])
     };
   }
   // Allow top-level field patches
-  if (body.overview !== undefined || body.materials !== undefined || body.steps !== undefined) {
+  if (body.overview !== undefined || body.materials !== undefined || body.steps !== undefined
+      || body.photos !== undefined || body.videos !== undefined || body.games !== undefined
+      || body.links !== undefined) {
     const prev = updates.body || lesson.body || {};
     updates.body = {
       overview: body.overview !== undefined ? String(body.overview) : (prev.overview || ""),
@@ -323,6 +348,7 @@ async function handlePatchLesson(req, res, lid) {
       steps: body.steps !== undefined ? body.steps : (prev.steps || []),
       photos: body.photos !== undefined ? body.photos : (prev.photos || []),
       videos: body.videos !== undefined ? body.videos : (prev.videos || []),
+      games: body.games !== undefined ? normalizeGames(body.games) : (prev.games || []),
       links: body.links !== undefined ? body.links : (prev.links || [])
     };
   }

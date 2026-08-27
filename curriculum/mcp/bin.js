@@ -215,7 +215,7 @@ server.tool(
 
 server.tool(
   "curriculum_update_lesson",
-  "Update a curriculum lesson. Pass title and/or body fields (overview, materials[], steps[], photos, videos, links).",
+  "Update a curriculum lesson. Pass title and/or body fields (overview, materials[], steps[], photos, videos, games, links). Games: { title?, html? } stored in Firebase, or { title?, url? } for external HTML5.",
   {
     lesson_id: z.string(),
     title: z.string().optional(),
@@ -224,6 +224,11 @@ server.tool(
     steps: z.array(z.string()).optional(),
     photos: z.array(z.object({ url: z.string() })).optional(),
     videos: z.array(z.object({ url: z.string() })).optional(),
+    games: z.array(z.object({
+      title: z.string().optional(),
+      html: z.string().optional(),
+      url: z.string().optional()
+    })).optional(),
     links: z.array(z.object({ label: z.string().optional(), url: z.string() })).optional()
   },
   async (args) => {
@@ -238,6 +243,7 @@ server.tool(
     if (args.steps !== undefined) body.steps = args.steps;
     if (args.photos !== undefined) body.photos = args.photos;
     if (args.videos !== undefined) body.videos = args.videos;
+    if (args.games !== undefined) body.games = args.games;
     if (args.links !== undefined) body.links = args.links;
     const data = await api("PATCH", `/lessons/${encodeURIComponent(args.lesson_id)}`, {
       token,

@@ -499,8 +499,126 @@ function addMediaRow(kind, values = {}) {
   syncPreview();
 }
 
+const MAX_GAME_HTML = 512 * 1024;
+
+function addGameRow(values = {}) {
+  const host = document.getElementById("gameRows");
+  if (!host) return;
+
+  const row = document.createElement("div");
+  row.className = "media-row game-row";
+  row.dataset.kind = "game";
+
+  const embedWrap = document.createElement("div");
+  embedWrap.className = "game-embed-wrap";
+
+  const embed = document.createElement("div");
+  embed.className = "game-embed";
+  embed.hidden = true;
+
+  const iframe = document.createElement("iframe");
+  iframe.title = values.title || "Lesson game";
+  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
+  iframe.setAttribute("allow", "fullscreen");
+  iframe.setAttribute("allowfullscreen", "");
+  iframe.loading = "lazy";
+
+  const fsBtn = document.createElement("button");
+  fsBtn.type = "button";
+  fsBtn.className = "game-fullscreen";
+  fsBtn.setAttribute("aria-label", "Fullscreen");
+  fsBtn.textContent = "⛶";
+
+  embed.appendChild(iframe);
+  embed.appendChild(fsBtn);
+
+  const controls = document.createElement("div");
+  controls.className = "game-controls";
+
+  const titleInput = document.createElement("input");
+  titleInput.className = "title-input";
+  titleInput.type = "text";
+  titleInput.placeholder = "Game title (optional)";
+  titleInput.value = values.title || "";
+
+  const htmlInput = document.createElement("textarea");
+  htmlInput.className = "html-input";
+  htmlInput.rows = 6;
+  htmlInput.placeholder = "HTML5 — paste a page or snippet with <style> and <script>";
+  htmlInput.value = values.html || "";
+
+  const urlInput = document.createElement("input");
+  urlInput.className = "url-input";
+  urlInput.type = "url";
+  urlInput.placeholder = "Or external URL (e.g. games.riscvthai.org/instpressure/)";
+  urlInput.value = values.url || "";
+
+  const bar = document.createElement("div");
+  bar.className = "game-control-bar";
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove";
+  removeBtn.setAttribute("aria-label", "Remove");
+  removeBtn.textContent = "✕";
+
+  bar.appendChild(removeBtn);
+  controls.appendChild(titleInput);
+  controls.appendChild(htmlInput);
+  controls.appendChild(urlInput);
+  controls.appendChild(bar);
+
+  embedWrap.appendChild(embed);
+  embedWrap.appendChild(controls);
+  row.appendChild(embedWrap);
+
+  const syncPreview = () => {
+    const html = htmlInput.value.trim();
+    const url = urlInput.value.trim();
+    iframe.title = titleInput.value.trim() || "Lesson game";
+    if (html) {
+      embed.hidden = false;
+      iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
+      iframe.removeAttribute("src");
+      iframe.srcdoc = html;
+    } else if (url) {
+      embed.hidden = false;
+      iframe.removeAttribute("sandbox");
+      iframe.removeAttribute("srcdoc");
+      iframe.src = url;
+    } else {
+      embed.hidden = true;
+      iframe.removeAttribute("src");
+      iframe.removeAttribute("srcdoc");
+    }
+  };
+
+  fsBtn.addEventListener("click", () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      embed.requestFullscreen?.().catch(() => {});
+    }
+  });
+
+  for (const el of [titleInput, htmlInput, urlInput]) {
+    el.addEventListener("input", () => {
+      syncPreview();
+      if (isAuthor && editMode === "edit") scheduleSave();
+    });
+  }
+
+  removeBtn.addEventListener("click", () => {
+    row.remove();
+    if (isAuthor && editMode === "edit") scheduleSave();
+  });
+
+  host.appendChild(row);
+  syncPreview();
+}
+
 function clearMedia() {
-  ["photoRows", "videoRows", "linkRows"].forEach((id) => {
+  ["photoRows", "videoRows", "gameRows", "linkRows"].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.replaceChildren();
   });
@@ -521,6 +639,21 @@ function readMedia(kind) {
   }).filter((x) => x.url);
 }
 
+function readGames() {
+  const host = document.getElementById("gameRows");
+  if (!host) return [];
+  return [...host.querySelectorAll(".game-row")].map((row) => {
+    const title = row.querySelector(".title-input")?.value.trim() || "";
+    const html = row.querySelector(".html-input")?.value.trim() || "";
+    const url = row.querySelector(".url-input")?.value.trim() || "";
+    const item = {};
+    if (title) item.title = title;
+    if (html) item.html = html;
+    else if (url) item.url = url;
+    return item;
+  }).filter((x) => x.html || x.url);
+}
+
 function blankBody() {
   return {
     overview: "",
@@ -528,6 +661,7 @@ function blankBody() {
     steps: [],
     photos: [],
     videos: [],
+    games: [],
     links: []
   };
 }
@@ -547,6 +681,7 @@ function collectForm() {
     steps: lines((field("fSteps") || field("steps"))?.value),
     photos: readMedia("photo"),
     videos: readMedia("video"),
+    games: readGames(),
     links: readMedia("link")
   };
 }
@@ -566,9 +701,11 @@ function fillFormFromLesson(lesson) {
   clearMedia();
   (body.photos || []).forEach((p) => addMediaRow("photo", p));
   (body.videos || []).forEach((v) => addMediaRow("video", v));
+  (body.games || []).forEach((g) => addGameRow(g));
   (body.links || []).forEach((l) => addMediaRow("link", l));
   if (!(body.photos || []).length) addMediaRow("photo");
   if (!(body.videos || []).length) addMediaRow("video");
+  if (!(body.games || []).length) addGameRow();
   if (!(body.links || []).length) addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = !(isAuthor && currentMeta?.ownerUid === me?.uid);
@@ -601,6 +738,7 @@ function renderList() {
 function setFormEditable(canEdit) {
   form?.querySelectorAll("input, textarea, button.remove, [data-add], .doc-insert").forEach((node) => {
     if (node === btnSave || node === btnDelete) return;
+    if (node.classList?.contains("game-fullscreen")) return;
     if (node.tagName === "BUTTON") node.disabled = !canEdit;
     else node.readOnly = !canEdit;
   });
@@ -716,6 +854,7 @@ function fillBlankNew() {
   clearMedia();
   addMediaRow("photo");
   addMediaRow("video");
+  addGameRow();
   addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = true;
@@ -969,6 +1108,12 @@ async function saveCurrent() {
     setStatus("Add a title first.");
     return;
   }
+  for (const game of data.games) {
+    if (game.html && game.html.length > MAX_GAME_HTML) {
+      setStatus("Game HTML is too large (max 512 KB).");
+      return;
+    }
+  }
   const now = Date.now();
   try {
     if (!currentId) {
@@ -992,6 +1137,7 @@ async function saveCurrent() {
         steps: data.steps,
         photos: data.photos,
         videos: data.videos,
+        games: data.games,
         links: data.links
       };
       updates[`curriculum/byUser/${me.uid}/${id}`] = true;
@@ -1019,6 +1165,7 @@ async function saveCurrent() {
       steps: data.steps,
       photos: data.photos,
       videos: data.videos,
+      games: data.games,
       links: data.links
     };
     await update(ref(db), updates);
@@ -1174,7 +1321,9 @@ btnShare?.addEventListener("click", () => shareLink());
 
 document.querySelectorAll("[data-add]").forEach((btn) => {
   btn.addEventListener("click", () => {
-    addMediaRow(btn.getAttribute("data-add"));
+    const kind = btn.getAttribute("data-add");
+    if (kind === "game") addGameRow();
+    else addMediaRow(kind);
     if (isAuthor && editMode === "edit") scheduleSave();
   });
 });
