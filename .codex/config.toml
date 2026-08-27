@@ -1,0 +1,10 @@
+# ODC curriculum MCP — active when this repo is a trusted Codex project.
+# Once: cd curriculum/mcp && npm install
+
+[mcp_servers.odc-curriculum]
+command = "node"
+args = ["curriculum/mcp/bin.js"]
+startup_timeout_sec = 20
+
+[mcp_servers.odc-curriculum.env]
+ODC_CURRICULUM_API = "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent"

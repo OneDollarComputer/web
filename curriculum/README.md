@@ -56,6 +56,38 @@ Tools: `curriculum_pair`, `curriculum_status`, `curriculum_list_lessons`, `curri
 
 Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair.
 
+### Codex
+
+This repo includes `.codex/config.toml` (project MCP). In Codex:
+
+1. Open this repo as a **trusted** project (Settings → MCP — server may show there)
+2. `cd curriculum/mcp && npm install`
+3. Start a new task, paste the Agent link from `/curriculum/`
+
+Or add to `~/.codex/config.toml` (any machine):
+
+```toml
+[mcp_servers.odc-curriculum]
+command = "node"
+args = ["/ABSOLUTE/PATH/TO/web/curriculum/mcp/bin.js"]
+
+[mcp_servers.odc-curriculum.env]
+ODC_CURRICULUM_API = "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent"
+```
+
+Docs: https://developers.openai.com/codex/mcp
+
+### No MCP (curl)
+
+Extract `connect=` from the Agent link, then:
+
+```bash
+API=https://us-central1-odc-files.cloudfunctions.net/curriculumAgent
+CODE=YOUR_CONNECT_CODE
+TOKEN=$(curl -sS "$API/pair/status?code=$CODE" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+curl -sS -H "Authorization: Bearer $TOKEN" "$API/lessons"
+```
+
 ### curl
 
 ```bash
