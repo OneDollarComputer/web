@@ -78,7 +78,6 @@ const modeSuggest = document.getElementById("modeSuggest");
 const suggestPanel = document.getElementById("suggestPanel");
 const suggestForm = document.getElementById("suggestForm");
 const sugList = document.getElementById("sugList");
-const agentLink = document.getElementById("agentLink");
 const agentStatus = document.getElementById("agentStatus");
 const btnCopyAgent = document.getElementById("btnCopyAgent");
 const btnAgentRevoke = document.getElementById("btnAgentRevoke");
@@ -175,21 +174,32 @@ function agentConnectUrl(code) {
   return `${SHORT_ORIGIN}/curriculum/?connect=${encodeURIComponent(code)}`;
 }
 
-function agentClipboardText(url) {
-  return (
-    "Use the MCP tool curriculum_pair with this link to edit lessons on One Dollar Computer. " +
-    "Do not fetch this URL as a webpage. Do not create local HTML files.\n\n" +
-    url
-  );
+function agentClipboardText(code) {
+  const connectUrl = agentConnectUrl(code);
+  return [
+    "Edit my One Dollar Computer curriculum on the site (not local files).",
+    "Run these terminal commands — approve each when asked:",
+    "",
+    `API=${AGENT_API}`,
+    `CODE=${code}`,
+    "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\")",
+    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons\"",
+    "",
+    "Keep TOKEN. To update a lesson:",
+    "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
+    "  -d '{\"overview\":\"…\"}' \"$API/lessons/LESSON_ID\"",
+    "",
+    `(MCP optional: curriculum_pair ${connectUrl})`
+  ].join("\n");
 }
 
 let pendingAgentCode = null;
 let pendingAgentExpiresAt = 0;
 
-function copyAgentLink() {
-  const url = agentLink?.value?.trim();
-  if (!url) return Promise.reject(new Error("No link"));
-  const text = agentClipboardText(url);
+async function copyAgentPrompt() {
+  if (!pendingAgentCode) await ensureAgentLink({ autoCopy: false });
+  if (!pendingAgentCode) return Promise.reject(new Error("No agent code"));
+  const text = agentClipboardText(pendingAgentCode);
   if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
   return Promise.reject(new Error("Clipboard unavailable"));
 }
@@ -237,19 +247,19 @@ function pairingLinkReady(row) {
 /** Keep one agent link ready; reuse until claimed or near expiry. */
 async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   if (!me) return null;
-  if (!forceNew && pendingAgentCode && agentLink?.value && pendingAgentExpiresAt - Date.now() > 60_000) {
+  if (!forceNew && pendingAgentCode && pendingAgentExpiresAt - Date.now() > 60_000) {
     try {
       const snap = await get(ref(db, `curriculum/agentPairing/${pendingAgentCode}`));
       if (pairingLinkReady(snap.val())) {
         if (autoCopy) {
           try {
-            await copyAgentLink();
+            await copyAgentPrompt();
             setAgentStatus("Copied — paste into your agent.");
           } catch {
-            setAgentStatus("Paste the link into your agent.");
+            setAgentStatus("Could not copy.");
           }
         }
-        return agentLink.value;
+        return agentConnectUrl(pendingAgentCode);
       }
     } catch {
       /* new link below */
@@ -269,19 +279,17 @@ async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
   await approveAgentPairingCode(code);
   pendingAgentCode = code;
   pendingAgentExpiresAt = expiresAt;
-  const url = agentConnectUrl(code);
-  if (agentLink) agentLink.value = url;
   if (autoCopy) {
     try {
-      await copyAgentLink();
+      await copyAgentPrompt();
       setAgentStatus("Copied — paste into your agent.");
     } catch {
-      setAgentStatus("Paste the link into your agent.");
+      setAgentStatus("Could not copy.");
     }
   } else {
     setAgentStatus("");
   }
-  return url;
+  return agentConnectUrl(code);
 }
 
 async function finishConnectVisit(code) {

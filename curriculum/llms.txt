@@ -3,11 +3,9 @@
 
 > Links with `?connect=` are **agent pairing URLs**, not lesson pages.
 
-## If the user pasted an Agent link
+## If the user pasted from Agent → Copy
 
-1. Call MCP tool **curriculum_pair** with the full URL (or connect code).
-2. Call **curriculum_list_lessons**, then **curriculum_get_lesson** / **curriculum_update_lesson**.
-3. Store HTML in lesson `body.html[]` via the API — not in local `outputs/` files.
+The clipboard has terminal commands with CODE filled in. Run them (approve each), then edit lessons via PATCH. Do not create local HTML files.
 
 ## Do NOT
 

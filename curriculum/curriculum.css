@@ -798,28 +798,14 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: .35rem;
-  margin-left: auto;
-  min-width: 0;
-  max-width: min(100%, 28rem)
+  gap: .45rem;
+  margin-left: auto
 }
 
 .agent-ready-label {
   font-size: .8rem;
   font-weight: 600;
   color: var(--sub)
-}
-
-.agent-ready input {
-  flex: 1;
-  min-width: 8rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: .4rem .55rem;
-  font: inherit;
-  font-size: .78rem;
-  background: #f8fafc;
-  color: var(--text)
 }
 
 .agent-status-inline {
