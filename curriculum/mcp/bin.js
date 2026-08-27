@@ -136,11 +136,6 @@ server.tool(
           api: DEFAULT_API,
           pairedAt: new Date().toISOString()
         });
-        try {
-          await api("GET", `/pair/status?code=${encodeURIComponent(code)}`);
-        } catch {
-          /* ignore */
-        }
         return textResult({
           ok: true,
           status: "connected",

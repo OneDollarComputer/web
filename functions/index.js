@@ -119,18 +119,16 @@ async function handlePairStatus(req, res, code) {
   }
 
   if (row.status === "approved" && row.tokenPending) {
-    const token = row.tokenPending;
-    await ref.update({
-      status: "connected",
-      tokenPending: null,
-      connectedAt: Date.now()
-    });
-    return json(res, 200, { status: "connected", token });
+    return json(res, 200, { status: "approved", token: row.tokenPending });
+  }
+
+  if (row.status === "connected" && row.tokenPending) {
+    return json(res, 200, { status: "connected", token: row.tokenPending });
   }
 
   return json(res, 200, {
     status: row.status || "pending",
-    ...(row.status === "connected" ? { message: "Token already claimed — pair again if needed" } : {})
+    ...(row.status === "connected" ? { message: "Token expired — copy Agent again on /curriculum/" } : {})
   });
 }
 

@@ -175,21 +175,20 @@ function agentConnectUrl(code) {
 }
 
 function agentClipboardText(code) {
-  const connectUrl = agentConnectUrl(code);
   return [
     "Edit my One Dollar Computer curriculum on the site (not local files).",
-    "Run these terminal commands — approve each when asked:",
+    "Run this entire block in ONE persistent shell (approve once):",
     "",
+    "set -e",
     `API=${AGENT_API}`,
     `CODE=${code}`,
-    "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; print(json.load(sys.stdin).get('token',''))\")",
+    "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('token',''); assert t, d; print(t)\")",
+    "export TOKEN",
     "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons\"",
     "",
-    "Keep TOKEN. To update a lesson:",
+    "Then PATCH with the same shell (TOKEN is already set):",
     "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
-    "  -d '{\"overview\":\"…\"}' \"$API/lessons/LESSON_ID\"",
-    "",
-    `(MCP optional: curriculum_pair ${connectUrl})`
+    "  -d '{\"overview\":\"…\"}' \"$API/lessons/LESSON_ID\""
   ].join("\n");
 }
 
@@ -213,7 +212,7 @@ async function approveAgentPairingCode(c) {
     await update(ref(db, `curriculum/agentPairing/${c}`), { status: "expired" });
     throw new Error("Code expired");
   }
-  if (row.status === "connected") return;
+  if (row.status === "connected" && row.tokenPending) return;
   if (row.status === "approved" && row.tokenPending) return;
   if (row.status !== "pending") {
     throw new Error(`Pairing is ${row.status}`);
@@ -241,7 +240,8 @@ async function approveAgentPairingCode(c) {
 function pairingLinkReady(row) {
   if (!row) return false;
   if (row.expiresAt && Date.now() > row.expiresAt) return false;
-  return row.status === "approved" && !!row.tokenPending;
+  if (row.status === "denied" || row.status === "expired") return false;
+  return !!row.tokenPending;
 }
 
 /** Keep one agent link ready; reuse until claimed or near expiry. */
