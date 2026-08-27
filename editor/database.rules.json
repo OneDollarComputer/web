@@ -49,6 +49,10 @@
           ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || data.child('uid').val() === auth.uid)"
         }
       },
+      "pendingByEmail": {
+        ".read": false,
+        ".write": false
+      },
       "byUser": {
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",

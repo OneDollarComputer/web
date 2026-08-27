@@ -337,6 +337,131 @@ async function handlePatchLesson(req, res, lid) {
   return json(res, 200, { ok: true, id: lid, updatedAt: now });
 }
 
+function emailKey(email) {
+  return String(email || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\./g, ",");
+}
+
+function readBody(req) {
+  try {
+    if (typeof req.body === "object" && req.body) return req.body;
+    if (req.rawBody) return JSON.parse(req.rawBody.toString());
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+async function addLessonAuthor(lessonId, otherUid, displayName) {
+  const now = Date.now();
+  const updates = {};
+  updates[`curriculum/lessons/${lessonId}/authors/${otherUid}`] = {
+    name: displayName || "Instructor",
+    role: "author",
+    addedAt: now
+  };
+  updates[`curriculum/byUser/${otherUid}/${lessonId}`] = true;
+  updates[`curriculum/lessons/${lessonId}/updatedAt`] = now;
+  await db.ref().update(updates);
+}
+
+async function handleInvite(req, res) {
+  const user = await verifyFirebaseUser(req);
+  if (!user) return json(res, 401, { error: "Sign in required" });
+
+  const body = readBody(req);
+  const lessonId = String(body.lessonId || "").trim();
+  const emailRaw = String(body.email || "").trim().toLowerCase();
+  const username = String(body.username || "").trim().toLowerCase();
+  if (!lessonId) return json(res, 400, { error: "lessonId required" });
+  if (!emailRaw && !username) return json(res, 400, { error: "email or username required" });
+
+  const lessonSnap = await db.ref(`curriculum/lessons/${lessonId}`).get();
+  if (!lessonSnap.exists()) return json(res, 404, { error: "Lesson not found" });
+  const lesson = lessonSnap.val();
+  if (lesson.ownerUid !== user.uid) {
+    return json(res, 403, { error: "Only the owner can invite" });
+  }
+
+  let otherUid = null;
+  let display = null;
+
+  if (username) {
+    const uSnap = await db.ref(`usernames/${username}`).get();
+    if (!uSnap.exists()) return json(res, 404, { error: `No account with username “${username}”` });
+    otherUid = uSnap.val()?.uid || uSnap.val();
+    if (typeof otherUid !== "string") otherUid = otherUid?.uid || null;
+    if (!otherUid) return json(res, 404, { error: `No account with username “${username}”` });
+    const pSnap = await db.ref(`profiles/${username}`).get();
+    display = pSnap.val()?.displayName || username;
+  } else {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+      return json(res, 400, { error: "Invalid email" });
+    }
+    try {
+      const other = await admin.auth().getUserByEmail(emailRaw);
+      otherUid = other.uid;
+      display = other.displayName || emailRaw.split("@")[0];
+    } catch (err) {
+      if (err.code === "auth/user-not-found") {
+        const key = emailKey(emailRaw);
+        await db.ref(`curriculum/pendingByEmail/${key}/${lessonId}`).set({
+          email: emailRaw,
+          lessonId,
+          invitedBy: user.uid,
+          invitedAt: Date.now()
+        });
+        return json(res, 200, {
+          ok: true,
+          pending: true,
+          message: "Invite saved — they get access when they sign in with that Google email."
+        });
+      }
+      console.error(err);
+      return json(res, 500, { error: "Could not look up email" });
+    }
+  }
+
+  if (otherUid === user.uid) return json(res, 400, { error: "That’s you." });
+  if (lesson.authors && lesson.authors[otherUid]) {
+    return json(res, 200, { ok: true, added: true, already: true });
+  }
+
+  await addLessonAuthor(lessonId, otherUid, display);
+  return json(res, 200, { ok: true, added: true });
+}
+
+async function handleInviteClaim(req, res) {
+  const user = await verifyFirebaseUser(req);
+  if (!user) return json(res, 401, { error: "Sign in required" });
+  const email = (user.email || "").trim().toLowerCase();
+  if (!email) return json(res, 200, { claimed: 0 });
+
+  const key = emailKey(email);
+  const snap = await db.ref(`curriculum/pendingByEmail/${key}`).get();
+  if (!snap.exists()) return json(res, 200, { claimed: 0 });
+
+  const pending = snap.val();
+  let claimed = 0;
+  const display = user.name || email.split("@")[0];
+  for (const lessonId of Object.keys(pending)) {
+    const lessonSnap = await db.ref(`curriculum/lessons/${lessonId}`).get();
+    if (!lessonSnap.exists()) {
+      await db.ref(`curriculum/pendingByEmail/${key}/${lessonId}`).remove();
+      continue;
+    }
+    const lesson = lessonSnap.val();
+    if (!(lesson.authors && lesson.authors[user.uid])) {
+      await addLessonAuthor(lessonId, user.uid, display);
+      claimed += 1;
+    }
+    await db.ref(`curriculum/pendingByEmail/${key}/${lessonId}`).remove();
+  }
+  return json(res, 200, { ok: true, claimed });
+}
+
 exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, CORS);
@@ -363,6 +488,12 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
     if (req.method === "POST" && parts[0] === "pair" && parts[1] === "revoke") {
       return await handlePairRevoke(req, res);
     }
+    if (req.method === "POST" && parts[0] === "invite" && parts[1] === "claim") {
+      return await handleInviteClaim(req, res);
+    }
+    if (req.method === "POST" && parts[0] === "invite") {
+      return await handleInvite(req, res);
+    }
     if (req.method === "GET" && parts[0] === "lessons" && !parts[1]) {
       return await handleListLessons(req, res);
     }
@@ -381,6 +512,8 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
         "POST /pair/confirm",
         "POST /pair/deny",
         "POST /pair/revoke",
+        "POST /invite",
+        "POST /invite/claim",
         "GET /lessons",
         "GET /lessons/:id",
         "PATCH /lessons/:id"

@@ -681,6 +681,7 @@ async function showStudio(user) {
     : (user.email || "Signed in with Google");
 
   await refreshLessonIndex();
+  claimEmailInvites();
   ensureAgentLink({ autoCopy: false }).catch((err) => {
     console.error(err);
     setAgentStatus("Could not prepare agent link.");
@@ -1064,51 +1065,66 @@ async function inviteCoAuthor() {
     setStatus("Only the owner can invite.");
     return;
   }
-  let name = (inviteUser.value || "").trim().toLowerCase().replace(/^@+/, "");
-  if (name.includes("@") || name.includes(".")) {
-    setStatus("Use their username (e.g. cloud), not an email.");
+  const raw = (inviteUser.value || "").trim().toLowerCase().replace(/^@+/, "");
+  if (!raw) {
+    setStatus("Enter a username or email.");
     return;
   }
-  if (!/^[a-z][a-z0-9-]{0,22}[a-z0-9]$/.test(name) || name.length < 2) {
-    setStatus("Username: 2–24 chars, start with a letter.");
-    return;
-  }
+
+  const isEmail = raw.includes("@");
   try {
-    const snap = await get(ref(db, `usernames/${name}`));
-    if (!snap.exists()) {
-      setStatus(`No account with username “${name}”.`);
+    if (isEmail) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+        setStatus("Enter a valid email.");
+        return;
+      }
+      const data = await agentFetch("POST", "/invite", {
+        lessonId: currentId,
+        email: raw
+      });
+      inviteUser.value = "";
+      if (data.pending) {
+        setStatus("Invite saved — they join when they sign in with that email.");
+      } else if (data.already) {
+        setStatus("Already an author.");
+      } else {
+        setStatus(`Added ${raw}.`);
+      }
       return;
     }
-    const uid = snap.val()?.uid || snap.val();
-    const otherUid = typeof uid === "string" ? uid : uid?.uid;
-    if (!otherUid) {
-      setStatus(`No account with username “${name}”.`);
+
+    const name = raw;
+    if (!/^[a-z][a-z0-9-]{0,22}[a-z0-9]$/.test(name) || name.length < 2) {
+      setStatus("Username: 2–24 chars, start with a letter — or use an email.");
       return;
     }
-    if (otherUid === me.uid) {
-      setStatus("That’s you.");
-      return;
-    }
-    if (currentMeta?.authors?.[otherUid]) {
-      setStatus(`“${name}” is already an author.`);
-      return;
-    }
-    const profile = await get(ref(db, `profiles/${name}`));
-    const display = profile.val()?.displayName || name;
-    const now = Date.now();
-    const updates = {};
-    updates[`curriculum/lessons/${currentId}/authors/${otherUid}`] = {
-      name: display,
-      role: "author",
-      addedAt: now
-    };
-    updates[`curriculum/byUser/${otherUid}/${currentId}`] = true;
-    await update(ref(db), updates);
+    const data = await agentFetch("POST", "/invite", {
+      lessonId: currentId,
+      username: name
+    });
     inviteUser.value = "";
-    setStatus(`Added /${name}/.`);
+    if (data.already) setStatus(`“${name}” is already an author.`);
+    else setStatus(`Added /${name}/.`);
   } catch (err) {
     console.error(err);
     setStatus(err?.message || "Invite failed.");
+  }
+}
+
+async function claimEmailInvites() {
+  if (!me) return;
+  try {
+    const data = await agentFetch("POST", "/invite/claim", {});
+    if (data.claimed > 0) {
+      await refreshLessonIndex();
+      setStatus(
+        data.claimed === 1
+          ? "Joined 1 invited lesson."
+          : `Joined ${data.claimed} invited lessons.`
+      );
+    }
+  } catch (err) {
+    console.error(err);
   }
 }
 
