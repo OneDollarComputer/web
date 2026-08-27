@@ -29,8 +29,8 @@ Owner invites by **username** (must already claim a username on `/project/`).
 ## Agent (MCP)
 
 1. Sign in on `/curriculum/` → **Agent** → **Copy** the link  
-2. Paste the link into your agent → `curriculum_pair`  
-3. Agent lists and edits your lessons — no extra confirm step  
+2. Paste into your agent (includes instructions) → MCP **curriculum_pair**  
+3. Agent edits lessons on the site — not local HTML files  
 
 The link is ready as soon as you copy it (while signed in). **Revoke** on the site to disconnect.
 

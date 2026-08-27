@@ -595,7 +595,25 @@ h3 {
   gap: .45rem
 }
 
-.form-actions {
+.agent-hint {
+  margin: .35rem 0 0;
+  font-size: .82rem;
+  color: var(--sub)
+}
+
+.agent-hint code {
+  font-size: .78rem
+}
+
+.agent-connect-doc {
+  margin: 1rem;
+  padding: .75rem 1rem;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #78350f;
+  font: .82rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap
+}
   display: flex;
   flex-wrap: wrap;
   gap: .65rem;

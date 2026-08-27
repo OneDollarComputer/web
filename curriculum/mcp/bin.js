@@ -91,7 +91,7 @@ const server = new McpServer({
 
 server.tool(
   "curriculum_pair",
-  "Connect to curriculum. Pass the Agent link from the site (odc.rs/curriculum/?connect=…). Works as soon as the instructor copied the link while signed in.",
+  "Connect to ODC curriculum. Pass the Agent link from /curriculum/ (while instructor is signed in). REQUIRED: call this tool — do NOT fetch the URL as a webpage, do NOT create local HTML files. Then use curriculum_list_lessons and curriculum_update_lesson.",
   {
     connect_url_or_code: z.string().describe("Full Agent link or the connect code")
   },

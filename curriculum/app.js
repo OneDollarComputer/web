@@ -175,13 +175,22 @@ function agentConnectUrl(code) {
   return `${SHORT_ORIGIN}/curriculum/?connect=${encodeURIComponent(code)}`;
 }
 
+function agentClipboardText(url) {
+  return (
+    "Use the MCP tool curriculum_pair with this link to edit lessons on One Dollar Computer. " +
+    "Do not fetch this URL as a webpage. Do not create local HTML files.\n\n" +
+    url
+  );
+}
+
 let pendingAgentCode = null;
 let pendingAgentExpiresAt = 0;
 
 function copyAgentLink() {
   const url = agentLink?.value?.trim();
   if (!url) return Promise.reject(new Error("No link"));
-  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(url);
+  const text = agentClipboardText(url);
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
   return Promise.reject(new Error("Clipboard unavailable"));
 }
 
@@ -323,8 +332,9 @@ async function showGate() {
   const connectCode = connectQueryCode();
   const lid = lessonQueryId();
   if (connectCode) {
-    gateTitle.textContent = "Curriculum";
-    gateLede.textContent = "Sign in with Google — then paste the Agent link into your agent.";
+    gateTitle.textContent = "Agent link";
+    gateLede.textContent =
+      "This link is for your agent (MCP curriculum_pair), not a lesson page. Sign in to open your studio.";
   } else if (lid) {
     const meta = await loadPublicTitle(lid);
     if (meta) {

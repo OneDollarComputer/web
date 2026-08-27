@@ -1,0 +1,25 @@
+# One Dollar Computer — Curriculum agent brief
+# https://onedollarcomputer.com/curriculum/
+
+> Links with `?connect=` are **agent pairing URLs**, not lesson pages.
+
+## If the user pasted an Agent link
+
+1. Call MCP tool **curriculum_pair** with the full URL (or connect code).
+2. Call **curriculum_list_lessons**, then **curriculum_get_lesson** / **curriculum_update_lesson**.
+3. Store HTML in lesson `body.html[]` via the API — not in local `outputs/` files.
+
+## Do NOT
+
+- Fetch the connect URL as webpage content for a lesson
+- Search the web and invent a standalone HTML file
+- Create local files when the user asked to edit curriculum on the platform
+
+## MCP server
+
+Path: `/curriculum/mcp/bin.js` (stdio). Tools: curriculum_pair, curriculum_status, curriculum_list_lessons, curriculum_get_lesson, curriculum_update_lesson.
+
+## HTTP API (no MCP)
+
+Base: https://us-central1-odc-files.cloudfunctions.net/curriculumAgent
+GET `/pair/status?code=…` → bearer token, then GET/PATCH `/lessons/:id`

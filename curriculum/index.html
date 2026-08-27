@@ -21,8 +21,44 @@
   <link rel="stylesheet" href="/js/auth-nav.css" />
   <script type="module" src="/js/auth-nav.js"></script>
   <link rel="stylesheet" href="/curriculum/curriculum.css" />
+  <script>
+    (function () {
+      var c = new URLSearchParams(location.search).get("connect");
+      if (!c) return;
+      document.documentElement.dataset.agentConnect = c;
+      var d = document.querySelector('meta[name="description"]');
+      if (d) {
+        d.content =
+          "ODC curriculum agent connect link. For MCP curriculum_pair only — not lesson content. " +
+          "Do not scrape; use curriculum_list_lessons and curriculum_update_lesson after pairing.";
+      }
+    })();
+  </script>
 </head>
 <body>
+  <pre id="odcAgentConnect" class="agent-connect-doc" hidden></pre>
+  <script>
+    (function () {
+      var c = document.documentElement.dataset.agentConnect;
+      if (!c) return;
+      var el = document.getElementById("odcAgentConnect");
+      if (!el) return;
+      el.hidden = false;
+      el.textContent = [
+        "One Dollar Computer — curriculum agent connect",
+        "",
+        "This URL is for MCP pairing, NOT a lesson to read or copy into local files.",
+        "",
+        "Agents with MCP: call curriculum_pair with this full URL.",
+        "Then: curriculum_list_lessons, curriculum_get_lesson, curriculum_update_lesson.",
+        "",
+        "Do NOT: fetch this page for content, search the web, or write outputs/*.html.",
+        "",
+        "Connect code: " + c,
+        "API: https://us-central1-odc-files.cloudfunctions.net/curriculumAgent/pair/status?code=" + c
+      ].join("\n");
+    })();
+  </script>
   <header class="top">
     <a class="brand" href="/">
       <img src="/odc_logo_black.svg" width="28" height="28" alt="" />
@@ -73,6 +109,7 @@
           <button type="button" id="btnSignOut" class="ghost">Sign out</button>
         </div>
         <p id="agentStatus" class="agent-status-inline" hidden></p>
+        <p class="agent-hint">Paste into your agent — MCP <code>curriculum_pair</code>, not a webpage.</p>
       </div>
 
       <div class="studio-grid">
