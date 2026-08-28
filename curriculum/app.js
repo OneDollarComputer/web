@@ -647,8 +647,8 @@ function addHtmlRow(values = {}, startEditing = false) {
   });
 
   doneBtn.addEventListener("click", () => {
-    setHtmlEditorOpen(row, false);
     syncPreview();
+    setHtmlEditorOpen(row, false);
     if (isAuthor && editMode === "edit") scheduleSave();
   });
 

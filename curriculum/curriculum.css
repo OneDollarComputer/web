@@ -569,6 +569,12 @@ h3 {
   display: none !important
 }
 
+.html-row.is-editing .html-embed {
+  max-width: 42rem;
+  min-height: 12rem;
+  aspect-ratio: 16 / 10
+}
+
 .html-editor {
   display: none;
   gap: .4rem
