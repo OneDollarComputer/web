@@ -508,16 +508,22 @@ function lessonHtmlBlocks(body) {
 
 function setHtmlEditorOpen(row, open) {
   const editor = row.querySelector(".html-editor");
-  const view = row.querySelector(".html-view");
   const editBtn = row.querySelector(".html-edit");
   const doneBtn = row.querySelector(".html-done");
   if (!editor || !editBtn || !doneBtn) return;
   row.classList.toggle("is-editing", open);
   editor.hidden = !open;
-  if (view) view.hidden = open;
   editBtn.hidden = open;
   doneBtn.hidden = !open;
   row.dataset.editing = open ? "1" : "";
+}
+
+function paintIframe(iframe, html) {
+  iframe.removeAttribute("src");
+  iframe.srcdoc = "";
+  requestAnimationFrame(() => {
+    iframe.srcdoc = html;
+  });
 }
 
 function addHtmlRow(values = {}, startEditing = false) {
@@ -619,8 +625,7 @@ function addHtmlRow(values = {}, startEditing = false) {
     titleDisplay.hidden = !title;
     if (html) {
       embed.hidden = false;
-      iframe.removeAttribute("src");
-      iframe.srcdoc = html;
+      paintIframe(iframe, html);
     } else {
       embed.hidden = true;
       iframe.removeAttribute("src");
