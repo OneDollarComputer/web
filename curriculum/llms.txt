@@ -1,23 +1,26 @@
 # One Dollar Computer — Curriculum agent brief
 # https://onedollarcomputer.com/curriculum/
 
-> Links with `?connect=` are **agent pairing URLs**, not lesson pages.
+## PATCH /lessons/:id — body fields
 
-## If the user pasted from Agent → Copy
+| Field | Type | Notes |
+|-------|------|-------|
+| overview | string | Lesson intro text |
+| materials | string[] | One item per line |
+| steps | string[] | One step per line |
+| photos | { url }[] | Image URLs |
+| videos | { url }[] | YouTube URLs |
+| links | { label?, url }[] | External links |
+| **html** | { title?, **html** }[] | **HTML5 blocks shown inline in the lesson** |
 
-The clipboard has terminal commands with CODE filled in. Run them (approve each), then edit lessons via PATCH. Do not create local HTML files.
+Use **`html`**, not `gameHtml`, not iframe in overview. Each block: `{ "title": "…", "html": "<!doctype html>…" }`.
 
-## Do NOT
+Aliases accepted by API: `games`, `gameHtml`, `game_html` (mapped to `html`).
 
-- Fetch the connect URL as webpage content for a lesson
-- Search the web and invent a standalone HTML file
-- Create local files when the user asked to edit curriculum on the platform
+## Agent → Copy
 
-## MCP server
+Run the copied shell block. Then PATCH with `$TOKEN` set. Do not create local HTML files.
 
-Path: `/curriculum/mcp/bin.js` (stdio). Tools: curriculum_pair, curriculum_status, curriculum_list_lessons, curriculum_get_lesson, curriculum_update_lesson.
+## MCP tools
 
-## HTTP API (no MCP)
-
-Base: https://us-central1-odc-files.cloudfunctions.net/curriculumAgent
-GET `/pair/status?code=…` → bearer token, then GET/PATCH `/lessons/:id`
+curriculum_pair, curriculum_list_lessons, curriculum_get_lesson, curriculum_update_lesson (field `html`).

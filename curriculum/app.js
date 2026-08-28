@@ -184,11 +184,14 @@ function agentClipboardText(code) {
     `CODE=${code}`,
     "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('token',''); assert t, d; print(t)\")",
     "export TOKEN",
-    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons\"",
+    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons/l_mt8zguud_q7n6dg\"",
     "",
-    "Then PATCH with the same shell (TOKEN is already set):",
+    "PATCH fields: overview, materials[], steps[], photos[], videos[], links[],",
+    "html[] with { \"title\": \"…\", \"html\": \"<!doctype html>…\" }  (NOT gameHtml).",
+    "Example:",
     "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
-    "  -d '{\"overview\":\"…\"}' \"$API/lessons/LESSON_ID\""
+    "  -d '{\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html>…</html>\"}]}' \\",
+    "  \"$API/lessons/l_mt8zguud_q7n6dg\""
   ].join("\n");
 }
 

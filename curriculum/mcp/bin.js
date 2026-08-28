@@ -208,7 +208,7 @@ server.tool(
 
 server.tool(
   "curriculum_update_lesson",
-  "Update a curriculum lesson. Pass title and/or body fields (overview, materials[], steps[], photos, videos, html, links). HTML blocks: { title?, html } stored in Firebase RTDB (HTML5 markup).",
+  "Update a curriculum lesson. Fields: overview, materials[], steps[], photos, videos, html[], links. Interactive content: html[] with { title?, html } — NOT gameHtml in overview. Aliases: games, gameHtml.",
   {
     lesson_id: z.string(),
     title: z.string().optional(),
@@ -225,6 +225,13 @@ server.tool(
       title: z.string().optional(),
       html: z.string()
     })).optional(),
+    gameHtml: z.union([
+      z.string(),
+      z.array(z.object({
+        title: z.string().optional(),
+        html: z.string()
+      }))
+    ]).optional(),
     links: z.array(z.object({ label: z.string().optional(), url: z.string() })).optional()
   },
   async (args) => {
@@ -241,6 +248,11 @@ server.tool(
     if (args.videos !== undefined) body.videos = args.videos;
     if (args.html !== undefined) body.html = args.html;
     else if (args.games !== undefined) body.html = args.games;
+    if (args.gameHtml !== undefined) {
+      body.html = typeof args.gameHtml === "string"
+        ? [{ html: args.gameHtml }]
+        : args.gameHtml;
+    }
     if (args.links !== undefined) body.links = args.links;
     const data = await api("PATCH", `/lessons/${encodeURIComponent(args.lesson_id)}`, {
       token,

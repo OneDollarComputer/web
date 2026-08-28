@@ -284,7 +284,10 @@ function normalizeHtmlBlocks(list) {
   for (const item of list) {
     if (!item || typeof item !== "object") continue;
     const title = typeof item.title === "string" ? item.title.trim().slice(0, 120) : "";
-    const html = typeof item.html === "string" ? item.html.trim() : "";
+    const html = typeof item.html === "string" ? item.html.trim()
+      : typeof item.markup === "string" ? item.markup.trim()
+        : typeof item.gameHtml === "string" ? item.gameHtml.trim()
+          : "";
     if (!html || html.length > 512 * 1024) continue;
     const row = { html };
     if (title) row.title = title;
@@ -293,10 +296,26 @@ function normalizeHtmlBlocks(list) {
   return out;
 }
 
+function coerceHtmlBlocks(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "string") return normalizeHtmlBlocks([{ html: value }]);
+  if (Array.isArray(value)) return normalizeHtmlBlocks(value);
+  return [];
+}
+
 function htmlBlocksFromBody(body) {
   if (body?.html !== undefined) return normalizeHtmlBlocks(body.html);
   if (body?.games !== undefined) return normalizeHtmlBlocks(body.games);
   return [];
+}
+
+function htmlBlocksFromPatch(src, prev) {
+  const nested = src.body && typeof src.body === "object" ? src.body : null;
+  for (const key of ["html", "games", "gameHtml", "game_html"]) {
+    const v = src[key] !== undefined ? src[key] : nested?.[key];
+    if (v !== undefined) return coerceHtmlBlocks(v);
+  }
+  return htmlBlocksFromBody(prev);
 }
 
 async function handlePatchLesson(req, res, lid) {
@@ -324,41 +343,33 @@ async function handlePatchLesson(req, res, lid) {
   }
   if (body.body && typeof body.body === "object") {
     const prev = lesson.body || {};
-    const prevHtml = htmlBlocksFromBody(prev);
-    const nextHtml = body.body.html !== undefined
-      ? normalizeHtmlBlocks(body.body.html)
-      : body.body.games !== undefined
-        ? normalizeHtmlBlocks(body.body.games)
-        : prevHtml;
+    const nextHtml = htmlBlocksFromPatch(body.body, prev);
+    const htmlProvided = ["html", "games", "gameHtml", "game_html"].some((k) => body.body[k] !== undefined);
     updates.body = {
       overview: body.body.overview !== undefined ? String(body.body.overview) : (prev.overview || ""),
       materials: Array.isArray(body.body.materials) ? body.body.materials : (prev.materials || []),
       steps: Array.isArray(body.body.steps) ? body.body.steps : (prev.steps || []),
       photos: Array.isArray(body.body.photos) ? body.body.photos : (prev.photos || []),
       videos: Array.isArray(body.body.videos) ? body.body.videos : (prev.videos || []),
-      html: nextHtml,
+      html: htmlProvided ? nextHtml : htmlBlocksFromBody(prev),
       links: Array.isArray(body.body.links) ? body.body.links : (prev.links || []),
       games: null
     };
   }
   // Allow top-level field patches
+  const topHtmlProvided = ["html", "games", "gameHtml", "game_html"].some((k) => body[k] !== undefined);
   if (body.overview !== undefined || body.materials !== undefined || body.steps !== undefined
-      || body.photos !== undefined || body.videos !== undefined || body.html !== undefined
-      || body.games !== undefined || body.links !== undefined) {
+      || body.photos !== undefined || body.videos !== undefined || topHtmlProvided
+      || body.links !== undefined) {
     const prev = updates.body || lesson.body || {};
-    const prevHtml = htmlBlocksFromBody(prev);
-    const nextHtml = body.html !== undefined
-      ? normalizeHtmlBlocks(body.html)
-      : body.games !== undefined
-        ? normalizeHtmlBlocks(body.games)
-        : prevHtml;
+    const nextHtml = htmlBlocksFromPatch(body, prev);
     updates.body = {
       overview: body.overview !== undefined ? String(body.overview) : (prev.overview || ""),
       materials: body.materials !== undefined ? body.materials : (prev.materials || []),
       steps: body.steps !== undefined ? body.steps : (prev.steps || []),
       photos: body.photos !== undefined ? body.photos : (prev.photos || []),
       videos: body.videos !== undefined ? body.videos : (prev.videos || []),
-      html: nextHtml,
+      html: topHtmlProvided ? nextHtml : htmlBlocksFromBody(prev),
       links: body.links !== undefined ? body.links : (prev.links || []),
       games: null
     };
