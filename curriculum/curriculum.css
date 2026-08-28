@@ -554,9 +554,36 @@ h3 {
 
 .html-fullscreen:hover { background: rgba(30, 41, 59, .92) }
 
+.html-title-display {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text);
+  padding-bottom: .25rem
+}
+
+.html-title-display[hidden] {
+  display: none !important
+}
+
+.html-view[hidden] {
+  display: none !important
+}
+
 .html-editor {
-  display: grid;
+  display: none;
   gap: .4rem
+}
+
+.html-editor[hidden] {
+  display: none !important
+}
+
+.html-row.is-editing .html-editor {
+  display: grid
+}
+
+.html-row.is-editing .html-editor[hidden] {
+  display: none !important
 }
 
 .html-editor .title-input {

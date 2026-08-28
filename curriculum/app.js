@@ -508,10 +508,13 @@ function lessonHtmlBlocks(body) {
 
 function setHtmlEditorOpen(row, open) {
   const editor = row.querySelector(".html-editor");
+  const view = row.querySelector(".html-view");
   const editBtn = row.querySelector(".html-edit");
   const doneBtn = row.querySelector(".html-done");
   if (!editor || !editBtn || !doneBtn) return;
+  row.classList.toggle("is-editing", open);
   editor.hidden = !open;
+  if (view) view.hidden = open;
   editBtn.hidden = open;
   doneBtn.hidden = !open;
   row.dataset.editing = open ? "1" : "";
@@ -527,6 +530,12 @@ function addHtmlRow(values = {}, startEditing = false) {
 
   const wrap = document.createElement("div");
   wrap.className = "html-embed-wrap";
+
+  const view = document.createElement("div");
+  view.className = "html-view";
+
+  const titleDisplay = document.createElement("div");
+  titleDisplay.className = "html-title-display";
 
   const embed = document.createElement("div");
   embed.className = "html-embed";
@@ -564,6 +573,9 @@ function addHtmlRow(values = {}, startEditing = false) {
 
   toolbar.appendChild(editBtn);
   toolbar.appendChild(doneBtn);
+  view.appendChild(titleDisplay);
+  view.appendChild(embed);
+  view.appendChild(toolbar);
 
   const editor = document.createElement("div");
   editor.className = "html-editor";
@@ -595,14 +607,16 @@ function addHtmlRow(values = {}, startEditing = false) {
   editor.appendChild(htmlInput);
   editor.appendChild(editorBar);
 
-  wrap.appendChild(embed);
-  wrap.appendChild(toolbar);
+  wrap.appendChild(view);
   wrap.appendChild(editor);
   row.appendChild(wrap);
 
   const syncPreview = () => {
     const html = htmlInput.value.trim();
-    iframe.title = titleInput.value.trim() || "Lesson HTML";
+    const title = titleInput.value.trim();
+    iframe.title = title || "Lesson HTML";
+    titleDisplay.textContent = title;
+    titleDisplay.hidden = !title;
     if (html) {
       embed.hidden = false;
       iframe.removeAttribute("src");
@@ -770,6 +784,7 @@ function setFormEditable(canEdit) {
   form?.querySelectorAll("input, textarea, button.remove, [data-add], .doc-insert").forEach((node) => {
     if (node === btnSave || node === btnDelete) return;
     if (node.classList?.contains("html-fullscreen")) return;
+    if (node.closest(".html-editor")) return;
     if (node.tagName === "BUTTON") node.disabled = !canEdit;
     else node.readOnly = !canEdit;
   });
@@ -784,8 +799,6 @@ function setFormEditable(canEdit) {
     } else if (row.dataset.editing !== "1") {
       setHtmlEditorOpen(row, false);
     }
-    const editor = row.querySelector(".html-editor");
-    if (editor && !canEdit) editor.hidden = true;
   });
   if (btnSave) btnSave.hidden = !canEdit;
   document.querySelectorAll("[data-add], .doc-insert").forEach((b) => {
