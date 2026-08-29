@@ -278,6 +278,21 @@ async function handleGetLesson(req, res, lid) {
   });
 }
 
+function normalizeQuizzes(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const item of list) {
+    if (!item || typeof item !== "object") continue;
+    const question = typeof item.question === "string" ? item.question.trim().slice(0, 500) : "";
+    const choices = Array.isArray(item.choices)
+      ? item.choices.map((c) => String(c).trim()).filter(Boolean).slice(0, 8)
+      : [];
+    if (!question || choices.length < 2) continue;
+    out.push({ question, choices });
+  }
+  return out;
+}
+
 function normalizeHtmlBlocks(list) {
   if (!Array.isArray(list)) return [];
   const out = [];
@@ -352,6 +367,7 @@ async function handlePatchLesson(req, res, lid) {
       photos: Array.isArray(body.body.photos) ? body.body.photos : (prev.photos || []),
       videos: Array.isArray(body.body.videos) ? body.body.videos : (prev.videos || []),
       html: htmlProvided ? nextHtml : htmlBlocksFromBody(prev),
+      quizzes: Array.isArray(body.body.quizzes) ? normalizeQuizzes(body.body.quizzes) : (prev.quizzes || []),
       links: Array.isArray(body.body.links) ? body.body.links : (prev.links || []),
       games: null
     };
@@ -360,7 +376,7 @@ async function handlePatchLesson(req, res, lid) {
   const topHtmlProvided = ["html", "games", "gameHtml", "game_html"].some((k) => body[k] !== undefined);
   if (body.overview !== undefined || body.materials !== undefined || body.steps !== undefined
       || body.photos !== undefined || body.videos !== undefined || topHtmlProvided
-      || body.links !== undefined) {
+      || body.quizzes !== undefined || body.links !== undefined) {
     const prev = updates.body || lesson.body || {};
     const nextHtml = htmlBlocksFromPatch(body, prev);
     updates.body = {
@@ -370,6 +386,7 @@ async function handlePatchLesson(req, res, lid) {
       photos: body.photos !== undefined ? body.photos : (prev.photos || []),
       videos: body.videos !== undefined ? body.videos : (prev.videos || []),
       html: topHtmlProvided ? nextHtml : htmlBlocksFromBody(prev),
+      quizzes: body.quizzes !== undefined ? normalizeQuizzes(body.quizzes) : (prev.quizzes || []),
       links: body.links !== undefined ? body.links : (prev.links || []),
       games: null
     };

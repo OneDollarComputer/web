@@ -73,6 +73,10 @@ const presenceBar = document.getElementById("presenceBar");
 const inviteUser = document.getElementById("inviteUser");
 const btnInvite = document.getElementById("btnInvite");
 const btnShare = document.getElementById("btnShare");
+const btnGoLive = document.getElementById("btnGoLive");
+const liveRoomChip = document.getElementById("liveRoomChip");
+const liveRoomLink = document.getElementById("liveRoomLink");
+const btnUpdateRoom = document.getElementById("btnUpdateRoom");
 const modeEdit = document.getElementById("modeEdit");
 const modeSuggest = document.getElementById("modeSuggest");
 const suggestPanel = document.getElementById("suggestPanel");
@@ -102,6 +106,8 @@ let saveTimer = null;
 let unsubLesson = null;
 let unsubPresence = null;
 let unsubSuggestions = null;
+let unsubLiveRoom = null;
+let activeLiveRoom = null;
 let presenceCleanup = null;
 
 function lessonQueryId() {
@@ -670,8 +676,38 @@ function addHtmlRow(values = {}, startEditing = false) {
   else setHtmlEditorOpen(row, false);
 }
 
+function addQuizRow(values = {}) {
+  const host = document.getElementById("quizRows");
+  if (!host) return;
+  const row = document.createElement("div");
+  row.className = "media-row quiz-row";
+  row.innerHTML =
+    `<label class="field"><span>Question</span>` +
+    `<textarea class="question-input doc-body" rows="2" placeholder="What did you learn?"></textarea></label>` +
+    `<label class="field"><span>Choices (one per line)</span>` +
+    `<textarea class="choices-input doc-body" rows="3" placeholder="Yes&#10;No"></textarea></label>` +
+    `<button type="button" class="ghost-sm remove">Remove</button>`;
+  const questionInput = row.querySelector(".question-input");
+  const choicesInput = row.querySelector(".choices-input");
+  const removeBtn = row.querySelector(".remove");
+  questionInput.value = values.question || "";
+  choicesInput.value = Array.isArray(values.choices) ? values.choices.join("\n") : "";
+  removeBtn.hidden = !isAuthor;
+  for (const el of [questionInput, choicesInput]) {
+    el.addEventListener("input", () => {
+      if (isAuthor && editMode === "edit") scheduleSave();
+    });
+  }
+  removeBtn.addEventListener("click", () => {
+    row.remove();
+    if (isAuthor && editMode === "edit") scheduleSave();
+  });
+  host.appendChild(row);
+  autosizeAll();
+}
+
 function clearMedia() {
-  ["photoRows", "videoRows", "htmlRows", "linkRows"].forEach((id) => {
+  ["photoRows", "videoRows", "htmlRows", "quizRows", "linkRows"].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.replaceChildren();
   });
@@ -704,6 +740,16 @@ function readHtmlBlocks() {
   }).filter((x) => x.html);
 }
 
+function readQuizzes() {
+  const host = document.getElementById("quizRows");
+  if (!host) return [];
+  return [...host.querySelectorAll(".quiz-row")].map((row) => {
+    const question = row.querySelector(".question-input")?.value.trim() || "";
+    const choices = lines(row.querySelector(".choices-input")?.value || "");
+    return { question, choices };
+  }).filter((x) => x.question && x.choices.length >= 2);
+}
+
 function blankBody() {
   return {
     overview: "",
@@ -712,6 +758,7 @@ function blankBody() {
     photos: [],
     videos: [],
     html: [],
+    quizzes: [],
     links: []
   };
 }
@@ -732,6 +779,7 @@ function collectForm() {
     photos: readMedia("photo"),
     videos: readMedia("video"),
     html: readHtmlBlocks(),
+    quizzes: readQuizzes(),
     links: readMedia("link")
   };
 }
@@ -752,10 +800,12 @@ function fillFormFromLesson(lesson) {
   (body.photos || []).forEach((p) => addMediaRow("photo", p));
   (body.videos || []).forEach((v) => addMediaRow("video", v));
   lessonHtmlBlocks(body).forEach((block) => addHtmlRow(block));
+  (body.quizzes || []).forEach((q) => addQuizRow(q));
   (body.links || []).forEach((l) => addMediaRow("link", l));
   if (!(body.photos || []).length) addMediaRow("photo");
   if (!(body.videos || []).length) addMediaRow("video");
   if (!lessonHtmlBlocks(body).length && isAuthor) addHtmlRow({}, true);
+  if (!(body.quizzes || []).length && isAuthor) addQuizRow();
   if (!(body.links || []).length) addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = !(isAuthor && currentMeta?.ownerUid === me?.uid);
@@ -916,6 +966,7 @@ function fillBlankNew() {
   addMediaRow("photo");
   addMediaRow("video");
   addHtmlRow({}, true);
+  addQuizRow();
   addMediaRow("link");
   applyingRemote = false;
   btnDelete.hidden = true;
@@ -952,8 +1003,11 @@ function detachLesson() {
   if (typeof unsubLesson === "function") unsubLesson();
   if (typeof unsubPresence === "function") unsubPresence();
   if (typeof unsubSuggestions === "function") unsubSuggestions();
+  if (typeof unsubLiveRoom === "function") unsubLiveRoom();
   if (typeof presenceCleanup === "function") presenceCleanup();
-  unsubLesson = unsubPresence = unsubSuggestions = presenceCleanup = null;
+  unsubLesson = unsubPresence = unsubSuggestions = unsubLiveRoom = presenceCleanup = null;
+  activeLiveRoom = null;
+  if (liveRoomChip) liveRoomChip.hidden = true;
   if (presenceBar) presenceBar.replaceChildren();
   document.querySelectorAll(".who").forEach((el) => {
     el.textContent = "";
@@ -1018,7 +1072,44 @@ async function openLesson(id) {
 
   attachPresence(id);
   attachSuggestions(id);
+  attachLiveRoom(id);
   renderList();
+}
+
+function updateLiveRoomChrome(room) {
+  activeLiveRoom = room;
+  if (!liveRoomChip || !isAuthor || !room?.sessionId) {
+    if (liveRoomChip) liveRoomChip.hidden = true;
+    return;
+  }
+  if (room.expiresAt && room.expiresAt < Date.now()) {
+    liveRoomChip.hidden = true;
+    return;
+  }
+  liveRoomChip.hidden = false;
+  if (liveRoomLink) {
+    liveRoomLink.textContent = `Room · ${room.pin}`;
+    liveRoomLink.href = `/curriculum/live/?session=${encodeURIComponent(room.sessionId)}`;
+  }
+}
+
+function attachLiveRoom(lessonId) {
+  unsubLiveRoom = onValue(ref(db, `curriculum/lessons/${lessonId}/liveRoom`), (snap) => {
+    updateLiveRoomChrome(snap.val());
+  });
+}
+
+function sessionBodyFromData(data) {
+  return {
+    overview: data.overview,
+    materials: data.materials,
+    steps: data.steps,
+    photos: data.photos,
+    videos: data.videos,
+    html: data.html,
+    quizzes: data.quizzes,
+    links: data.links
+  };
 }
 
 function attachPresence(lessonId) {
@@ -1199,6 +1290,7 @@ async function saveCurrent() {
         photos: data.photos,
         videos: data.videos,
         html: data.html,
+        quizzes: data.quizzes,
         links: data.links
       };
       updates[`curriculum/lessons/${id}/body/games`] = null;
@@ -1228,6 +1320,7 @@ async function saveCurrent() {
       photos: data.photos,
       videos: data.videos,
       html: data.html,
+      quizzes: data.quizzes,
       links: data.links
     };
     updates[`curriculum/lessons/${currentId}/body/games`] = null;
@@ -1382,10 +1475,90 @@ inviteUser?.addEventListener("keydown", (e) => {
 
 btnShare?.addEventListener("click", () => shareLink());
 
+async function startWorkshop() {
+  if (!me || !currentId || !isAuthor) return;
+  await saveCurrent();
+  if (!currentId) return;
+  const data = collectForm();
+  let pin = "";
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const candidate = String(Math.floor(1000 + Math.random() * 9000));
+    const taken = await get(ref(db, `curriculum/liveByPin/${candidate}`));
+    if (!taken.exists() || taken.val()?.status !== "active") {
+      pin = candidate;
+      break;
+    }
+  }
+  if (!pin) {
+    setStatus("Could not create a room PIN. Try again.");
+    return;
+  }
+  const sid = `ws_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const now = Date.now();
+  const session = {
+    lessonId: currentId,
+    ownerUid: me.uid,
+    pin,
+    status: "active",
+    createdAt: now,
+    expiresAt: now + 4 * 60 * 60 * 1000,
+    title: data.title,
+    body: sessionBodyFromData(data)
+  };
+  const liveRoom = {
+    sessionId: sid,
+    pin,
+    startedAt: now,
+    expiresAt: session.expiresAt
+  };
+  try {
+    await update(ref(db), {
+      [`curriculum/live/${sid}`]: session,
+      [`curriculum/liveByPin/${pin}`]: {
+        sessionId: sid,
+        lessonId: currentId,
+        status: "active",
+        expiresAt: session.expiresAt
+      },
+      [`curriculum/lessons/${currentId}/liveRoom`]: liveRoom
+    });
+    updateLiveRoomChrome(liveRoom);
+    window.open(`/curriculum/live/?session=${encodeURIComponent(sid)}`, "_blank", "noopener");
+    setStatus("Workshop is live — students join with PIN, no sign-in.");
+  } catch (err) {
+    console.error(err);
+    const denied = String(err?.message || "").includes("PERMISSION_DENIED");
+    setStatus(denied
+      ? "Deploy database rules first, then try again."
+      : "Could not start workshop.");
+  }
+}
+
+async function pushRoomUpdate() {
+  if (!me || !currentId || !isAuthor || !activeLiveRoom?.sessionId) return;
+  await saveCurrent();
+  const data = collectForm();
+  try {
+    await update(ref(db), {
+      [`curriculum/live/${activeLiveRoom.sessionId}/title`]: data.title,
+      [`curriculum/live/${activeLiveRoom.sessionId}/body`]: sessionBodyFromData(data),
+      [`curriculum/live/${activeLiveRoom.sessionId}/updatedAt`]: Date.now()
+    });
+    setStatus(`Room updated · PIN ${activeLiveRoom.pin}`);
+  } catch (err) {
+    console.error(err);
+    setStatus("Could not update room.");
+  }
+}
+
+btnGoLive?.addEventListener("click", () => startWorkshop());
+btnUpdateRoom?.addEventListener("click", () => pushRoomUpdate());
+
 document.querySelectorAll("[data-add]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const kind = btn.getAttribute("data-add");
     if (kind === "html") addHtmlRow({}, true);
+    else if (kind === "quiz") addQuizRow();
     else addMediaRow(kind);
     if (isAuthor && editMode === "edit") scheduleSave();
   });

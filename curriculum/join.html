@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Join workshop — One Dollar Computer</title>
+  <meta name="description" content="Join a live One Dollar Computer workshop with a room PIN." />
+  <link rel="canonical" href="https://onedollarcomputer.com/curriculum/join/" />
+  <link rel="stylesheet" href="/curriculum/workshop.css" />
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/">One Dollar Computer</a>
+  </header>
+
+  <main>
+    <section id="pinGate" class="panel pin-gate">
+      <h1>Join workshop</h1>
+      <p>Enter the 4-digit PIN from your teacher.</p>
+      <form id="pinForm" class="pin-form">
+        <input id="pinInput" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+          placeholder="0000" autocomplete="one-time-code" required />
+        <button type="submit" class="primary">Join</button>
+      </form>
+      <p id="pinStatus" class="status" role="status"></p>
+    </section>
+
+    <section id="lessonView" class="panel" hidden>
+      <h1 id="lessonTitle" class="ws-lesson-title"></h1>
+      <div id="lessonBody"></div>
+      <div class="done-panel">
+        <label for="photoInput">Finished your build?</label>
+        <div class="done-actions">
+          <input id="photoInput" type="file" accept="image/*" capture="environment" hidden />
+          <button type="button" id="btnPickPhoto" class="ghost-sm">Add photo</button>
+          <button type="button" id="btnDone" class="primary" hidden>Done</button>
+        </div>
+        <p id="doneStatus" class="status" role="status"></p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/curriculum/join.js"></script>
+</body>
+</html>

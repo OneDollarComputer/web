@@ -61,6 +61,38 @@
           }
         }
       },
+      "liveByPin": {
+        "$pin": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      },
+      "live": {
+        "$sid": {
+          ".read": "data.child('status').val() === 'active' && data.child('expiresAt').val() > now",
+          ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && data.child('ownerUid').val() === auth.uid))",
+          "students": {
+            "$studentId": {
+              ".read": true,
+              ".write": "!data.exists() && root.child('curriculum/live').child($sid).child('status').val() === 'active'"
+            }
+          },
+          "answers": {
+            "$studentId": {
+              ".read": true,
+              "$quizIndex": {
+                ".write": "root.child('curriculum/live').child($sid).child('status').val() === 'active'"
+              }
+            }
+          },
+          "photos": {
+            "$photoId": {
+              ".read": true,
+              ".write": "!data.exists() && root.child('curriculum/live').child($sid).child('status').val() === 'active'"
+            }
+          }
+        }
+      },
       "lessons": {
         "$lid": {
           ".read": "auth != null",
@@ -98,6 +130,10 @@
           "body": {
             ".read": "auth != null",
             ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "liveRoom": {
+            ".read": "auth != null",
+            ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
           },
           "presence": {
             ".read": "auth != null",

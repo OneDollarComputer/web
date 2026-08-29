@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live workshop — One Dollar Computer</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="/curriculum/workshop.css" />
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/curriculum/">Curriculum</a>
+    <div class="live-toolbar">
+      <button type="button" id="btnEnd" class="ghost-sm danger" hidden>End workshop</button>
+    </div>
+  </header>
+
+  <main class="live-main">
+    <p id="loadStatus" class="status">Loading…</p>
+
+    <div id="liveView" hidden>
+      <section class="panel live-hero">
+        <div>
+          <h1 id="liveTitle" class="live-title"></h1>
+          <p id="liveMeta" class="live-meta"></p>
+          <div class="pin-display">
+            <div>
+              <div class="pin-code" id="pinCode"></div>
+              <p class="join-link"><a id="joinLink" href="#" target="_blank" rel="noopener"></a></p>
+            </div>
+            <div class="qr-wrap">
+              <img id="qrImg" alt="QR code to join workshop" width="180" height="180" />
+            </div>
+          </div>
+          <div class="stats-row">
+            <span class="stat" id="studentCount">👥 0 students</span>
+          </div>
+        </div>
+        <div id="lessonPreview" class="ws-lesson-preview"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Quiz responses</h2>
+        <div id="quizResults" class="quiz-results">
+          <p class="empty-wall">No quizzes in this lesson.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Build photos</h2>
+        <div id="photoWall" class="photo-wall">
+          <p class="empty-wall">Photos appear when students tap Done.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/curriculum/live.js"></script>
+</body>
+</html>

@@ -827,6 +827,42 @@ h3 {
   font-size: .9rem
 }
 
+.quiz-row {
+  display: grid;
+  gap: .65rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .75rem .85rem;
+  background: #f8fafc;
+}
+
+.quiz-row .field {
+  display: grid;
+  gap: .35rem;
+}
+
+.quiz-row .field span {
+  font-size: .85rem;
+  color: var(--sub);
+}
+
+.live-room-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .85rem;
+}
+
+.live-room-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.live-room-link:hover {
+  text-decoration: underline;
+}
+
 .agent-ready {
   display: flex;
   flex-wrap: wrap;
