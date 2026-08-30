@@ -23,11 +23,16 @@
   ],
   "product": {
     "name": "One Dollar Computer V1.004",
+    "model": "1.004",
     "revision": "R2",
     "price_usd": 1.0,
     "architecture": "RISC-V",
+    "isa": "RV32EC",
+    "board_pins": "0-19",
     "programming": ["WebHID", "browser editor", "simple Rust (odc)", "firmware flash"],
-    "open_source": true
+    "open_source": true,
+    "specification": "https://onedollarcomputer.com/specification/",
+    "specification_yaml": "https://onedollarcomputer.com/specification/v1.004.yaml"
   },
   "organization": {
     "name": "One Dollar Computer Project",

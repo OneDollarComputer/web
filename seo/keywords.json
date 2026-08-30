@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-15",
+  "updated": "2026-08-30",
   "notes": "Add new target queries here; regenerate sitemap and brand copy as needed. See seo/README.md.",
   "primary": [
     {
@@ -38,7 +38,13 @@
     {
       "query": "one dollar computer RISC-V",
       "intent": "product + tech",
-      "landing": "https://onedollarcomputer.com/",
+      "landing": "https://onedollarcomputer.com/specification/",
+      "priority": 2
+    },
+    {
+      "query": "one dollar computer specification",
+      "intent": "product + tech",
+      "landing": "https://onedollarcomputer.com/specification/",
       "priority": 2
     },
     {
