@@ -22,7 +22,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | Clock / memory (R2) | up to **48 MHz**, **16 KB** flash, **2 KB** RAM |
 | User I/O | Board pins **0–19** only; **LED = 19**, **BUTTON = 13** |
 | Firmware API | Simple Rust — `use odc::*;` (`/editor/AI_DOCS.txt`) |
-| Flash | Browser editor, **WebHID** |
+| Flash | Browser editor, **WebHID** (Chromium on Windows/Mac/Linux — no driver install) |
 
 - **Do** use board pin numbers and `odc` in user-facing firmware help.
 - **Don’t** name the MCU chip or pad names in beginner docs — chip mapping is internal (`docs/board.yaml` comment only).

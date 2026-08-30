@@ -32,7 +32,8 @@
 - **Architecture:** 32-bit **RISC-V** (**RV32EC** on R2)
 - **Processing (R2):** up to **48 MHz**, **16 KB** flash, **2 KB** RAM, **10-bit** ADC on board pins **8** and **9**
 - **User I/O:** board pins **0–19** only (PCB silkscreen). **LED = 19**, **BUTTON = 13**
-- **Firmware:** Simple Rust — `use odc::*;` and `fn main()` (browser editor compiles and flashes via WebHID)
+- **Firmware:** Simple Rust — `use odc::*;` and `fn main()` (browser editor compiles and flashes via **WebHID**)
+- **Flash / drivers:** **USB WebHID** — HID is built into every OS; no separate driver. Any **Chromium** browser on Windows, Mac, or Linux
 - **Do not** expose MCU chip names or pad names (`PD6`, `PA1`, …) to beginners — chip layer is private
 - **Machine-readable spec:** https://onedollarcomputer.com/specification/v1.004.yaml
 
