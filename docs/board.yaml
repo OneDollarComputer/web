@@ -1,5 +1,8 @@
 # One Dollar Computer — board pins (logical)
+# Model 1.004 (fixed). Current published revision: R2.
 
+model: "1.004"
+revision: R2
 version: 1.004 R2
 connector: ODC Port
 rj_connector: RJ45

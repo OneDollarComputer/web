@@ -15,15 +15,60 @@
       ]
     }
   ],
-  "hosting": {
-    "public": "firebase-hosting",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "redirects": [
-      {
-        "source": "/",
-        "destination": "https://onedollarcomputer.com/",
-        "type": 302
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "site": "odc-files",
+      "public": "firebase-hosting",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "redirects": [
+        {
+          "source": "/",
+          "destination": "https://onedollarcomputer.com/",
+          "type": 302
+        },
+        {
+          "source": "/spec",
+          "destination": "https://onedollarcomputer.com/specification/",
+          "type": 302
+        },
+        {
+          "source": "/specification",
+          "destination": "https://onedollarcomputer.com/specification/",
+          "type": 302
+        },
+        {
+          "source": "/specification/**",
+          "destination": "https://onedollarcomputer.com/specification/:splat",
+          "type": 302
+        }
+      ]
+    },
+    {
+      "site": "odc-files-api",
+      "public": "firebase-hosting-api",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/pair/**",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/lessons",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/lessons/**",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/invite",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/invite/**",
+          "function": "curriculumAgent"
+        }
+      ]
+    }
+  ]
 }

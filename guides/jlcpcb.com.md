@@ -1,7 +1,7 @@
     
 # Manufacturing Guide – JLCPCB
 
-This guide shows how to manufacture the **One Dollar Computer V1.004 R1** at JLCPCB in just a few minutes.
+This guide shows how to manufacture the **One Dollar Computer v1.004 R2** at JLCPCB in just a few minutes.
 
 The process is simple:
 1. Download the official manufacturing file
@@ -15,7 +15,7 @@ The process is simple:
 
 Download the latest manufacturing package (click to download):
 
-👉 [**Download ZIP – Official JLCPCB Package**](https://github.com/OneDollarComputer/web/raw/main/download/OneDollarComputer.com.ODC.1.004_r1_jlcpcb.zip)
+👉 [**Download ZIP – Official JLCPCB Package**](https://github.com/OneDollarComputer/web/raw/main/download/OneDollarComputer.com.ODC.1.004_r2_jlcpcb.zip)
 
 📁 [All files in `/download`](https://github.com/OneDollarComputer/web/tree/main/download)
 
@@ -24,9 +24,9 @@ After downloading:
 • Extract the ZIP file  
 • You will see:
 
-- `OneDollarComputer_V1.004_R1_JLCPCB_BOM.xlsx`
-- `OneDollarComputer_V1.004_R1_JLCPCB_CPL.xlsx`
-- `OneDollarComputer.com.ODC.1.004_r1_jlcpcb.zip` (this is the file you should upload directly to the JLCPCB website – it already contains all the necessary Gerber files)
+- `OneDollarComputer_V1.004_R2_JLCPCB_BOM.xlsx`
+- `OneDollarComputer_V1.004_R2_JLCPCB_CPL.xlsx`
+- `OneDollarComputer.com.ODC.1.004_r2_jlcpcb.zip` (this is the file you should upload directly to the JLCPCB website – it already contains all the necessary Gerber files)
 
 You only need the extracted files. Do not modify them.
 
@@ -67,8 +67,8 @@ After Gerber upload:
 
 Upload:
 
-• `OneDollarComputer_V1.004_R1_JLCPCB_BOM.xlsx`  
-• `OneDollarComputer_V1.004_R1_JLCPCB_CPL.xlsx`
+• `OneDollarComputer_V1.004_R2_JLCPCB_BOM.xlsx`  
+• `OneDollarComputer_V1.004_R2_JLCPCB_CPL.xlsx`
 
 JLCPCB will automatically match components.
 
@@ -140,7 +140,7 @@ If you prefer to:
 
 You can download the full LCSC component list here (click to download):
 
-👉 [**Download LCSC BOM (XLSX)**](https://github.com/OneDollarComputer/web/raw/main/download/OneDollarComputer_V1.004_R1_LCSC_BOM.xlsx)
+👉 [**Download LCSC BOM (XLSX)**](https://github.com/OneDollarComputer/web/raw/main/download/OneDollarComputer_V1.004_R2_LCSC_BOM.xlsx)
 
 The PCB itself is very low cost.
 
@@ -177,6 +177,6 @@ Let’s awaken talent around the world.
 
 ## Version
 
-Board: One Dollar Computer V1.004 R1  
+Board: One Dollar Computer v1.004 R2  
 Designed in Austin, Texas  
 Latest version always available at: [onedollarcomputer.com](https://onedollarcomputer.com)

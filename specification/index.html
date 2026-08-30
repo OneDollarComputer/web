@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specification — One Dollar Computer v1.004 R2</title>
+  <meta name="description" content="Platform specification: RISC-V RV32EC, board pins 0–19, Simple Rust (odc). One Dollar Computer v1.004 R2." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://onedollarcomputer.com/specification/" />
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <link rel="stylesheet" href="/js/site-nav.css" />
+  <script defer src="/js/analytics.js"></script>
+  <script defer src="/js/share.js"></script>
+  <script defer src="/js/site-nav.js"></script>
+  <style>
+    :root { --bg:#07090F; --text:#E8EEF8; --sub:#A9B4C7; --accent:#48E1A7; --line:#1D2843; --code:#0D1220; }
+    body { margin:0; min-height:100vh; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.55; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    main { max-width:44rem; margin:0 auto; padding:2.5rem 1.25rem 4rem; }
+    h1 { margin:0 0 .75rem; font-size:clamp(1.75rem,4vw,2.25rem); line-height:1.2; }
+    h2 { margin:2.25rem 0 .75rem; font-size:1.15rem; color:var(--accent); }
+    p, li { color:var(--sub); }
+    strong { color:var(--text); }
+    ul { padding-left:1.2rem; }
+    code { color:var(--text); font-size:.92em; }
+    pre { background:var(--code); border:1px solid var(--line); border-radius:6px; padding:1rem 1.1rem; overflow-x:auto; font-size:.85rem; line-height:1.45; }
+    pre code { color:var(--sub); }
+    .meta { font-size:.9rem; color:var(--sub); margin-top:.5rem; }
+    table { width:100%; border-collapse:collapse; font-size:.92rem; margin:1rem 0; }
+    th, td { text-align:left; padding:.45rem .6rem; border-bottom:1px solid var(--line); color:var(--sub); }
+    th { color:var(--text); font-weight:600; }
+    .pinout-figure { margin:1.25rem 0 1.5rem; border:1px solid var(--line); border-radius:8px; background:#fff; overflow:hidden; }
+    .pinout-figure img { display:block; width:100%; height:auto; }
+    .pinout-figure figcaption { padding:.55rem .85rem; font-size:.85rem; color:var(--sub); border-top:1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header id="site-nav" class="site-nav">
+    <div class="site-nav__bar">
+      <a class="site-nav__brand" href="/" aria-label="One Dollar Computer home">
+        <img src="/odc_logo_white.svg" width="36" height="36" alt="" decoding="async" />
+        <span class="site-nav__brand-text">
+          <span class="site-nav__brand-full">One Dollar Computer</span>
+          <span class="site-nav__brand-short" aria-hidden="true">ODC</span>
+        </span>
+      </a>
+      <div class="site-nav__actions">
+        <nav class="site-nav__links site-nav__links--desktop" aria-label="Primary">
+          <a class="site-nav__link" href="/docs/">Docs</a>
+          <a class="site-nav__link" href="/brand/">Brand</a>
+          <a class="site-nav__link" href="/about/">About</a>
+          <button type="button" class="site-nav__link" data-odc-share>Share</button>
+          <a class="site-nav__link" href="/">Home</a>
+        </nav>
+        <a class="preorder-btn--nav" href="https://shop.claudioolmedo.com/preorder" aria-label="Pre-Order $1">Pre-Order <span class="preorder-btn__price">$1</span></a>
+        <button type="button" class="site-nav__menu-btn" aria-expanded="false" aria-controls="site-nav-drawer" aria-label="Menu">
+          <span class="site-nav__menu-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+    <div id="site-nav-drawer" class="site-nav__drawer" hidden>
+      <nav class="site-nav__drawer-inner" aria-label="Menu">
+        <a class="site-nav__link" href="/docs/">Docs</a>
+        <a class="site-nav__link" href="/brand/">Brand</a>
+        <a class="site-nav__link" href="/about/">About</a>
+        <button type="button" class="site-nav__link" data-odc-share>Share</button>
+        <a class="site-nav__link" href="/">Home</a>
+      </nav>
+    </div>
+  </header>
+  <div id="nav-spacer" aria-hidden="true"></div>
+
+  <main>
+    <h1>Specification</h1>
+    <p><strong>One Dollar Computer v1.004 R2</strong> — open educational <strong>RISC-V</strong> computer.
+      Model <strong>1.004</strong> is fixed; <strong>R2</strong> is the current board revision.</p>
+
+    <h2>Platform</h2>
+    <p>The product is a <strong>RISC-V</strong> platform with a stable logical I/O map — not a specific demo board tied to one MCU package name.</p>
+    <ul>
+      <li><strong>User layer:</strong> board pins <strong>0–19</strong> (PCB silkscreen), Simple Rust (<code>odc</code>)</li>
+      <li><strong>Toolchain layer:</strong> editor wrap, compile, WebHID flash (automatic)</li>
+      <li><strong>Chip layer:</strong> private — never exposed in beginner firmware</li>
+    </ul>
+
+    <h2 id="processing-r2">Processing (R2)</h2>
+    <p>Revision <strong>R2</strong> uses a <strong>32-bit RISC-V</strong> processor (<strong>RV32EC</strong>).</p>
+    <table>
+      <thead><tr><th>Spec</th><th>R2</th></tr></thead>
+      <tbody>
+        <tr><td>ISA</td><td><strong>RV32EC</strong> (32-bit RISC-V)</td></tr>
+        <tr><td>System clock</td><td>Up to <strong>48&nbsp;MHz</strong></td></tr>
+        <tr><td>Program memory</td><td><strong>16&nbsp;KB</strong> flash (user firmware)</td></tr>
+        <tr><td>RAM</td><td><strong>2&nbsp;KB</strong> SRAM</td></tr>
+        <tr><td>Analog input</td><td><strong>10-bit</strong> ADC — board pins <strong>8</strong> and <strong>9</strong></td></tr>
+        <tr><td>Logic level</td><td><strong>3.3&nbsp;V</strong> I/O; <strong>5&nbsp;V</strong> available on pin <strong>18</strong> (USB / VBUS)</td></tr>
+      </tbody>
+    </table>
+    <p>Simple Rust programs are single-threaded: one <code>main()</code> loop, no OS, no heap required.
+      Typical beginner sketches use a fraction of the 16&nbsp;KB flash and 2&nbsp;KB RAM.</p>
+    <p>Future revisions may ship different silicon while keeping the same <strong>platform contract</strong> — board pins <strong>0–19</strong>, Simple Rust, WebHID flash.
+      The numbers above describe the current published board only.</p>
+
+    <h2>Hardware</h2>
+    <p>Firmware, the editor, and assistants use <strong>board pin numbers only</strong>.</p>
+    <table>
+      <thead><tr><th>Pin</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td>0–9, 12, 14–15</td><td>GPIO (8–9 analog-capable on R2)</td></tr>
+        <tr><td>10</td><td>3.3 V power</td></tr>
+        <tr><td>11, 17</td><td>Ground</td></tr>
+        <tr><td>12</td><td>GPIO — also SWIO (using as GPIO disables SWD until reboot)</td></tr>
+        <tr><td>13</td><td>Button (<code>BUTTON</code>)</td></tr>
+        <tr><td>16</td><td>Not connected</td></tr>
+        <tr><td>18</td><td>+5 V / VBUS</td></tr>
+        <tr><td>19</td><td>Onboard LED (<code>LED</code>)</td></tr>
+      </tbody>
+    </table>
+    <figure class="pinout-figure">
+      <img src="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg" width="840" height="594"
+        alt="One Dollar Computer v1.004 R2 pinout — board pins 0–19" loading="lazy" decoding="async" />
+      <figcaption>v1.004 R2 pinout —
+        <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg">SVG</a>
+        · <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.pdf">PDF</a>
+      </figcaption>
+    </figure>
+    <ul>
+      <li><a href="/docs/board.yaml"><code>board.yaml</code></a> — canonical pin map</li>
+      <li>ODC Port — RJ45 cable (see pinout)</li>
+    </ul>
+
+    <h2>Software</h2>
+    <p><strong>Simple Rust</strong> — beginner firmware uses <code>use odc::*;</code> and <code>fn main()</code> only.</p>
+<pre><code>use odc::*;
+
+fn main() {
+    pin_output(LED);
+    loop {
+        pin_set(LED);
+        delay(200);
+        pin_clear(LED);
+        delay(200);
+    }
+}</code></pre>
+    <p>API: <code>pin_output</code>, <code>pin_input</code>, <code>pin_set</code>, <code>pin_clear</code>, <code>pin_read</code>, <code>delay</code>, <code>led_on</code>, <code>led_off</code>, <code>read_button</code>.
+      Constants: <code>LED</code> (19), <code>BUTTON</code> (13).</p>
+    <ul>
+      <li><a href="/editor/AI_DOCS.txt">Editor / AI protocol</a></li>
+    </ul>
+
+    <h2>Flash</h2>
+    <p>Browser editor compiles firmware and flashes over <strong>USB WebHID</strong>.</p>
+
+    <h2>Revision R2</h2>
+    <p>Current published board revision — see <a href="#processing-r2">Processing (R2)</a> for compute specs.</p>
+
+    <h2>Machine-readable</h2>
+    <ul>
+      <li><a href="/specification/v1.004.yaml"><code>v1.004.yaml</code></a></li>
+      <li><a href="/seo/entity.json"><code>entity.json</code></a></li>
+    </ul>
+  </main>
+</body>
+</html>

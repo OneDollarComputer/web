@@ -1,0 +1,68 @@
+# One Dollar Computer — platform specification (v1.004 R2)
+# Public API: board pins 0..=19 and Simple Rust (odc). MCU pads are not public.
+
+product: One Dollar Computer
+model: "1.004"
+revision: R2
+status: current
+architecture: RISC-V
+isa: RV32EC
+programming: Simple Rust
+
+processing:
+  revision: R2
+  isa: RV32EC
+  clock_mhz_max: 48
+  flash_kb: 16
+  sram_kb: 2
+  adc_bits: 10
+  adc_board_pins: [8, 9]
+  logic_v: 3.3
+  supply_v: 5
+
+canonical: https://onedollarcomputer.com/specification/
+short_url: https://odc.rs/specification
+
+connector:
+  name: ODC Port
+  physical: RJ45
+
+board_map: /docs/board.yaml
+pinout_svg: /docs/OneDollarComputer.com.v1.004.r2.pinout.svg
+pinout_pdf: /docs/OneDollarComputer.com.v1.004.r2.pinout.pdf
+
+aliases:
+  LED: 19
+  BUTTON: 13
+  PIN_3V3: 10
+  PIN_GND: 11
+  PIN_NC: 16
+  PIN_GND2: 17
+  PIN_5V: 18
+
+gpio_pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 14, 15, 19]
+
+software:
+  language: rust
+  entry: |
+    use odc::*;
+    fn main() { }
+  api:
+    - pin_output
+    - pin_input
+    - pin_set
+    - pin_clear
+    - pin_high
+    - pin_low
+    - pin_read
+    - delay
+    - led_on
+    - led_off
+    - read_button
+  editor_protocol: /editor/AI_DOCS.txt
+
+flash:
+  transport: WebHID
+  vendor_id: "0x1209"
+  product_id_range: "0xB000-0xB00F"
+  bootloader_entry: physical ODC button (board pin 13)

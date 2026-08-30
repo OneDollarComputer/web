@@ -1,7 +1,7 @@
 {
   "$schema": "./entity.schema.json",
   "version": 1,
-  "updated": "2026-08-24",
+  "updated": "2026-08-30",
   "canonical_url": "https://onedollarcomputer.com/",
   "preferred_name": "One Dollar Computer",
   "alternate_names": [
@@ -23,6 +23,7 @@
   ],
   "product": {
     "name": "One Dollar Computer V1.004",
+    "revision": "R2",
     "price_usd": 1.0,
     "architecture": "RISC-V",
     "programming": ["WebHID", "browser editor", "simple Rust (odc)", "firmware flash"],
@@ -43,6 +44,8 @@
     "about": "https://onedollarcomputer.com/about/",
     "brand": "https://onedollarcomputer.com/brand/",
     "project": "https://onedollarcomputer.com/project/",
+    "specification": "https://onedollarcomputer.com/specification/",
+    "specification_short": "https://odc.rs/specification",
     "docs_ai": "https://onedollarcomputer.com/llms.txt",
     "agents": "https://onedollarcomputer.com/AGENTS.md",
     "github_web": "https://github.com/OneDollarComputer/web",

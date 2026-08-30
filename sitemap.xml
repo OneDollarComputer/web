@@ -44,7 +44,7 @@
   </url>
   <url>
     <loc>https://onedollarcomputer.com/docs/</loc>
-    <lastmod>2026-08-24</lastmod>
+    <lastmod>2026-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -53,6 +53,18 @@
     <lastmod>2026-08-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://onedollarcomputer.com/specification/</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://onedollarcomputer.com/specification/v1.004.yaml</loc>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://onedollarcomputer.com/docs/pinout.html</loc>

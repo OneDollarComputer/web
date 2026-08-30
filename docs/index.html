@@ -11,6 +11,8 @@
   <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
   <script defer src="/js/analytics.js"></script>
   <script defer src="/js/share.js"></script>
+  <link rel="stylesheet" href="/js/site-nav.css" />
+  <script defer src="/js/site-nav.js"></script>
   <style>
     :root {
       --bg: #07090F;
@@ -31,40 +33,6 @@
 
     a { color: var(--accent); text-decoration: none }
     a:hover { text-decoration: underline }
-
-    .top {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: center;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--line)
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-      color: var(--text);
-      font-weight: 600
-    }
-
-    .top nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-left: auto;
-      font-size: .95rem
-    }
-
-    .top button[data-odc-share] {
-      background: transparent;
-      border: 0;
-      padding: 0;
-      color: var(--accent);
-      font: inherit;
-      cursor: pointer
-    }
 
     main {
       max-width: 44rem;
@@ -88,21 +56,46 @@
     strong { color: var(--text) }
     ul { padding-left: 1.2rem }
     code { color: var(--text) }
+    .pinout-figure { margin: 1.25rem 0 1.5rem; border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden }
+    .pinout-figure img { display: block; width: 100%; height: auto }
+    .pinout-figure figcaption { padding: .55rem .85rem; font-size: .85rem; color: var(--sub); border-top: 1px solid var(--line) }
   </style>
 </head>
 <body>
-  <header class="top">
-    <a class="brand" href="/">
-      <img src="/odc_logo_white.svg" width="28" height="28" alt="" />
-      One Dollar Computer
-    </a>
-    <nav aria-label="Docs">
-      <a href="/brand/">Brand</a>
-      <a href="/about/">About</a>
-      <button type="button" data-odc-share>Share</button>
-      <a href="/">Home</a>
-    </nav>
+  <header id="site-nav" class="site-nav">
+    <div class="site-nav__bar">
+      <a class="site-nav__brand" href="/" aria-label="One Dollar Computer home">
+        <img src="/odc_logo_white.svg" width="36" height="36" alt="" decoding="async" />
+        <span class="site-nav__brand-text">
+          <span class="site-nav__brand-full">One Dollar Computer</span>
+          <span class="site-nav__brand-short" aria-hidden="true">ODC</span>
+        </span>
+      </a>
+      <div class="site-nav__actions">
+        <nav class="site-nav__links site-nav__links--desktop" aria-label="Primary">
+          <a class="site-nav__link" href="/specification/">Specification</a>
+          <a class="site-nav__link" href="/brand/">Brand</a>
+          <a class="site-nav__link" href="/about/">About</a>
+          <button type="button" class="site-nav__link" data-odc-share>Share</button>
+          <a class="site-nav__link" href="/">Home</a>
+        </nav>
+        <a class="preorder-btn--nav" href="https://shop.claudioolmedo.com/preorder" aria-label="Pre-Order $1">Pre-Order <span class="preorder-btn__price">$1</span></a>
+        <button type="button" class="site-nav__menu-btn" aria-expanded="false" aria-controls="site-nav-drawer" aria-label="Menu">
+          <span class="site-nav__menu-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+    <div id="site-nav-drawer" class="site-nav__drawer" hidden>
+      <nav class="site-nav__drawer-inner" aria-label="Menu">
+        <a class="site-nav__link" href="/specification/">Specification</a>
+        <a class="site-nav__link" href="/brand/">Brand</a>
+        <a class="site-nav__link" href="/about/">About</a>
+        <button type="button" class="site-nav__link" data-odc-share>Share</button>
+        <a class="site-nav__link" href="/">Home</a>
+      </nav>
+    </div>
   </header>
+  <div id="nav-spacer" aria-hidden="true"></div>
 
   <main>
     <h1>Documentation</h1>
@@ -110,13 +103,24 @@
       (<a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>).
       Firmware uses board pins <strong>0–19</strong> only — never MCU pad names.</p>
 
+    <h2>Specification</h2>
+    <p>Platform spec for <strong>v1.004 R2</strong> (RISC-V, pins 0–19, Simple Rust):
+      <a href="/specification/">Specification</a>
+      · <a href="https://odc.rs/specification">odc.rs/specification</a>
+      · <a href="/specification/v1.004.yaml"><code>v1.004.yaml</code></a>.</p>
+
     <h2>Pinout</h2>
     <p>Canonical board map:
       <a href="/docs/board.yaml"><code>board.yaml</code></a>
-      (v1.004 R2). LED = <strong>19</strong>, button = <strong>13</strong>.
-      Diagram:
-      <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg">SVG</a>
-      · <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.pdf">PDF</a>.</p>
+      (v1.004 R2). LED = <strong>19</strong>, button = <strong>13</strong>.</p>
+    <figure class="pinout-figure">
+      <img src="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg" width="840" height="594"
+        alt="One Dollar Computer v1.004 R2 pinout — board pins 0–19" loading="lazy" decoding="async" />
+      <figcaption>v1.004 R2 pinout —
+        <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg">SVG</a>
+        · <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.pdf">PDF</a>
+      </figcaption>
+    </figure>
 
     <h2>Also useful</h2>
     <ul>
