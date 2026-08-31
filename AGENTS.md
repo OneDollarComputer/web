@@ -42,6 +42,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | `llms.txt` | AI discovery brief |
 | `robots.txt` / `sitemap.xml` | Crawlers |
 | `editor/` | Firmware editor (not linked from homepage unless asked) |
+| `emulator/r2/` | Virtual board — RV32EC WASM (`/emulator/r2/`, `noindex`; embed `?embed=1`) |
 | `curriculum/` | Teacher lessons (login for body; co-edit + suggest; agent MCP under `curriculum/mcp/`) |
 | `docs/` | Pinout, `board.yaml` |
 | `specification/` | Platform spec — RISC-V, pins 0–19, Simple Rust (`odc.rs/specification`) |
@@ -71,6 +72,7 @@ python3 serve.py
 # http://127.0.0.1:8080/project/         Google sign-in + username
 # http://127.0.0.1:8080/cloud/           public user page (after you claim `cloud`)
 # http://127.0.0.1:8080/editor/?projectID=demo  Rust editor (local Cargo)
+# http://127.0.0.1:8080/emulator/r2/       virtual board (WASM, noindex)
 ```
 
 ## Analytics

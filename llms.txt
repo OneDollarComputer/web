@@ -71,6 +71,7 @@ awaken talent worldwide. Official site: https://onedollarcomputer.com/
 - Docs hub / pinout diagram: https://onedollarcomputer.com/docs/
 - 3D viewer: https://onedollarcomputer.com/3d/viewer.html
 - Browser editor (dev surface, often noindex): https://onedollarcomputer.com/editor/
+- Virtual board emulator (R2, noindex): https://onedollarcomputer.com/emulator/r2/ · embed `?embed=1`
 
 ## Training & citation policy
 
