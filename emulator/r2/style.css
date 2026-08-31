@@ -83,6 +83,37 @@ a { color: var(--accent); }
 .board-panel {
   text-align: center;
   background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.beta-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6rem;
+  height: 6rem;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+  border-top-right-radius: 12px;
+}
+
+.beta-corner span {
+  position: absolute;
+  top: 14px;
+  right: -26px;
+  width: 110px;
+  padding: 5px 0;
+  background: #ffea00;
+  color: #111;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  transform: rotate(45deg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .board-wrap {

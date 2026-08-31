@@ -7,7 +7,7 @@
   <meta name="description" content="Virtual One Dollar Computer (model 1.004 R2). Run RV32EC firmware in the browser." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
   <style>
     /* [hidden] must win over .auth-gate { display: grid } */
     #auth-gate[hidden],
@@ -40,6 +40,7 @@
 
   <main class="layout">
     <section class="panel board-panel">
+      <span class="beta-corner" aria-hidden="true"><span>Beta</span></span>
       <div class="board-wrap" id="board-wrap">
         <img
           id="board-art"
@@ -83,7 +84,7 @@
       <p class="fine">
         Spec: <a href="/specification/">v1.004 R2</a> ·
         Pins: <a href="/docs/board.yaml">board.yaml</a> ·
-        Compile Rust in the <a href="/editor/?projectID=demo">editor</a>, then <strong>Simulate</strong> — or load a <code>.bin</code> file.
+        Compile Rust in the <a href="/editor/?projectID=demo">editor</a>, then open <strong>Lab → Simulate</strong> — or load a <code>.bin</code> file.
       </p>
     </section>
   </main>

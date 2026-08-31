@@ -242,6 +242,47 @@
       color: #7ee2b8;
     }
 
+    .user-menu-lab {
+      border-top: 1px solid #30363d;
+      padding-top: 0.35rem;
+      margin-top: 0.35rem;
+    }
+
+    .user-menu-lab-label {
+      margin: 0;
+      padding: 2px 14px 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8b949e;
+    }
+
+    .user-menu-lab a,
+    .user-menu-lab button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: #e6edf3;
+      padding: 8px 14px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      text-decoration: none;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+    }
+
+    .user-menu-lab a:hover,
+    .user-menu-lab button:hover {
+      background: #21262d;
+    }
+
+    .user-menu-lab button.new-help {
+      color: #c4a7e7;
+    }
+
     .user-menu-drop button.user-signout {
       color: #ffa198;
     }
@@ -272,24 +313,6 @@
 
     button.secondary:hover {
       background: #40464d;
-    }
-
-    a.simulate-link {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.45rem 0.75rem;
-      border-radius: 6px;
-      border: 1px solid #3d4f6f;
-      background: #1a2332;
-      color: #e8eef8;
-      text-decoration: none;
-      font: inherit;
-      font-size: 0.9rem;
-    }
-
-    a.simulate-link:hover {
-      background: #40464d;
-      text-decoration: none;
     }
 
     button.compile {
@@ -841,7 +864,6 @@
     <div class="controls">
       <span id="status" class="status-empty"></span>
       <button id="btnUpload" class="upload" disabled title="Upload: compile and flash">⬆️ Upload</button>
-      <a id="btnSimulate" class="secondary simulate-link" href="/emulator/r2/" target="_blank" rel="noopener" title="Open virtual board (load .bin after compile)">◇ Simulate</a>
       <span id="aiSessionBadge" class="ai-session-badge"></span>
       <button type="button" class="secondary" id="btnShare" data-odc-share>Share</button>
       <div class="user-menu" id="userMenu">
@@ -853,6 +875,11 @@
         <div class="user-menu-drop" id="userMenuDrop" hidden>
           <a id="userMenuPage" href="/project/">Your page</a>
           <div id="userMenuProjects" class="user-menu-projects"></div>
+          <div id="userMenuLab" class="user-menu-lab" hidden>
+            <p class="user-menu-lab-label">Lab</p>
+            <button type="button" id="btnLabHelp">Help</button>
+            <a id="btnSimulate" href="/emulator/r2/" target="_blank" rel="noopener">Simulate</a>
+          </div>
           <button type="button" class="user-signout" id="btnEditorSignOut">Sign out</button>
         </div>
       </div>
@@ -894,10 +921,7 @@
   </div>
 
   
-  <button id="btnAIHelp" class="ai-help-btn">
-    <span class="ai-beta-corner" aria-hidden="true"><span>Beta</span></span>
-    <span>🤖</span> Help
-  </button>
+  <button id="btnAIHelp" class="ai-help-btn" hidden aria-hidden="true" tabindex="-1">Help</button>
 
   
   <div id="aiModal" class="ai-modal-overlay">
@@ -1292,6 +1316,7 @@
       const fallback = document.getElementById('userMenuFallback');
       const page = document.getElementById('userMenuPage');
       const list = document.getElementById('userMenuProjects');
+      const lab = document.getElementById('userMenuLab');
       if (!signIn || !menuBtn || !drop) return;
 
       if (!user) {
@@ -1302,6 +1327,7 @@
         signIn.textContent = 'Sign in';
         if (page) page.href = '/project/';
         if (list) list.innerHTML = '';
+        if (lab) lab.hidden = true;
         return;
       }
 
@@ -1322,11 +1348,13 @@
         signIn.href = '/project/';
         signIn.textContent = 'Sign in';
         if (list) list.innerHTML = '';
+        if (lab) lab.hidden = true;
         return;
       }
 
       signIn.hidden = true;
       menuBtn.hidden = false;
+      if (lab) lab.hidden = false;
       menuBtn.setAttribute('aria-label', `/${username}`);
       if (user.photoURL && photo) {
         photo.src = user.photoURL;
@@ -1440,16 +1468,16 @@
     let editor = null;
     (function wireAiHelp() {
       const aiModal = document.getElementById('aiModal');
-      const btnAIHelp = document.getElementById('btnAIHelp');
+      const btnLabHelp = document.getElementById('btnLabHelp');
       const btnCloseAI = document.getElementById('btnCloseAI');
       const qrcodeContainer = document.getElementById('qrcode-container');
       const linkChatGPT = document.getElementById('linkChatGPT');
       const btnCopyPrompt = document.getElementById('btnCopyPrompt');
-      if (!btnAIHelp || !aiModal) return;
+      if (!btnLabHelp || !aiModal) return;
 
       const dbUrl = (firebaseConfig && firebaseConfig.databaseURL) || DEFAULT_FIREBASE.databaseURL;
 
-      btnAIHelp.addEventListener('click', () => {
+      function openAIHelp() {
         const currentSource = editor ? editor.getValue() : '';
         const aiToken = Math.random().toString(36).substring(2, 8).toUpperCase();
         const projectID = new URL(window.location.href).searchParams.get('projectID') || window.PROJECT_CODE || '';
@@ -1551,6 +1579,13 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
         }
 
         aiModal.style.display = 'flex';
+        btnLabHelp.classList.remove('new-help');
+      }
+
+      btnLabHelp.addEventListener('click', () => {
+        const drop = document.getElementById('userMenuDrop');
+        if (drop) drop.hidden = true;
+        openAIHelp();
       });
 
       btnCloseAI?.addEventListener('click', () => { aiModal.style.display = 'none'; });
@@ -3280,7 +3315,7 @@ fn main() {
         setUploadEnabled(true);
 
         
-        const helpBtn = document.getElementById('btnAIHelp');
+        const helpBtn = document.getElementById('btnLabHelp');
         if (!initialData || !initialData.aiHelpUsed) {
           helpBtn?.classList.add('new-help');
           console.log('✨ Project is new for AI help');
