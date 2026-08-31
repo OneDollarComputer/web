@@ -1,0 +1,35 @@
+{
+  "image": "board.png",
+  "display_width": 389,
+  "display_height": 642,
+  "image_width": 609,
+  "image_height": 992,
+  "led": {
+    "pin": 19,
+    "x": 112,
+    "y": 282,
+    "w": 15,
+    "h": 5
+  },
+  "button": {
+    "pin": 13,
+    "x": 164,
+    "y": 210,
+    "w": 51,
+    "h": 52
+  },
+  "pixel": {
+    "led": {
+      "x": 175,
+      "y": 436,
+      "w": 24,
+      "h": 8
+    },
+    "button": {
+      "x": 256,
+      "y": 324,
+      "w": 80,
+      "h": 80
+    }
+  }
+}

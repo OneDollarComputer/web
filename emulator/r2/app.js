@@ -3,7 +3,7 @@
  * Core board model: https://github.com/OneDollarComputer/emulator/tree/main/r2
  */
 
-import { ensureEmulatorAccess } from "./auth-gate.js";
+import { ensureEmulatorAccess, isLocalDev } from "./auth-gate.js";
 
 const CYCLES_PER_FRAME = 80_000;
 const DEMO_PATH = "sample.bin";
@@ -102,10 +102,12 @@ function startLoop() {
 
 function wireInput() {
   const press = () => {
+    bootBtn.classList.add("pressed");
     emu?.pressButton();
     syncLed();
   };
   const release = () => {
+    bootBtn.classList.remove("pressed");
     emu?.releaseButton();
     syncLed();
   };
@@ -159,6 +161,16 @@ wireInput();
 
 if (new URLSearchParams(location.search).get("embed") === "1") {
   document.body.classList.add("embed");
+}
+
+if (isLocalDev()) {
+  const bar = document.querySelector(".bar-inner");
+  if (bar) {
+    const tag = document.createElement("span");
+    tag.className = "local-tag";
+    tag.textContent = "Local — no sign-in";
+    bar.appendChild(tag);
+  }
 }
 
 (async () => {

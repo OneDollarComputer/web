@@ -24,8 +24,9 @@ Copies:
 
 - `wasm/odc_emulator_r2_wasm.js` + `.wasm` (wasm-bindgen)
 - `sample.bin` (demo blink firmware)
+- `board.png` + `overlay.json` (from `emulator/r2/assets/`)
 
-Commit the updated `wasm/` and `sample.bin` in **web** when you want the live site to pick up a new core.
+Commit the updated `wasm/`, `sample.bin`, and board assets in **web** when you want the live site to pick up a new core.
 
 ## iframe API
 

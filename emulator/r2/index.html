@@ -7,7 +7,14 @@
   <meta name="description" content="Virtual One Dollar Computer (model 1.004 R2). Run RV32EC firmware in the browser." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=5" />
+  <style>
+    /* [hidden] must win over .auth-gate { display: grid } */
+    #auth-gate[hidden],
+    #emulator-main[hidden] {
+      display: none !important;
+    }
+  </style>
   <script defer src="embed.js"></script>
   <script type="module" src="app.js"></script>
 </head>
@@ -35,14 +42,14 @@
     <section class="panel board-panel">
       <div class="board-wrap" id="board-wrap">
         <img
-          id="pinout"
-          src="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg"
-          alt="One Dollar Computer pinout (pins 0–19)"
-          width="220"
-          height="520"
+          id="board-art"
+          src="board.png"
+          alt="One Dollar Computer board (model 1.004 R2)"
+          width="389"
+          height="642"
         />
         <div id="led" class="led" title="Board pin 19 (LED)" aria-hidden="true"></div>
-        <button type="button" id="boot-btn" class="boot-btn" title="Board pin 13 (BUTTON)">Button</button>
+        <button type="button" id="boot-btn" class="boot-btn" title="Board pin 13 (BUTTON)" aria-label="Board button (pin 13)"></button>
       </div>
       <p class="hint">Click <strong>Button</strong> (pin 13) or hold <kbd>Space</kbd>. Same path as the physical board.</p>
     </section>

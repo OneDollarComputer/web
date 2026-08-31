@@ -25,12 +25,14 @@ export function isLocalDev() {
 }
 
 export function ensureEmulatorAccess() {
-  if (isLocalDev()) {
-    return Promise.resolve();
-  }
-
   const gate = document.getElementById("auth-gate");
   const main = document.getElementById("emulator-main");
+
+  if (isLocalDev()) {
+    if (gate) gate.hidden = true;
+    if (main) main.hidden = false;
+    return Promise.resolve();
+  }
   const btnGoogle = document.getElementById("btnGoogle");
   const gateError = document.getElementById("gateError");
 
