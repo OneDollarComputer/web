@@ -3,6 +3,8 @@
  * Core board model: https://github.com/OneDollarComputer/emulator/tree/main/r2
  */
 
+import { ensureEmulatorAccess } from "./auth-gate.js";
+
 const CYCLES_PER_FRAME = 80_000;
 const DEMO_PATH = "sample.bin";
 
@@ -43,8 +45,10 @@ function syncLed() {
 }
 
 async function loadWasm() {
-  const init = (await import("./wasm/odc_emulator_r2_wasm.js")).default;
-  wasm = await init();
+  if (wasm) return;
+  const mod = await import("./wasm/odc_emulator_r2_wasm.js");
+  await mod.default();
+  wasm = mod;
   emu = new wasm.OdcR2Emulator();
 }
 
@@ -73,7 +77,7 @@ function stopLoop() {
 
 function tick() {
   if (!running || !emu) return;
-  const code = emu.run(CYCLES_PER_FRAME);
+  const code = emu.run(BigInt(CYCLES_PER_FRAME));
   updateMetrics(code);
   syncLed();
 
@@ -128,6 +132,7 @@ function wireInput() {
 
 runDemoBtn.addEventListener("click", async () => {
   try {
+    await ensureEmulatorAccess();
     if (!emu) await loadWasm();
     await loadBin(await fetchDemo());
     startLoop();
@@ -158,6 +163,7 @@ if (new URLSearchParams(location.search).get("embed") === "1") {
 
 (async () => {
   try {
+    await ensureEmulatorAccess();
     await loadWasm();
     setStatus("Ready — run demo or load a .bin", "ok");
   } catch (err) {

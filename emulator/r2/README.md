@@ -10,6 +10,8 @@ The board model is developed in the **emulator** repo; this folder is only hosti
 | Full page | `/emulator/r2/` |
 | Curriculum iframe | `/emulator/r2/?embed=1` |
 
+**Access:** no sign-in on `localhost` / `127.0.0.1`. On **onedollarcomputer.com** the page requires Google sign-in.
+
 ## Rebuild WASM (after changing `emulator/r2`)
 
 From a checkout with **emulator** and **web** as siblings (`~/github/`):

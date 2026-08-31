@@ -557,6 +557,11 @@ def is_user_profile_path(path: str) -> bool:
 
 
 class Handler(SimpleHTTPRequestHandler):
+    extensions_map = {
+        **SimpleHTTPRequestHandler.extensions_map,
+        ".wasm": "application/wasm",
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(SITE_ROOT), **kwargs)
 
