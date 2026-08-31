@@ -243,6 +243,11 @@ button.primary {
   border-color: #1f6b52;
 }
 
+button.compile {
+  background: #1a2f4a;
+  border-color: #2d4a6f;
+}
+
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;

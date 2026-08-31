@@ -11,9 +11,11 @@ import {
 } from "./auth-gate.js";
 
 const CYCLES_PER_FRAME = 80_000;
+const COMPILE_TIMEOUT_MS = 120_000;
 
 const statusEl = document.getElementById("status");
 const ledEl = document.getElementById("led");
+const compileBtn = document.getElementById("compile");
 const runBtn = document.getElementById("run");
 const stopBtn = document.getElementById("stop");
 const fileInput = document.getElementById("bin-file");
@@ -27,6 +29,10 @@ let emu;
 let rafId = 0;
 let running = false;
 let loadedBin = false;
+let compiling = false;
+let authCtx = null;
+let projectID = null;
+let projectMeta = null;
 
 function setStatus(text, kind = "") {
   statusEl.textContent = text;
@@ -35,7 +41,11 @@ function setStatus(text, kind = "") {
 
 function setRunEnabled(on) {
   loadedBin = on;
-  if (!running) runBtn.disabled = !on;
+  if (!running && !compiling) runBtn.disabled = !on;
+}
+
+function setCompileVisible(on) {
+  if (compileBtn) compileBtn.hidden = !on;
 }
 
 function updateMetrics(stopCode) {
@@ -61,50 +71,221 @@ function decodeBase64Binary(b64) {
   return bytes.buffer;
 }
 
-async function fetchProjectBinary(projectID, authCtx) {
-  if (authCtx.local) {
-    const res = await fetch(`/api/projects/${encodeURIComponent(projectID)}`);
-    if (!res.ok) throw new Error(`Project not found (${res.status})`);
-    const data = await res.json();
-    const b64 = data.binary || data.compilationResult?.binary;
-    if (!b64) throw new Error("No compiled binary — compile in the editor first");
-    return decodeBase64Binary(b64);
-  }
+function extractBinary(data) {
+  return data?.binary || data?.compilationResult?.binary || null;
+}
 
+function cleanCodeForHash(code) {
+  return String(code)
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function getCodeHash(code) {
+  const buffer = new TextEncoder().encode(cleanCodeForHash(code));
+  const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function fetchProjectMeta(id, ctx) {
+  if (ctx.local) return null;
   const token = await getIdToken();
   const authQuery = token ? `?auth=${encodeURIComponent(token)}` : "";
   const metaRes = await fetch(
-    `${DATABASE_URL}/projects/${encodeURIComponent(projectID)}.json${authQuery}`,
+    `${DATABASE_URL}/projects/${encodeURIComponent(id)}.json${authQuery}`,
   );
   if (!metaRes.ok) throw new Error(`Project not found (${metaRes.status})`);
   const meta = await metaRes.json();
   if (!meta) throw new Error("Project not found");
+  return meta;
+}
 
-  const uid = authCtx.user?.uid;
-  if (meta.ownerUid !== uid && meta.public !== true) {
+function canAccessProject(meta, ctx) {
+  if (ctx.local) return true;
+  const uid = ctx.user?.uid;
+  return meta.ownerUid === uid || meta.public === true;
+}
+
+function canCompileProject(meta, ctx) {
+  if (ctx.local) return true;
+  return meta && ctx.user?.uid === meta.ownerUid;
+}
+
+async function fetchProjectCode(id, ctx) {
+  if (ctx.local) {
+    const res = await fetch(`/api/projects/${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error(`Project not found (${res.status})`);
+    return res.json();
+  }
+
+  const meta = await fetchProjectMeta(id, ctx);
+  if (!canAccessProject(meta, ctx)) {
     throw new Error("Sign in as the project owner to simulate this firmware");
   }
 
   const codeRes = await fetch(
-    `${DATABASE_URL}/projects/${encodeURIComponent(projectID)}/code.json`,
+    `${DATABASE_URL}/projects/${encodeURIComponent(id)}/code.json`,
   );
   if (!codeRes.ok) throw new Error(`Could not load project (${codeRes.status})`);
-  const code = await codeRes.json();
+  return codeRes.json();
+}
 
-  let b64 = code?.binary;
-  if (!b64 && code?.binaryHash) {
-    const cacheRes = await fetch(`${DATABASE_URL}/cache/${code.binaryHash}.json`);
-    if (cacheRes.ok) {
-      const cache = await cacheRes.json();
-      b64 = cache?.binary;
-    }
+async function fetchBinaryFromCache(binaryHash, code = null) {
+  if (code && code.binary) {
+    return code.binary;
   }
-  if (!b64) b64 = code?.compilationResult?.binary;
-  if (!b64) throw new Error("No compiled binary — compile in the editor first");
+  if (!binaryHash) return null;
+  const cacheRes = await fetch(`${DATABASE_URL}/cache/${binaryHash}.json`);
+  if (!cacheRes.ok) return null;
+  const cache = await cacheRes.json();
+  return cache?.binary || null;
+}
+
+async function fetchProjectBinary(id, ctx) {
+  const code = await fetchProjectCode(id, ctx);
+
+  let b64 = extractBinary(code);
+  if (!b64 && code?.binaryHash) {
+    b64 = await fetchBinaryFromCache(code.binaryHash, code);
+  }
+  if (!b64) throw new Error("No compiled binary — Compile to build a .bin");
+  if (code.compilationStatus === "error") {
+    throw new Error(code.compilationError || "Last compile failed — Compile again");
+  }
   if (code.compilationStatus && code.compilationStatus !== "success") {
-    throw new Error("Last compile failed — fix and compile in the editor");
+    throw new Error("Compilation in progress — wait or Compile again");
   }
   return decodeBase64Binary(b64);
+}
+
+async function waitForCloudCompile(id, expectedHash, startedAt) {
+  const deadline = Date.now() + COMPILE_TIMEOUT_MS;
+  let sawPending = false;
+
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const res = await fetch(
+      `${DATABASE_URL}/projects/${encodeURIComponent(id)}/code.json`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+
+    if (data.compilationStatus === "pending") {
+      sawPending = true;
+      setStatus("Compiling…");
+      continue;
+    }
+    if (data.compilationStatus === "error") {
+      throw new Error(data.compilationError || "Compile failed");
+    }
+    if (data.compilationStatus === "success" && data.binaryHash === expectedHash) {
+      const updated = data.compilationUpdatedAt || data.binarySavedAt || "";
+      if (sawPending || !updated || updated >= startedAt) {
+        return data;
+      }
+    }
+  }
+  throw new Error("Compile timed out — try again");
+}
+
+async function requestCompile(id, ctx, content) {
+  if (!content.trim()) throw new Error("No source code to compile");
+
+  if (ctx.local) {
+    const res = await fetch("/api/compile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectID: id, content, language: "rust" }),
+    });
+    const result = await res.json();
+    if (!res.ok || result.compilationStatus === "error" || result.ok === false) {
+      throw new Error(result.compilationError || result.error || "Compile failed");
+    }
+    return result;
+  }
+
+  if (!canCompileProject(projectMeta, ctx)) {
+    throw new Error("Only the project owner can compile");
+  }
+
+  const binaryHash = await getCodeHash(content);
+  const now = new Date().toISOString();
+  const data = {
+    content,
+    binaryHash,
+    language: "rust",
+    lastModified: now,
+    timestamp: Date.now(),
+    size: content.length,
+    compilationStatus: "pending",
+    compilationRequested: true,
+    compilationRequestedAt: now,
+  };
+
+  const putRes = await fetch(
+    `${DATABASE_URL}/projects/${encodeURIComponent(id)}/code.json`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+  if (!putRes.ok) throw new Error(`Could not request compile (${putRes.status})`);
+
+  try {
+    await fetch(
+      `${DATABASE_URL}/compileQueue/${encodeURIComponent(id)}.json`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestedAt: now, binaryHash }),
+      },
+    );
+  } catch {
+    /* queue write is best-effort */
+  }
+
+  return waitForCloudCompile(id, binaryHash, now);
+}
+
+async function compileAndLoad() {
+  if (!projectID || !authCtx || compiling) return;
+
+  compiling = true;
+  compileBtn.disabled = true;
+  runBtn.disabled = true;
+  stopLoop();
+
+  try {
+    const code = await fetchProjectCode(projectID, authCtx);
+    const content = code.content || code.code || "";
+    const hash = await getCodeHash(content);
+
+    if (code.compilationStatus === "success" && code.binaryHash === hash) {
+      const b64 = extractBinary(code) || await fetchBinaryFromCache(code.binaryHash, code);
+      if (b64) {
+        await loadBin(decodeBase64Binary(b64));
+        setStatus(`Loaded ${atob(b64).length} bytes`, "ok");
+        return;
+      }
+    }
+
+    setStatus("Compiling…");
+    await requestCompile(projectID, authCtx, content);
+    await loadBin(await fetchProjectBinary(projectID, authCtx));
+    setStatus(`Compiled — ${loadedBin ? "ready to run" : "loaded"}`, "ok");
+  } catch (err) {
+    setStatus(String(err.message || err), "error");
+  } finally {
+    compiling = false;
+    if (compileBtn) compileBtn.disabled = false;
+    if (!running) runBtn.disabled = !loadedBin;
+  }
 }
 
 async function loadWasm() {
@@ -129,7 +310,7 @@ function stopLoop() {
   running = false;
   if (rafId) cancelAnimationFrame(rafId);
   rafId = 0;
-  runBtn.disabled = !loadedBin;
+  if (!compiling) runBtn.disabled = !loadedBin;
   stopBtn.disabled = true;
 }
 
@@ -190,6 +371,10 @@ function wireInput() {
   });
 }
 
+compileBtn?.addEventListener("click", () => {
+  compileAndLoad().catch((err) => setStatus(String(err.message || err), "error"));
+});
+
 runBtn.addEventListener("click", () => {
   try {
     startLoop();
@@ -230,13 +415,30 @@ if (isLocalDev()) {
 
 (async () => {
   try {
-    const authCtx = await ensureEmulatorAccess();
+    authCtx = await ensureEmulatorAccess();
     await loadWasm();
 
-    const projectID = new URLSearchParams(location.search).get("projectID");
+    projectID = new URLSearchParams(location.search).get("projectID");
     if (projectID) {
+      if (!authCtx.local) {
+        projectMeta = await fetchProjectMeta(projectID, authCtx);
+      }
+      setCompileVisible(canCompileProject(projectMeta, authCtx));
+
       setStatus(`Loading ${projectID}…`);
-      await loadBin(await fetchProjectBinary(projectID, authCtx));
+      try {
+        await loadBin(await fetchProjectBinary(projectID, authCtx));
+      } catch (err) {
+        const msg = String(err.message || err);
+        if (msg.includes("No compiled binary") || msg.includes("Compile")) {
+          setStatus(canCompileProject(projectMeta, authCtx)
+            ? "No binary yet — Compile, then Run"
+            : msg,
+            canCompileProject(projectMeta, authCtx) ? "" : "error");
+        } else {
+          setStatus(msg, "error");
+        }
+      }
       return;
     }
 
