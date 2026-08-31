@@ -7,7 +7,7 @@
   <meta name="description" content="Virtual One Dollar Computer (model 1.004 R2). Run RV32EC firmware in the browser." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
   <style>
     /* [hidden] must win over .auth-gate { display: grid } */
     #auth-gate[hidden],
@@ -71,11 +71,6 @@
         <button type="button" id="stop" disabled>Stop</button>
       </div>
 
-      <label class="file-label">
-        <span>Load firmware (.bin)</span>
-        <input type="file" id="bin-file" accept=".bin,application/octet-stream" />
-      </label>
-
       <dl class="metrics">
         <div><dt>Cycles</dt><dd id="metric-cycles">—</dd></div>
         <div><dt>PC</dt><dd id="metric-pc">—</dd></div>
@@ -85,7 +80,7 @@
       <p class="fine">
         Spec: <a href="/specification/">v1.004 R2</a> ·
         Pins: <a href="/docs/board.yaml">board.yaml</a> ·
-        With a <code>?projectID=</code> link, use <strong>Compile</strong> then <strong>Run</strong> — or load a <code>.bin</code> file.
+        With a <code>?projectID=</code> link, use <strong>Compile</strong> then <strong>Run</strong>.
       </p>
     </section>
   </main>

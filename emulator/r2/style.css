@@ -228,7 +228,7 @@ h1 {
   margin-bottom: 1rem;
 }
 
-button, .file-label span {
+button {
   font: inherit;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -251,22 +251,6 @@ button.compile {
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.file-label {
-  display: block;
-  margin-bottom: 1rem;
-}
-
-.file-label span {
-  display: inline-block;
-}
-
-.file-label input {
-  display: block;
-  margin-top: 0.5rem;
-  width: 100%;
-  color: var(--muted);
 }
 
 .metrics {
@@ -307,8 +291,7 @@ kbd {
 body.embed .bar,
 body.embed .controls h1,
 body.embed .lede,
-body.embed .fine,
-body.embed .file-label {
+body.embed .fine {
   display: none;
 }
 

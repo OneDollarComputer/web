@@ -18,7 +18,6 @@ const ledEl = document.getElementById("led");
 const compileBtn = document.getElementById("compile");
 const runBtn = document.getElementById("run");
 const stopBtn = document.getElementById("stop");
-const fileInput = document.getElementById("bin-file");
 const bootBtn = document.getElementById("boot-btn");
 const metricCycles = document.getElementById("metric-cycles");
 const metricPc = document.getElementById("metric-pc");
@@ -385,18 +384,6 @@ runBtn.addEventListener("click", () => {
 
 stopBtn.addEventListener("click", stopLoop);
 
-fileInput.addEventListener("change", async () => {
-  const file = fileInput.files?.[0];
-  if (!file) return;
-  try {
-    if (!emu) await loadWasm();
-    stopLoop();
-    await loadBin(await file.arrayBuffer());
-  } catch (err) {
-    setStatus(String(err), "error");
-  }
-});
-
 wireInput();
 
 if (new URLSearchParams(location.search).get("embed") === "1") {
@@ -442,7 +429,7 @@ if (isLocalDev()) {
       return;
     }
 
-    setStatus("Ready — open from the editor or load a .bin", "ok");
+    setStatus("Open from the editor — Lab → Simulate", "ok");
   } catch (err) {
     if (String(err).includes("WASM")) {
       setStatus(
