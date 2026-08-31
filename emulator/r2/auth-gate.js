@@ -19,9 +19,18 @@ const FIREBASE = {
   appId: "1:1086912562723:web:d158f4ce5c08d1ceb95396",
 };
 
+export const DATABASE_URL = FIREBASE.databaseURL;
+
+let authInstance = null;
+
 export function isLocalDev() {
   const host = location.hostname;
   return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+}
+
+export async function getIdToken() {
+  if (isLocalDev() || !authInstance?.currentUser) return null;
+  return authInstance.currentUser.getIdToken();
 }
 
 export function ensureEmulatorAccess() {
@@ -31,37 +40,37 @@ export function ensureEmulatorAccess() {
   if (isLocalDev()) {
     if (gate) gate.hidden = true;
     if (main) main.hidden = false;
-    return Promise.resolve();
+    return Promise.resolve({ user: null, local: true });
   }
   const btnGoogle = document.getElementById("btnGoogle");
   const gateError = document.getElementById("gateError");
 
   if (!gate || !main) {
-    return Promise.resolve();
+    return Promise.resolve({ user: null, local: false });
   }
 
   gate.hidden = false;
   main.hidden = true;
 
   const app = initializeApp(FIREBASE);
-  const auth = getAuth(app);
+  authInstance = getAuth(app);
   const google = new GoogleAuthProvider();
   google.setCustomParameters({ prompt: "select_account" });
 
   return new Promise((resolve) => {
-    const stop = onAuthStateChanged(auth, (user) => {
+    const stop = onAuthStateChanged(authInstance, (user) => {
       if (!user) return;
       gate.hidden = true;
       main.hidden = false;
       stop();
-      resolve();
+      resolve({ user, local: false });
     });
 
     if (btnGoogle) {
       btnGoogle.addEventListener("click", async () => {
         if (gateError) gateError.hidden = true;
         try {
-          await signInWithPopup(auth, google);
+          await signInWithPopup(authInstance, google);
         } catch (err) {
           if (gateError) {
             gateError.textContent = err?.message || "Sign-in failed";

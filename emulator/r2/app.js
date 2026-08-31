@@ -3,14 +3,18 @@
  * Core board model: https://github.com/OneDollarComputer/emulator/tree/main/r2
  */
 
-import { ensureEmulatorAccess, isLocalDev } from "./auth-gate.js";
+import {
+  ensureEmulatorAccess,
+  isLocalDev,
+  getIdToken,
+  DATABASE_URL,
+} from "./auth-gate.js";
 
 const CYCLES_PER_FRAME = 80_000;
-const DEMO_PATH = "sample.bin";
 
 const statusEl = document.getElementById("status");
 const ledEl = document.getElementById("led");
-const runDemoBtn = document.getElementById("run-demo");
+const runBtn = document.getElementById("run");
 const stopBtn = document.getElementById("stop");
 const fileInput = document.getElementById("bin-file");
 const bootBtn = document.getElementById("boot-btn");
@@ -22,10 +26,16 @@ let wasm;
 let emu;
 let rafId = 0;
 let running = false;
+let loadedBin = false;
 
 function setStatus(text, kind = "") {
   statusEl.textContent = text;
   statusEl.className = `status${kind ? ` ${kind}` : ""}`;
+}
+
+function setRunEnabled(on) {
+  loadedBin = on;
+  if (!running) runBtn.disabled = !on;
 }
 
 function updateMetrics(stopCode) {
@@ -44,6 +54,59 @@ function syncLed() {
   window.odcEmulatorNotify?.({ type: "odc-emulator", event: "led", on });
 }
 
+function decodeBase64Binary(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+async function fetchProjectBinary(projectID, authCtx) {
+  if (authCtx.local) {
+    const res = await fetch(`/api/projects/${encodeURIComponent(projectID)}`);
+    if (!res.ok) throw new Error(`Project not found (${res.status})`);
+    const data = await res.json();
+    const b64 = data.binary || data.compilationResult?.binary;
+    if (!b64) throw new Error("No compiled binary — compile in the editor first");
+    return decodeBase64Binary(b64);
+  }
+
+  const token = await getIdToken();
+  const authQuery = token ? `?auth=${encodeURIComponent(token)}` : "";
+  const metaRes = await fetch(
+    `${DATABASE_URL}/projects/${encodeURIComponent(projectID)}.json${authQuery}`,
+  );
+  if (!metaRes.ok) throw new Error(`Project not found (${metaRes.status})`);
+  const meta = await metaRes.json();
+  if (!meta) throw new Error("Project not found");
+
+  const uid = authCtx.user?.uid;
+  if (meta.ownerUid !== uid && meta.public !== true) {
+    throw new Error("Sign in as the project owner to simulate this firmware");
+  }
+
+  const codeRes = await fetch(
+    `${DATABASE_URL}/projects/${encodeURIComponent(projectID)}/code.json`,
+  );
+  if (!codeRes.ok) throw new Error(`Could not load project (${codeRes.status})`);
+  const code = await codeRes.json();
+
+  let b64 = code?.binary;
+  if (!b64 && code?.binaryHash) {
+    const cacheRes = await fetch(`${DATABASE_URL}/cache/${code.binaryHash}.json`);
+    if (cacheRes.ok) {
+      const cache = await cacheRes.json();
+      b64 = cache?.binary;
+    }
+  }
+  if (!b64) b64 = code?.compilationResult?.binary;
+  if (!b64) throw new Error("No compiled binary — compile in the editor first");
+  if (code.compilationStatus && code.compilationStatus !== "success") {
+    throw new Error("Last compile failed — fix and compile in the editor");
+  }
+  return decodeBase64Binary(b64);
+}
+
 async function loadWasm() {
   if (wasm) return;
   const mod = await import("./wasm/odc_emulator_r2_wasm.js");
@@ -57,21 +120,16 @@ async function loadBin(bytes) {
   emu.loadBin(new Uint8Array(bytes));
   updateMetrics(0);
   syncLed();
+  setRunEnabled(true);
   setStatus(`Loaded ${bytes.byteLength} bytes`, "ok");
   window.odcEmulatorNotify?.({ type: "odc-emulator", event: "loaded", size: bytes.byteLength });
-}
-
-async function fetchDemo() {
-  const res = await fetch(DEMO_PATH);
-  if (!res.ok) throw new Error(`demo bin ${res.status}`);
-  return res.arrayBuffer();
 }
 
 function stopLoop() {
   running = false;
   if (rafId) cancelAnimationFrame(rafId);
   rafId = 0;
-  runDemoBtn.disabled = false;
+  runBtn.disabled = !loadedBin;
   stopBtn.disabled = true;
 }
 
@@ -92,9 +150,9 @@ function tick() {
 }
 
 function startLoop() {
-  if (!emu || running) return;
+  if (!emu || running || !loadedBin) return;
   running = true;
-  runDemoBtn.disabled = true;
+  runBtn.disabled = true;
   stopBtn.disabled = false;
   setStatus("Running…");
   rafId = requestAnimationFrame(tick);
@@ -132,11 +190,8 @@ function wireInput() {
   });
 }
 
-runDemoBtn.addEventListener("click", async () => {
+runBtn.addEventListener("click", () => {
   try {
-    await ensureEmulatorAccess();
-    if (!emu) await loadWasm();
-    await loadBin(await fetchDemo());
     startLoop();
   } catch (err) {
     setStatus(String(err), "error");
@@ -175,14 +230,26 @@ if (isLocalDev()) {
 
 (async () => {
   try {
-    await ensureEmulatorAccess();
+    const authCtx = await ensureEmulatorAccess();
     await loadWasm();
-    setStatus("Ready — run demo or load a .bin", "ok");
+
+    const projectID = new URLSearchParams(location.search).get("projectID");
+    if (projectID) {
+      setStatus(`Loading ${projectID}…`);
+      await loadBin(await fetchProjectBinary(projectID, authCtx));
+      return;
+    }
+
+    setStatus("Ready — open from the editor or load a .bin", "ok");
   } catch (err) {
-    setStatus(
-      "WASM not built. From emulator repo run: r2/scripts/deploy-web.sh",
-      "error",
-    );
+    if (String(err).includes("WASM")) {
+      setStatus(
+        "WASM not built. From emulator repo run: r2/scripts/deploy-web.sh",
+        "error",
+      );
+    } else {
+      setStatus(String(err.message || err), "error");
+    }
     console.error(err);
   }
 })();

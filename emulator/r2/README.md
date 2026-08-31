@@ -7,7 +7,8 @@ The board model is developed in the **emulator** repo; this folder is only hosti
 
 | | |
 |--|--|
-| Full page | `/emulator/r2/` |
+| Full page | `/emulator/r2/?projectID=…` |
+| From editor | **Simulate** opens emulator with the current project |
 | Curriculum iframe | `/emulator/r2/?embed=1` |
 
 **Access:** no sign-in on `localhost` / `127.0.0.1`. On **onedollarcomputer.com** the page requires Google sign-in.
@@ -23,10 +24,9 @@ From a checkout with **emulator** and **web** as siblings (`~/github/`):
 Copies:
 
 - `wasm/odc_emulator_r2_wasm.js` + `.wasm` (wasm-bindgen)
-- `sample.bin` (demo blink firmware)
 - `board.png` + `overlay.json` (from `emulator/r2/assets/`)
 
-Commit the updated `wasm/`, `sample.bin`, and board assets in **web** when you want the live site to pick up a new core.
+Commit the updated `wasm/` and board assets in **web** when you want the live site to pick up a new core.
 
 ## iframe API
 

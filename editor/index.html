@@ -274,6 +274,24 @@
       background: #40464d;
     }
 
+    a.simulate-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #3d4f6f;
+      background: #1a2332;
+      color: #e8eef8;
+      text-decoration: none;
+      font: inherit;
+      font-size: 0.9rem;
+    }
+
+    a.simulate-link:hover {
+      background: #40464d;
+      text-decoration: none;
+    }
+
     button.compile {
       background: #238636;
     }
@@ -823,6 +841,7 @@
     <div class="controls">
       <span id="status" class="status-empty"></span>
       <button id="btnUpload" class="upload" disabled title="Upload: compile and flash">⬆️ Upload</button>
+      <a id="btnSimulate" class="secondary simulate-link" href="/emulator/r2/" target="_blank" rel="noopener" title="Open virtual board (load .bin after compile)">◇ Simulate</a>
       <span id="aiSessionBadge" class="ai-session-badge"></span>
       <button type="button" class="secondary" id="btnShare" data-odc-share>Share</button>
       <div class="user-menu" id="userMenu">
@@ -1098,6 +1117,7 @@
       if (!database || !window.PROJECT_CODE) {
         projectAccess.loaded = true;
         if (link) link.hidden = true;
+        updateSimulateLink();
         return;
       }
       try {
@@ -1127,6 +1147,14 @@
         projectAccess = { ownerUid: null, username: null, slug: null, name: null, loaded: true };
         if (link) link.hidden = true;
       }
+      updateSimulateLink();
+    }
+
+    function updateSimulateLink() {
+      const a = document.getElementById('btnSimulate');
+      if (!a) return;
+      const id = window.PROJECT_CODE || new URL(window.location.href).searchParams.get('projectID') || '';
+      a.href = id ? `/emulator/r2/?projectID=${encodeURIComponent(id)}` : '/emulator/r2/';
     }
 
     function canEditOriginal() {
