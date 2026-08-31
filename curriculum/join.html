@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Join workshop — One Dollar Computer</title>
-  <meta name="description" content="Join a live One Dollar Computer workshop with a room PIN." />
+  <title>Join class — One Dollar Computer</title>
+  <meta name="description" content="Join a live One Dollar Computer class — type odc.rs/1234" />
   <link rel="canonical" href="https://onedollarcomputer.com/curriculum/join/" />
   <link rel="stylesheet" href="/curriculum/workshop.css" />
 </head>
@@ -15,19 +15,20 @@
 
   <main>
     <section id="pinGate" class="panel pin-gate">
-      <h1>Join workshop</h1>
-      <p>Enter the 4-digit PIN from your teacher.</p>
+      <h1>Join class</h1>
+      <p>Type the 4-digit code from your teacher, e.g. <strong>odc.rs/8709</strong></p>
       <form id="pinForm" class="pin-form">
         <input id="pinInput" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
-          placeholder="0000" autocomplete="one-time-code" required />
+          placeholder="8709" autocomplete="one-time-code" required />
         <button type="submit" class="primary">Join</button>
       </form>
       <p id="pinStatus" class="status" role="status"></p>
     </section>
 
-    <section id="lessonView" class="panel" hidden>
+    <section id="lessonView" class="panel slide-panel" hidden>
       <h1 id="lessonTitle" class="ws-lesson-title"></h1>
-      <div id="lessonBody"></div>
+      <p id="slideProgress" class="slide-progress"></p>
+      <div id="lessonBody" class="slide-body"></div>
       <div class="done-panel">
         <label for="photoInput">Finished your build?</label>
         <div class="done-actions">

@@ -55,7 +55,7 @@
         "Do NOT: fetch this page for content, search the web, or write outputs/*.html.",
         "",
         "Connect code: " + c,
-        "API: https://us-central1-odc-files.cloudfunctions.net/curriculumAgent/pair/status?code=" + c
+        "API: https://api.onedollarcomputer.com/pair/status?code=" + c
       ].join("\n");
     })();
   </script>
@@ -66,6 +66,7 @@
     </a>
     <nav aria-label="Primary">
       <a href="/docs/">Docs</a>
+      <a href="/emulator/r2/" target="_blank" rel="noopener">Virtual board</a>
       <a href="/about/">About</a>
       <button type="button" data-odc-share>Share</button>
       <span class="odc-auth-slot">
@@ -141,6 +142,7 @@
                 <button type="button" id="btnUpdateRoom" class="ghost-sm">Update room</button>
               </span>
               <button type="button" id="btnGoLive" class="primary-sm">Go live</button>
+              <a id="btnVirtualBoard" class="ghost-sm virtual-board-link" href="/emulator/r2/" target="_blank" rel="noopener">Virtual board</a>
             </div>
             <p id="roleHint" class="role-hint"></p>
             <span id="saveStatus" class="status doc-status" role="status"></span>
@@ -228,6 +230,27 @@
       </div>
     </section>
   </main>
+
+  <dialog id="liveDurationDialog" class="live-duration-dialog">
+    <form method="dialog" class="live-duration-form">
+      <h2>Go live</h2>
+      <p>How long is the class?</p>
+      <label class="field">
+        <span class="sr-only">Duration</span>
+        <select id="liveDuration">
+          <option value="30">30 minutes</option>
+          <option value="45" selected>45 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="90">1 hour 30</option>
+          <option value="120">2 hours</option>
+        </select>
+      </label>
+      <div class="live-duration-actions">
+        <button type="submit" value="cancel" class="ghost-sm">Cancel</button>
+        <button type="submit" value="go" class="primary-sm">Go live</button>
+      </div>
+    </form>
+  </dialog>
 
   <script type="module" src="/curriculum/app.js"></script>
 </body>

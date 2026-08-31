@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Live workshop — One Dollar Computer</title>
+  <title>Live class — One Dollar Computer</title>
   <meta name="robots" content="noindex" />
   <link rel="stylesheet" href="/curriculum/workshop.css" />
 </head>
@@ -11,7 +11,7 @@
   <header class="top">
     <a class="brand" href="/curriculum/">Curriculum</a>
     <div class="live-toolbar">
-      <button type="button" id="btnEnd" class="ghost-sm danger" hidden>End workshop</button>
+      <button type="button" id="btnEnd" class="ghost-sm danger" hidden>End class</button>
     </div>
   </header>
 
@@ -23,17 +23,22 @@
         <div>
           <h1 id="liveTitle" class="live-title"></h1>
           <p id="liveMeta" class="live-meta"></p>
-          <div class="pin-display">
-            <div>
-              <div class="pin-code" id="pinCode"></div>
-              <p class="join-link"><a id="joinLink" href="#" target="_blank" rel="noopener"></a></p>
-            </div>
-            <div class="qr-wrap">
-              <img id="qrImg" alt="QR code to join workshop" width="180" height="180" />
-            </div>
+          <div class="room-display">
+            <p class="room-label">Students type</p>
+            <div class="pin-code" id="pinCode"></div>
+            <p class="join-link"><a id="joinLink" href="#" target="_blank" rel="noopener"></a></p>
+            <p class="join-link join-link-alt"><a id="joinLinkAlt" href="#" target="_blank" rel="noopener"></a></p>
           </div>
           <div class="stats-row">
-            <span class="stat" id="studentCount">👥 0 students</span>
+            <span class="stat" id="studentCount">0 joined</span>
+            <span class="stat" id="viewedCount">0 viewed</span>
+            <span class="stat" id="activeCount">0 active now</span>
+            <span class="stat stat-muted" id="timeLeft"></span>
+          </div>
+          <div class="slide-controls">
+            <button type="button" id="btnPrevSlide" class="ghost-sm" aria-label="Previous slide">←</button>
+            <span id="slideIndicator" class="slide-indicator">1 / 1</span>
+            <button type="button" id="btnNextSlide" class="ghost-sm" aria-label="Next slide">→</button>
           </div>
         </div>
         <div id="lessonPreview" class="ws-lesson-preview"></div>
@@ -51,6 +56,13 @@
         <div id="photoWall" class="photo-wall">
           <p class="empty-wall">Photos appear when students tap Done.</p>
         </div>
+      </section>
+
+      <section class="panel">
+        <h2>Past classes</h2>
+        <ul id="sessionHistory" class="session-history">
+          <li class="empty-wall">Past classes will appear here.</li>
+        </ul>
       </section>
     </div>
   </main>

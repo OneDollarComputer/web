@@ -486,6 +486,7 @@ def config_payload() -> dict:
 
 USERNAME_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 PROJECT_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+ROOM_CODE_RE = re.compile(r"^/(\d{4})$")
 PROFILE_RESERVED = frozenset(
     {
         "about",
@@ -690,6 +691,11 @@ class Handler(SimpleHTTPRequestHandler):
 
         if path in ("/api/config", "/api/health"):
             self._send_json(200, config_payload())
+            return
+
+        if ROOM_CODE_RE.fullmatch(path):
+            self.path = "/curriculum/join/index.html"
+            super().do_GET()
             return
 
         if MODE != "local":

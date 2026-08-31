@@ -58,6 +58,12 @@
           ".read": "auth != null && auth.uid === $uid",
           "$lid": {
             ".write": "auth != null && (auth.uid === $uid || root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "sessions": {
+            "$sessionId": {
+              ".read": "auth != null && auth.uid === $uid",
+              ".write": "auth != null && auth.uid === $uid"
+            }
           }
         }
       },
@@ -74,7 +80,7 @@
           "students": {
             "$studentId": {
               ".read": true,
-              ".write": "!data.exists() && root.child('curriculum/live').child($sid).child('status').val() === 'active'"
+              ".write": "root.child('curriculum/live').child($sid).child('status').val() === 'active' && (!data.exists() || newData.child('joinedAt').val() === data.child('joinedAt').val())"
             }
           },
           "answers": {
@@ -134,6 +140,12 @@
           "liveRoom": {
             ".read": "auth != null",
             ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+          },
+          "sessions": {
+            "$sessionId": {
+              ".read": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())",
+              ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
+            }
           },
           "presence": {
             ".read": "auth != null",

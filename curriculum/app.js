@@ -27,6 +27,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import { CURRICULUM_API } from "./api-origin.js";
 import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js";
+import { joinUrl, joinUrlAlt } from "./session-shared.js";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -75,6 +76,8 @@ const inviteUser = document.getElementById("inviteUser");
 const btnInvite = document.getElementById("btnInvite");
 const btnShare = document.getElementById("btnShare");
 const btnGoLive = document.getElementById("btnGoLive");
+const liveDurationDialog = document.getElementById("liveDurationDialog");
+const liveDuration = document.getElementById("liveDuration");
 const liveRoomChip = document.getElementById("liveRoomChip");
 const liveRoomLink = document.getElementById("liveRoomLink");
 const btnUpdateRoom = document.getElementById("btnUpdateRoom");
@@ -1102,8 +1105,9 @@ function updateLiveRoomChrome(room) {
   }
   liveRoomChip.hidden = false;
   if (liveRoomLink) {
-    liveRoomLink.textContent = `Room · ${room.pin}`;
-    liveRoomLink.href = `/curriculum/live/?session=${encodeURIComponent(room.sessionId)}`;
+    liveRoomLink.textContent = `odc.rs/${room.pin}`;
+    liveRoomLink.href = joinUrl(room.pin);
+    liveRoomLink.title = joinUrlAlt(room.pin);
   }
 }
 
@@ -1489,7 +1493,7 @@ inviteUser?.addEventListener("keydown", (e) => {
 
 btnShare?.addEventListener("click", () => shareLink());
 
-async function startWorkshop() {
+async function startWorkshop(durationMinutes = 45) {
   if (!me || !currentId || !isAuthor) return;
   await saveCurrent();
   if (!currentId) return;
@@ -1504,18 +1508,21 @@ async function startWorkshop() {
     }
   }
   if (!pin) {
-    setStatus("Could not create a room PIN. Try again.");
+    setStatus("Could not create a room code. Try again.");
     return;
   }
   const sid = `ws_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const now = Date.now();
+  const durationMs = Math.max(15, Number(durationMinutes) || 45) * 60 * 1000;
   const session = {
     lessonId: currentId,
     ownerUid: me.uid,
     pin,
     status: "active",
     createdAt: now,
-    expiresAt: now + 4 * 60 * 60 * 1000,
+    durationMs,
+    expiresAt: now + durationMs,
+    currentSlide: 0,
     title: data.title,
     body: sessionBodyFromData(data)
   };
@@ -1523,7 +1530,8 @@ async function startWorkshop() {
     sessionId: sid,
     pin,
     startedAt: now,
-    expiresAt: session.expiresAt
+    expiresAt: session.expiresAt,
+    durationMs
   };
   try {
     await update(ref(db), {
@@ -1538,13 +1546,13 @@ async function startWorkshop() {
     });
     updateLiveRoomChrome(liveRoom);
     window.open(`/curriculum/live/?session=${encodeURIComponent(sid)}`, "_blank", "noopener");
-    setStatus("Workshop is live — students join with PIN, no sign-in.");
+    setStatus(`Live · students type ${joinUrl(pin).replace(/^https?:\/\//, "")}`);
   } catch (err) {
     console.error(err);
     const denied = String(err?.message || "").includes("PERMISSION_DENIED");
     setStatus(denied
       ? "Deploy database rules first, then try again."
-      : "Could not start workshop.");
+      : "Could not start class.");
   }
 }
 
@@ -1565,7 +1573,16 @@ async function pushRoomUpdate() {
   }
 }
 
-btnGoLive?.addEventListener("click", () => startWorkshop());
+btnGoLive?.addEventListener("click", () => {
+  if (!liveDurationDialog) return startWorkshop();
+  liveDurationDialog.showModal();
+});
+
+liveDurationDialog?.addEventListener("close", () => {
+  if (liveDurationDialog.returnValue !== "go") return;
+  const minutes = Number(liveDuration?.value || 45);
+  startWorkshop(minutes);
+});
 btnUpdateRoom?.addEventListener("click", () => pushRoomUpdate());
 
 document.querySelectorAll("[data-add]").forEach((btn) => {

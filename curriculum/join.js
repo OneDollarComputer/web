@@ -3,14 +3,15 @@ import {
   onValue,
   ref,
   set,
-  push
+  push,
+  update
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import {
-  escapeHtml,
   getDb,
-  joinUrl,
+  joinCodeFromLocation,
+  lessonSlides,
   MAX_PHOTO_BYTES,
-  renderLessonBody,
+  renderSlide,
   studentId
 } from "./session-shared.js";
 
@@ -21,6 +22,7 @@ const pinInput = document.getElementById("pinInput");
 const pinStatus = document.getElementById("pinStatus");
 const lessonView = document.getElementById("lessonView");
 const lessonTitle = document.getElementById("lessonTitle");
+const slideProgress = document.getElementById("slideProgress");
 const lessonBody = document.getElementById("lessonBody");
 const photoInput = document.getElementById("photoInput");
 const btnPickPhoto = document.getElementById("btnPickPhoto");
@@ -32,6 +34,9 @@ let sessionPin = null;
 let myId = studentId();
 let pendingPhoto = null;
 let unsubSession = null;
+let heartbeatTimer = null;
+let slides = [];
+let currentSlide = 0;
 
 function setPinStatus(msg, isError = false) {
   pinStatus.textContent = msg || "";
@@ -46,23 +51,23 @@ function setDoneStatus(msg, isError = false) {
 async function loadSessionByPin(pin) {
   const pinSnap = await get(ref(db, `curriculum/liveByPin/${pin}`));
   if (!pinSnap.exists()) {
-    throw new Error("PIN not found. Check with your teacher.");
+    throw new Error("Room not found. Check the code with your teacher.");
   }
   const pinRow = pinSnap.val();
   if (pinRow.status !== "active") {
-    throw new Error("This workshop has ended.");
+    throw new Error("This class has ended.");
   }
   if (pinRow.expiresAt && pinRow.expiresAt < Date.now()) {
-    throw new Error("This workshop has expired.");
+    throw new Error("This class has expired.");
   }
   const sid = pinRow.sessionId;
   const sessionSnap = await get(ref(db, `curriculum/live/${sid}`));
   if (!sessionSnap.exists()) {
-    throw new Error("Workshop not found.");
+    throw new Error("Class not found.");
   }
   const session = sessionSnap.val();
   if (session.status !== "active") {
-    throw new Error("This workshop has ended.");
+    throw new Error("This class has ended.");
   }
   return { sid, session, pin };
 }
@@ -70,8 +75,22 @@ async function loadSessionByPin(pin) {
 async function registerStudent(sid) {
   const path = `curriculum/live/${sid}/students/${myId}`;
   const snap = await get(ref(db, path));
+  const now = Date.now();
   if (!snap.exists()) {
-    await set(ref(db, path), { joinedAt: Date.now() });
+    await set(ref(db, path), { joinedAt: now, viewed: true, lastSeen: now });
+    return;
+  }
+  await update(ref(db, path), { viewed: true, lastSeen: now });
+}
+
+async function heartbeat(sid) {
+  try {
+    await update(ref(db, `curriculum/live/${sid}/students/${myId}`), {
+      lastSeen: Date.now(),
+      viewed: true
+    });
+  } catch {
+    /* ignore */
   }
 }
 
@@ -91,24 +110,17 @@ async function restoreMyAnswers(sid) {
   });
 }
 
-function watchSession(sid) {
-  if (unsubSession) unsubSession();
-  const sessionRef = ref(db, `curriculum/live/${sid}`);
-  unsubSession = onValue(sessionRef, async (snap) => {
-    if (!snap.exists() || snap.val().status !== "active") {
-      setDoneStatus("This workshop has ended.", true);
-      btnPickPhoto.disabled = true;
-      btnDone.disabled = true;
-      return;
-    }
-    renderSession(snap.val());
-    await restoreMyAnswers(sid);
-  });
-}
-
-function renderSession(session) {
-  lessonTitle.textContent = session.title || "Workshop";
-  renderLessonBody(lessonBody, session.body || {}, {
+function renderCurrentSlide(session) {
+  slides = lessonSlides(session.body || {});
+  if (!slides.length) {
+    lessonBody.innerHTML = `<p class="empty-wall">Waiting for your teacher…</p>`;
+    slideProgress.textContent = "";
+    return;
+  }
+  const idx = Math.min(Math.max(0, currentSlide), slides.length - 1);
+  currentSlide = idx;
+  slideProgress.textContent = `Slide ${idx + 1} of ${slides.length}`;
+  renderSlide(lessonBody, session.body || {}, slides[idx], {
     onAnswer: async (quizIndex, choiceIndex, section, btn) => {
       if (!sessionId) return;
       section.querySelectorAll(".ws-quiz-choice").forEach((el) => {
@@ -129,6 +141,29 @@ function renderSession(session) {
   });
 }
 
+function watchSession(sid) {
+  if (unsubSession) unsubSession();
+  const sessionRef = ref(db, `curriculum/live/${sid}`);
+  unsubSession = onValue(sessionRef, async (snap) => {
+    if (!snap.exists() || snap.val().status !== "active") {
+      setDoneStatus("This class has ended.", true);
+      btnPickPhoto.disabled = true;
+      btnDone.disabled = true;
+      clearInterval(heartbeatTimer);
+      return;
+    }
+    const session = snap.val();
+    currentSlide = typeof session.currentSlide === "number" ? session.currentSlide : 0;
+    renderSession(session);
+    await restoreMyAnswers(sid);
+  });
+}
+
+function renderSession(session) {
+  lessonTitle.textContent = session.title || "Class";
+  renderCurrentSlide(session);
+}
+
 async function enterWorkshop(pin) {
   setPinStatus("Joining…");
   const { sid, pin: normalizedPin } = await loadSessionByPin(pin);
@@ -136,9 +171,14 @@ async function enterWorkshop(pin) {
   sessionPin = normalizedPin;
   await registerStudent(sid);
   watchSession(sid);
+  clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(() => heartbeat(sid), 30000);
   pinGate.hidden = true;
   lessonView.hidden = false;
-  history.replaceState(null, "", `?pin=${encodeURIComponent(normalizedPin)}`);
+  const shortPath = `/${normalizedPin}`;
+  if (location.pathname !== shortPath) {
+    history.replaceState(null, "", shortPath);
+  }
   setPinStatus("");
 }
 
@@ -154,7 +194,7 @@ pinForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const pin = pinInput.value.replace(/\D/g, "").slice(0, 4);
   if (pin.length !== 4) {
-    setPinStatus("Enter a 4-digit PIN.", true);
+    setPinStatus("Enter the 4-digit room code.", true);
     return;
   }
   try {
@@ -214,11 +254,11 @@ btnDone?.addEventListener("click", async () => {
   }
 });
 
-const urlPin = new URLSearchParams(location.search).get("pin");
+const urlPin = joinCodeFromLocation();
 if (urlPin) {
-  pinInput.value = urlPin.replace(/\D/g, "").slice(0, 4);
-  if (pinInput.value.length === 4) {
-    enterWorkshop(pinInput.value).catch((err) => {
+  pinInput.value = urlPin;
+  if (urlPin.length === 4) {
+    enterWorkshop(urlPin).catch((err) => {
       console.error(err);
       setPinStatus(joinErrorMessage(err), true);
     });
