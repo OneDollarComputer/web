@@ -3,6 +3,9 @@
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+import { paintIframe, watchHtmlEmbed } from "./iframe-paint.js";
+
+export { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js";
 
 export const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -47,8 +50,7 @@ export function studentId() {
 }
 
 export function joinUrl(pin) {
-  const base = `${location.origin}/curriculum/join/`;
-  return `${base}?pin=${encodeURIComponent(pin)}`;
+  return `${SHORT_ORIGIN}/curriculum/join/?pin=${encodeURIComponent(pin)}`;
 }
 
 export function youtubeId(url) {
@@ -65,17 +67,6 @@ export function youtubeId(url) {
     return null;
   }
   return null;
-}
-
-function paintIframe(iframe, html) {
-  const doc = html || "<p></p>";
-  iframe.srcdoc = doc;
-  requestAnimationFrame(() => {
-    iframe.srcdoc = "";
-    requestAnimationFrame(() => {
-      iframe.srcdoc = doc;
-    });
-  });
 }
 
 export function renderLessonBody(host, body, { interactiveQuizzes = null } = {}) {
@@ -144,9 +135,10 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     frame.className = "ws-html-frame";
     frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
     frame.setAttribute("title", block.title || `Interactive block ${index + 1}`);
-    paintIframe(frame, html);
     section.appendChild(frame);
     host.appendChild(section);
+    paintIframe(frame, html);
+    watchHtmlEmbed(frame);
   });
 
   const quizzes = body.quizzes || [];

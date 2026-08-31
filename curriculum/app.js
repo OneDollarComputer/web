@@ -25,6 +25,8 @@ import {
   onDisconnect,
   push
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+import { CURRICULUM_API } from "./api-origin.js";
+import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -38,8 +40,7 @@ const FIREBASE = {
 
 const PRESENCE_COLORS = ["#0f766e", "#1d4ed8", "#b45309", "#be123c", "#7c3aed", "#0369a1"];
 
-const AGENT_API =
-  "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent";
+const AGENT_API = CURRICULUM_API;
 const SHORT_ORIGIN = "https://odc.rs";
 const PAIR_TTL_MS = 10 * 60 * 1000;
 
@@ -509,7 +510,15 @@ function addMediaRow(kind, values = {}) {
 const MAX_HTML_BYTES = 512 * 1024;
 
 function lessonHtmlBlocks(body) {
-  return body?.html || body?.games || [];
+  const blocks = body?.html || body?.games || [];
+  return blocks.map((block) => {
+    if (!block || typeof block !== "object") return block;
+    return {
+      ...block,
+      title: block.title || "",
+      html: block.html || block.gameHtml || block.game_html || ""
+    };
+  });
 }
 
 function setHtmlEditorOpen(row, open) {
@@ -522,14 +531,6 @@ function setHtmlEditorOpen(row, open) {
   editBtn.hidden = open;
   doneBtn.hidden = !open;
   row.dataset.editing = open ? "1" : "";
-}
-
-function paintIframe(iframe, html) {
-  iframe.removeAttribute("src");
-  iframe.srcdoc = "";
-  requestAnimationFrame(() => {
-    iframe.srcdoc = html;
-  });
 }
 
 function addHtmlRow(values = {}, startEditing = false) {
@@ -551,14 +552,13 @@ function addHtmlRow(values = {}, startEditing = false) {
 
   const embed = document.createElement("div");
   embed.className = "html-embed";
-  embed.hidden = true;
+  embed.hidden = !String(values.html || "").trim();
 
   const iframe = document.createElement("iframe");
   iframe.title = values.title || "Lesson HTML";
   iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
   iframe.setAttribute("allow", "fullscreen");
   iframe.setAttribute("allowfullscreen", "");
-  iframe.loading = "lazy";
 
   const fsBtn = document.createElement("button");
   fsBtn.type = "button";
@@ -623,20 +623,26 @@ function addHtmlRow(values = {}, startEditing = false) {
   wrap.appendChild(editor);
   row.appendChild(wrap);
 
-  const syncPreview = () => {
+  let previewTimer = 0;
+  const syncPreview = (immediate = false) => {
     const html = htmlInput.value.trim();
     const title = titleInput.value.trim();
     iframe.title = title || "Lesson HTML";
     titleDisplay.textContent = title;
     titleDisplay.hidden = !title;
-    if (html) {
-      embed.hidden = false;
-      paintIframe(iframe, html);
-    } else {
-      embed.hidden = true;
-      iframe.removeAttribute("src");
-      iframe.removeAttribute("srcdoc");
-    }
+    const paint = () => {
+      if (html) {
+        embed.hidden = false;
+        paintIframe(iframe, html);
+      } else {
+        embed.hidden = true;
+        iframe.removeAttribute("src");
+        iframe.removeAttribute("srcdoc");
+      }
+    };
+    clearTimeout(previewTimer);
+    if (immediate) paint();
+    else previewTimer = setTimeout(paint, 400);
   };
 
   fsBtn.addEventListener("click", () => {
@@ -653,17 +659,23 @@ function addHtmlRow(values = {}, startEditing = false) {
   });
 
   doneBtn.addEventListener("click", () => {
-    syncPreview();
+    syncPreview(true);
     setHtmlEditorOpen(row, false);
     if (isAuthor && editMode === "edit") scheduleSave();
   });
 
-  for (const el of [titleInput, htmlInput]) {
-    el.addEventListener("input", () => {
-      syncPreview();
-      if (isAuthor && editMode === "edit") scheduleSave();
-    });
-  }
+  titleInput.addEventListener("input", () => {
+    const title = titleInput.value.trim();
+    iframe.title = title || "Lesson HTML";
+    titleDisplay.textContent = title;
+    titleDisplay.hidden = !title;
+    if (isAuthor && editMode === "edit") scheduleSave();
+  });
+
+  htmlInput.addEventListener("input", () => {
+    syncPreview(false);
+    if (isAuthor && editMode === "edit") scheduleSave();
+  });
 
   removeBtn.addEventListener("click", () => {
     row.remove();
@@ -671,7 +683,8 @@ function addHtmlRow(values = {}, startEditing = false) {
   });
 
   host.appendChild(row);
-  syncPreview();
+  syncPreview(true);
+  watchHtmlEmbed(iframe);
   if (startEditing || !htmlInput.value.trim()) setHtmlEditorOpen(row, true);
   else setHtmlEditorOpen(row, false);
 }
@@ -812,6 +825,7 @@ function fillFormFromLesson(lesson) {
   autosizeAll();
   renderList();
   updateCollabChrome();
+  requestAnimationFrame(() => requestAnimationFrame(() => repaintHtmlPreviews()));
 }
 
 function renderList() {
@@ -1639,6 +1653,10 @@ btnAgentRevoke?.addEventListener("click", () => revokeAllAgents());
 onAuthStateChanged(auth, (user) => {
   if (user) showStudio(user);
   else showGate();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") repaintHtmlPreviews();
 });
 
 window.addEventListener("beforeunload", () => {
