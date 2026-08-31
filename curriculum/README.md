@@ -4,6 +4,18 @@ Workspace for **teachers and instructors** to build One Dollar Computer lessons.
 
 **Live:** https://onedollarcomputer.com/curriculum/
 
+## Domains
+
+| Role | URL |
+|------|-----|
+| Site & curriculum | `onedollarcomputer.com` |
+| Short links (share, join, agent connect) | `odc.rs` + same path |
+| Agent API (MCP / curl) | `api.onedollarcomputer.com` |
+
+Workshop join link shown on the projector: `odc.rs/curriculum/join/?pin=…`
+
+**Virtual board (R2):** embed `/emulator/r2/?embed=1` to preview firmware without hardware (see `web/emulator/r2/README.md`).
+
 ## How it differs from Projects
 
 | | Projects (`/project/`, `/{user}/`) | Curriculum (`/curriculum/`) |
@@ -34,6 +46,10 @@ Owner invites by **username** (must already claim a username on `/project/`).
 
 The link is ready as soon as you copy it (while signed in). **Revoke** on the site to disconnect.
 
+**API base URL:** `https://api.onedollarcomputer.com` (Firebase Hosting → `curriculumAgent`). Canonical value: `curriculum/api-origin.json`.
+
+Until DNS is connected, use `https://odc-files-api.web.app` as `ODC_CURRICULUM_API`.
+
 ### Cursor MCP (`~/.cursor/mcp.json`)
 
 ```json
@@ -43,7 +59,7 @@ The link is ready as soon as you copy it (while signed in). **Revoke** on the si
       "command": "node",
       "args": ["/ABSOLUTE/PATH/TO/web/curriculum/mcp/bin.js"],
       "env": {
-        "ODC_CURRICULUM_API": "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent"
+        "ODC_CURRICULUM_API": "https://api.onedollarcomputer.com"
       }
     }
   }
@@ -72,7 +88,7 @@ command = "node"
 args = ["/ABSOLUTE/PATH/TO/web/curriculum/mcp/bin.js"]
 
 [mcp_servers.odc-curriculum.env]
-ODC_CURRICULUM_API = "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent"
+ODC_CURRICULUM_API = "https://api.onedollarcomputer.com"
 ```
 
 Docs: https://developers.openai.com/codex/mcp
@@ -82,7 +98,7 @@ Docs: https://developers.openai.com/codex/mcp
 Extract `connect=` from the Agent link, then:
 
 ```bash
-API=https://us-central1-odc-files.cloudfunctions.net/curriculumAgent
+API=https://api.onedollarcomputer.com
 CODE=YOUR_CONNECT_CODE
 TOKEN=$(curl -sS "$API/pair/status?code=$CODE" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
 curl -sS -H "Authorization: Bearer $TOKEN" "$API/lessons"
@@ -91,7 +107,7 @@ curl -sS -H "Authorization: Bearer $TOKEN" "$API/lessons"
 ### curl
 
 ```bash
-API=https://us-central1-odc-files.cloudfunctions.net/curriculumAgent
+API=https://api.onedollarcomputer.com
 
 # After copy (instructor signed in on /curriculum/):
 curl "$API/pair/status?code=YOUR_CODE"

@@ -1,0 +1,248 @@
+:root {
+  color-scheme: dark;
+  --bg: #07090f;
+  --panel: #0f141f;
+  --border: #1e2738;
+  --text: #e8edf7;
+  --muted: #8b97ad;
+  --accent: #48e1a7;
+  --led-off: #1a2333;
+  --led-on: #22c55e;
+  --danger: #f87171;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a { color: var(--accent); }
+
+.bar {
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 9, 15, 0.9);
+}
+
+.bar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tag {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(240px, 280px) 1fr;
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.board-panel { text-align: center; }
+
+.board-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+#pinout {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+.led {
+  position: absolute;
+  left: 51%;
+  top: 53%;
+  width: 14px;
+  height: 9px;
+  margin-left: -7px;
+  border-radius: 2px;
+  background: var(--led-off);
+  box-shadow: inset 0 0 0 1px #0006;
+  transition: background 0.05s linear, box-shadow 0.05s linear;
+  pointer-events: none;
+}
+
+.led.on {
+  background: var(--led-on);
+  box-shadow: 0 0 10px var(--led-on);
+}
+
+.boot-btn {
+  position: absolute;
+  left: 72%;
+  top: 40%;
+  width: 42px;
+  height: 36px;
+  opacity: 0.02;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+}
+
+.boot-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  opacity: 0.2;
+}
+
+.hint {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.lede {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 1rem;
+}
+
+.status {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: #0a1018;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.status.error { border-color: var(--danger); color: #fecaca; }
+.status.ok { border-color: #14532d; color: #bbf7d0; }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+button, .file-label span {
+  font: inherit;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #151c2b;
+  color: var(--text);
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+button.primary {
+  background: #123c2f;
+  border-color: #1f6b52;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.file-label {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.file-label span {
+  display: inline-block;
+}
+
+.file-label input {
+  display: block;
+  margin-top: 0.5rem;
+  width: 100%;
+  color: var(--muted);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.metrics dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.metrics dd {
+  margin: 0.15rem 0 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.fine {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+kbd {
+  font-size: 0.8em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #0a1018;
+}
+
+/* iframe / curriculum embed */
+body.embed .bar,
+body.embed .controls h1,
+body.embed .lede,
+body.embed .fine,
+body.embed .file-label {
+  display: none;
+}
+
+body.embed .layout {
+  grid-template-columns: 1fr;
+  padding: 0.75rem;
+}
+
+body.embed .board-panel {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
