@@ -541,6 +541,10 @@ PROFILE_RESERVED = frozenset(
 )
 
 
+def is_emulator_path(path: str) -> bool:
+    return path == "/emulator" or path.startswith("/emulator/")
+
+
 def is_user_profile_path(path: str) -> bool:
     parts = [p for p in path.split("/") if p]
     if not parts or len(parts) > 2:
@@ -679,6 +683,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
         parsed = urlparse(self.path)
         path = parsed.path
+
+        if is_emulator_path(path):
+            super().do_GET()
+            return
 
         if path in ("/api/config", "/api/health"):
             self._send_json(200, config_payload())
