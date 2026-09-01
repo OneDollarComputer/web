@@ -32,7 +32,6 @@ const loadStatus = document.getElementById("loadStatus");
 const liveView = document.getElementById("liveView");
 const liveTitle = document.getElementById("liveTitle");
 const liveMeta = document.getElementById("liveMeta");
-const pinCode = document.getElementById("pinCode");
 const joinLink = document.getElementById("joinLink");
 const joinLinkAlt = document.getElementById("joinLinkAlt");
 const timeLeft = document.getElementById("timeLeft");
@@ -214,10 +213,10 @@ function showSession(session) {
   sessionData = session;
   currentSlide = typeof session.currentSlide === "number" ? session.currentSlide : 0;
   liveTitle.textContent = session.title || "Live class";
-  liveMeta.textContent = "Students type the code below — no sign-in, no QR.";
-  pinCode.textContent = session.pin;
+  liveMeta.textContent = "No sign-in, no QR.";
+  const short = joinUrl(session.pin).replace(/^https?:\/\//, "");
   joinLink.href = joinUrl(session.pin);
-  joinLink.textContent = joinUrl(session.pin).replace(/^https?:\/\//, "");
+  joinLink.textContent = short;
   if (joinLinkAlt) {
     joinLinkAlt.href = joinUrlAlt(session.pin);
     joinLinkAlt.textContent = joinUrlAlt(session.pin).replace(/^https?:\/\//, "");
