@@ -1,14 +1,14 @@
 # Firebase + GCP compiler (One Dollar Computer)
 
-Same shape as One Dollar Board (`onedollarboard-1b26a`), new project for this product.
+Firebase project: **`odc-files`** (replaced the legacy One Dollar Board project, deleted 2026-09).
 
-| | Board (legacy) | Computer (current) |
-|--|----------------|--------------------|
-| Firebase project | `onedollarboard-1b26a` | **`odc-files`** |
-| RTDB | `onedollarboard-1b26a-default-rtdb` | `odc-files-default-rtdb` |
-| Path | `/projects/{id}/code` | `/projects/{id}/code` |
-| Cache | `/cache/{sha1}` | `/cache/{sha1}` |
-| Compile | C / ch32fun (+ later Rust) | **Rust** via `wrap_odc` + Cargo |
+| | Computer (current) |
+|--|--------------------|
+| Firebase project | **`odc-files`** |
+| RTDB | `odc-files-default-rtdb` |
+| Path | `/projects/{id}/code` |
+| Cache | `/cache/{sha1}` |
+| Compile | **Rust** via `wrap_odc` + Cargo |
 
 Console: https://console.firebase.google.com/project/odc-files/overview
 
@@ -19,6 +19,14 @@ Rules match the Board test DB (open read/write) in `editor/database.rules.json`.
 ```bash
 firebase deploy --only database --project odc-files
 ```
+
+**Curriculum agent API** — `https://api.onedollarcomputer.com` (Firebase Hosting site `odc-files-api` → Cloud Function `curriculumAgent`).
+
+1. Deploy: `firebase deploy --only hosting:odc-files-api,functions:curriculumAgent --project odc-files`
+2. Firebase Console → Hosting → **odc-files-api** → Add custom domain → `api.onedollarcomputer.com`
+3. Add the DNS records Firebase shows (usually CNAME `api` → `odc-files-api.web.app`)
+
+Until DNS is live, the API also works at `https://odc-files-api.web.app`.
 
 Worker (local, uses the same Cargo path as `serve.py`):
 

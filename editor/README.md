@@ -68,7 +68,7 @@ That host has **no** `/api/*` → the page falls back to **firebase** mode (same
 ## Brand / product names
 
 - **One Dollar Computer** / **computer** in UI copy.
-- Firebase project: **`odc-files`** (RTDB `https://odc-files-default-rtdb.firebaseio.com`). Legacy Board DB was `onedollarboard-1b26a`.
+- Firebase project: **`odc-files`** (RTDB `https://odc-files-default-rtdb.firebaseio.com`). Legacy Board Firebase project was deleted.
 - Magic AI links use `https://onedollarcomputer.com/editor/…`.
 - Logo: site root `/odc_logo_*.svg`.
 
