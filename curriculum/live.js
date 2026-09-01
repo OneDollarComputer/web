@@ -18,7 +18,6 @@ import {
   formatTimeLeft,
   getDb,
   joinUrl,
-  joinUrlAlt,
   lessonSlides,
   renderSlide
 } from "./session-shared.js";
@@ -31,9 +30,7 @@ const google = new GoogleAuthProvider();
 const loadStatus = document.getElementById("loadStatus");
 const liveView = document.getElementById("liveView");
 const liveTitle = document.getElementById("liveTitle");
-const liveMeta = document.getElementById("liveMeta");
 const joinLink = document.getElementById("joinLink");
-const joinLinkAlt = document.getElementById("joinLinkAlt");
 const timeLeft = document.getElementById("timeLeft");
 const studentCount = document.getElementById("studentCount");
 const viewedCount = document.getElementById("viewedCount");
@@ -213,14 +210,9 @@ function showSession(session) {
   sessionData = session;
   currentSlide = typeof session.currentSlide === "number" ? session.currentSlide : 0;
   liveTitle.textContent = session.title || "Live class";
-  liveMeta.textContent = "No sign-in, no QR.";
   const short = joinUrl(session.pin).replace(/^https?:\/\//, "");
   joinLink.href = joinUrl(session.pin);
   joinLink.textContent = short;
-  if (joinLinkAlt) {
-    joinLinkAlt.href = joinUrlAlt(session.pin);
-    joinLinkAlt.textContent = joinUrlAlt(session.pin).replace(/^https?:\/\//, "");
-  }
   if (session.durationMs) {
     timeLeft.textContent = formatTimeLeft(session.expiresAt);
   }

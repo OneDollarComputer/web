@@ -25,14 +25,23 @@ const lessonTitle = document.getElementById("lessonTitle");
 const slideProgress = document.getElementById("slideProgress");
 const lessonBody = document.getElementById("lessonBody");
 const photoInput = document.getElementById("photoInput");
-const btnPickPhoto = document.getElementById("btnPickPhoto");
+const btnCamera = document.getElementById("btnCamera");
+const btnUpload = document.getElementById("btnUpload");
 const btnDone = document.getElementById("btnDone");
+const btnClearPhoto = document.getElementById("btnClearPhoto");
+const photoPreview = document.getElementById("photoPreview");
+const photoPreviewImg = document.getElementById("photoPreviewImg");
+const cameraDialog = document.getElementById("cameraDialog");
+const cameraVideo = document.getElementById("cameraVideo");
+const btnCapture = document.getElementById("btnCapture");
+const btnCancelCamera = document.getElementById("btnCancelCamera");
 const doneStatus = document.getElementById("doneStatus");
 
 let sessionId = null;
 let sessionPin = null;
 let myId = studentId();
 let pendingPhoto = null;
+let cameraStream = null;
 let unsubSession = null;
 let heartbeatTimer = null;
 let slides = [];
@@ -46,6 +55,91 @@ function setPinStatus(msg, isError = false) {
 function setDoneStatus(msg, isError = false) {
   doneStatus.textContent = msg || "";
   doneStatus.classList.toggle("error", isError);
+}
+
+function photoBytes(dataUrl) {
+  const comma = dataUrl.indexOf(",");
+  if (comma < 0) return 0;
+  return Math.ceil((dataUrl.length - comma - 1) * 3 / 4);
+}
+
+function showPhotoPreview(dataUrl) {
+  photoPreviewImg.src = dataUrl;
+  photoPreview.hidden = false;
+  btnDone.hidden = false;
+}
+
+function clearPhoto() {
+  pendingPhoto = null;
+  photoInput.value = "";
+  photoPreview.hidden = true;
+  photoPreviewImg.removeAttribute("src");
+  btnDone.hidden = true;
+}
+
+function setPhotoFromDataUrl(dataUrl) {
+  if (!dataUrl.startsWith("data:image/")) {
+    setDoneStatus("Choose an image file.", true);
+    return;
+  }
+  if (photoBytes(dataUrl) > MAX_PHOTO_BYTES) {
+    setDoneStatus("Photo is too large. Try a smaller image.", true);
+    clearPhoto();
+    return;
+  }
+  pendingPhoto = dataUrl;
+  showPhotoPreview(dataUrl);
+  setDoneStatus("Ready to send.");
+}
+
+async function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((t) => t.stop());
+    cameraStream = null;
+  }
+  cameraVideo.srcObject = null;
+}
+
+async function openCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setDoneStatus("Camera not available in this browser.", true);
+    return;
+  }
+  setDoneStatus("");
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+    cameraVideo.srcObject = cameraStream;
+    cameraDialog.showModal();
+  } catch (err) {
+    console.error(err);
+    setDoneStatus("Could not open camera.", true);
+    await stopCamera();
+  }
+}
+
+function captureFromCamera() {
+  const video = cameraVideo;
+  if (!video.videoWidth) return;
+  const maxW = 1600;
+  const scale = Math.min(1, maxW / video.videoWidth);
+  const w = Math.round(video.videoWidth * scale);
+  const h = Math.round(video.videoHeight * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext("2d").drawImage(video, 0, 0, w, h);
+  let quality = 0.88;
+  let dataUrl = canvas.toDataURL("image/jpeg", quality);
+  while (photoBytes(dataUrl) > MAX_PHOTO_BYTES && quality > 0.4) {
+    quality -= 0.1;
+    dataUrl = canvas.toDataURL("image/jpeg", quality);
+  }
+  stopCamera();
+  cameraDialog.close();
+  setPhotoFromDataUrl(dataUrl);
 }
 
 async function loadSessionByPin(pin) {
@@ -147,7 +241,8 @@ function watchSession(sid) {
   unsubSession = onValue(sessionRef, async (snap) => {
     if (!snap.exists() || snap.val().status !== "active") {
       setDoneStatus("This class has ended.", true);
-      btnPickPhoto.disabled = true;
+      btnCamera.disabled = true;
+      btnUpload.disabled = true;
       btnDone.disabled = true;
       clearInterval(heartbeatTimer);
       return;
@@ -205,7 +300,23 @@ pinForm?.addEventListener("submit", async (e) => {
   }
 });
 
-btnPickPhoto?.addEventListener("click", () => photoInput.click());
+btnUpload?.addEventListener("click", () => photoInput.click());
+
+btnCamera?.addEventListener("click", () => openCamera());
+
+btnCancelCamera?.addEventListener("click", async () => {
+  await stopCamera();
+  cameraDialog.close();
+});
+
+cameraDialog?.addEventListener("close", () => stopCamera());
+
+btnCapture?.addEventListener("click", () => captureFromCamera());
+
+btnClearPhoto?.addEventListener("click", () => {
+  clearPhoto();
+  setDoneStatus("");
+});
 
 photoInput?.addEventListener("change", () => {
   const file = photoInput.files?.[0];
@@ -215,19 +326,7 @@ photoInput?.addEventListener("change", () => {
     return;
   }
   const reader = new FileReader();
-  reader.onload = () => {
-    const dataUrl = String(reader.result || "");
-    const bytes = Math.ceil((dataUrl.length - dataUrl.indexOf(",") - 1) * 3 / 4);
-    if (bytes > MAX_PHOTO_BYTES) {
-      setDoneStatus("Photo is too large. Try a smaller image.", true);
-      pendingPhoto = null;
-      btnDone.hidden = true;
-      return;
-    }
-    pendingPhoto = dataUrl;
-    btnDone.hidden = false;
-    setDoneStatus("Ready to send.");
-  };
+  reader.onload = () => setPhotoFromDataUrl(String(reader.result || ""));
   reader.onerror = () => setDoneStatus("Could not read photo.", true);
   reader.readAsDataURL(file);
 });
@@ -245,7 +344,8 @@ btnDone?.addEventListener("click", async () => {
     });
     pendingPhoto = null;
     photoInput.value = "";
-    btnDone.hidden = true;
+    clearPhoto();
+    btnDone.disabled = false;
     setDoneStatus("Photo sent!");
   } catch (err) {
     console.error(err);

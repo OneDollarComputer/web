@@ -30,12 +30,24 @@
       <p id="slideProgress" class="slide-progress"></p>
       <div id="lessonBody" class="slide-body"></div>
       <div class="done-panel">
-        <label for="photoInput">Finished your build?</label>
+        <p class="done-label">Finished your build?</p>
         <div class="done-actions">
-          <input id="photoInput" type="file" accept="image/*" capture="environment" hidden />
-          <button type="button" id="btnPickPhoto" class="ghost-sm">Add photo</button>
+          <input id="photoInput" type="file" accept="image/*" hidden />
+          <button type="button" id="btnCamera" class="ghost-sm">Camera</button>
+          <button type="button" id="btnUpload" class="ghost-sm">Upload</button>
           <button type="button" id="btnDone" class="primary" hidden>Done</button>
         </div>
+        <div id="photoPreview" class="photo-preview" hidden>
+          <img id="photoPreviewImg" alt="" />
+          <button type="button" id="btnClearPhoto" class="ghost-sm">Remove</button>
+        </div>
+        <dialog id="cameraDialog" class="camera-dialog">
+          <video id="cameraVideo" autoplay playsinline muted></video>
+          <div class="camera-actions">
+            <button type="button" id="btnCapture" class="primary">Capture</button>
+            <button type="button" id="btnCancelCamera" class="ghost-sm">Cancel</button>
+          </div>
+        </dialog>
         <p id="doneStatus" class="status" role="status"></p>
       </div>
     </section>
