@@ -16,7 +16,7 @@ You don't need a developer API key; your AI uses the Magic Link to see and edit 
 To connect components in the schematic without user intervention:
 
 ### **Endpoint (Direct Write)**
-- **URL**: `https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/schematic/aiPatch.json`
+- **URL**: `https://odc-files-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/schematic/aiPatch.json`
 - **Method**: `PUT`
 - **Body**: 
 ```json
@@ -41,7 +41,7 @@ To connect components in the schematic without user intervention:
 To place components and route traces on the board:
 
 ### **Endpoint (Direct Write)**
-- **URL**: `https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/pcb/aiPatch.json`
+- **URL**: `https://odc-files-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/pcb/aiPatch.json`
 - **Method**: `PUT`
 - **Body**:
 ```json
@@ -71,8 +71,8 @@ Always prioritize **45-degree corners** (octilinear). Avoid 90-degree or arbitra
 
 ## 🔍 3. HOW TO SEE THE BOARD
 Always check the current state before patching:
-- **PCB State**: `GET https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/pcb.json`
-- **Schematic State**: `GET https://onedollarboard-1b26a-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/schematic.json`
+- **PCB State**: `GET https://odc-files-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/pcb.json`
+- **Schematic State**: `GET https://odc-files-default-rtdb.firebaseio.com/projects/{PROJECT_ID}/schematic.json`
 - **Visual Reference (URL)**: `https://onedollarcomputer.com/electronics/live.html?projectID={PROJECT_ID}` (Visit this via Browse tool to see a human-readable summary).
 
 ---

@@ -6,5 +6,5 @@
   "databaseURL": "https://odc-files-default-rtdb.firebaseio.com",
   "storageBucket": "odc-files.firebasestorage.app",
   "messagingSenderId": "1086912562723",
-  "note": "Public web client config for the One Dollar Computer editor. Same role as onedollarboard-1b26a. Do not put service-account keys here."
+  "note": "Public web client config for the One Dollar Computer editor. Do not put service-account keys here."
 }
