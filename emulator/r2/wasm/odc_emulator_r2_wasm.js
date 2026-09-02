@@ -31,6 +31,34 @@ export class OdcR2Emulator {
         return BigInt.asUintN(64, ret);
     }
     /**
+     * @returns {number}
+     */
+    gpioAOut() {
+        const ret = wasm.odcr2emulator_gpioAOut(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    gpioCOut() {
+        const ret = wasm.odcr2emulator_gpioCOut(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    gpioDIn() {
+        const ret = wasm.odcr2emulator_gpioDIn(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {number}
+     */
+    gpioDOut() {
+        const ret = wasm.odcr2emulator_gpioDOut(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * Board pin 19 — active-low LED on PD6.
      * @returns {boolean}
      */
@@ -69,7 +97,8 @@ export class OdcR2Emulator {
         wasm.odcr2emulator_releaseButton(this.__wbg_ptr);
     }
     /**
-     * Run up to `max_cycles` CPU cycles. Returns stop-reason code (see `stopReasonName`).
+     * Run for up to `max_cycles` *additional* CPU cycles from the current count.
+     * Returns stop-reason code (see `stopReasonName`).
      * @param {bigint} max_cycles
      * @returns {number}
      */

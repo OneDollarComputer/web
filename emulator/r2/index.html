@@ -3,87 +3,100 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ODC Emulator — 1.004 R2</title>
+  <title>odc-emulator — 1.004 R2</title>
   <meta name="description" content="Virtual One Dollar Computer (model 1.004 R2). Run RV32EC firmware in the browser." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=12" />
   <style>
-    /* [hidden] must win over .auth-gate { display: grid } */
     #auth-gate[hidden],
     #emulator-main[hidden] {
       display: none !important;
     }
   </style>
-  <script defer src="embed.js"></script>
-  <script type="module" src="app.js"></script>
+  <script defer src="embed.js?v=2"></script>
+  <script type="module" src="app.js?v=8"></script>
 </head>
 <body>
   <section id="auth-gate" class="auth-gate" hidden>
-    <div class="auth-gate-card">
-      <p class="kicker">One Dollar Computer</p>
-      <h1>Virtual board · 1.004 R2</h1>
-      <p class="lede">Sign in to run firmware on the emulator at onedollarcomputer.com.</p>
-      <button type="button" id="btnGoogle" class="google-btn">Sign in with Google</button>
-      <p id="gateError" class="gate-error" hidden></p>
-      <p class="fine"><a href="/project/">Claim your username</a> · <a href="/">Home</a></p>
+    <div class="term-window auth-term">
+      <div class="term-chrome">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="term-title">odc-emulator — sign in</span>
+      </div>
+      <div class="term-body">
+        <p class="term-line"><span class="prompt">$</span> odc-emulator --login</p>
+        <p class="term-line dim">Sign in to run firmware at onedollarcomputer.com</p>
+        <button type="button" id="btnGoogle" class="term-btn">Sign in with Google</button>
+        <p id="gateError" class="term-line err" hidden></p>
+        <p class="term-line dim"><a href="/project/">Claim username</a> · <a href="/">Home</a></p>
+      </div>
     </div>
   </section>
 
   <div id="emulator-main">
-  <header class="bar">
-    <div class="bar-inner">
-      <a class="brand" href="/">One Dollar Computer</a>
-      <span class="tag">Emulator · 1.004 R2</span>
+    <div class="term-shell">
+      <div class="term-window">
+        <div class="term-chrome">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="term-title">odc-emulator — 1.004 R2</span>
+          <span id="local-tag" class="term-badge" hidden>local</span>
+          <a class="term-link" href="/">onedollarcomputer.com</a>
+        </div>
+
+        <div class="term-body">
+          <div class="term-grid">
+            <section class="term-pane term-log-pane">
+              <div id="term-log" class="term-log" aria-live="polite"></div>
+
+              <div id="status" class="term-status" role="status" hidden></div>
+
+              <div class="term-cmdline">
+                <span class="prompt">$</span>
+                <div class="term-actions">
+                  <button type="button" id="compile" class="term-btn" hidden>compile</button>
+                  <button type="button" id="run" class="term-btn primary" disabled>run</button>
+                  <button type="button" id="stop" class="term-btn" disabled>stop</button>
+                  <span class="term-hint">button=<kbd>Space</kbd> · pin 13</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="term-pane term-board-pane">
+              <p class="term-line dim board-label">board preview</p>
+              <div class="board-wrap" id="board-wrap">
+                <img
+                  id="board-art"
+                  src="board.png"
+                  alt="One Dollar Computer board (model 1.004 R2)"
+                  width="389"
+                  height="642"
+                />
+                <div id="pin-overlay" class="pin-overlay" aria-hidden="true"></div>
+                <div id="led" class="led" title="Board pin 19 (LED)" aria-hidden="true"></div>
+                <button type="button" id="boot-btn" class="boot-btn" title="Board pin 13 (BUTTON)" aria-label="Board button (pin 13)"></button>
+              </div>
+            </section>
+          </div>
+
+          <div class="term-readout">
+            <span class="readout-item"><span class="dim">cycles</span> <span id="metric-cycles">—</span></span>
+            <span class="readout-item"><span class="dim">pc</span> <span id="metric-pc">—</span></span>
+            <span class="readout-item"><span class="dim">stop</span> <span id="metric-stop">—</span></span>
+            <span class="readout-item"><span class="dim">led</span> <span id="metric-led">—</span></span>
+          </div>
+
+          <div class="gpio-panel">
+            <p class="term-line dim">gpio</p>
+            <pre id="gpio-readout" class="gpio-readout">—</pre>
+          </div>
+        </div>
+      </div>
     </div>
-  </header>
-
-  <main class="layout">
-    <section class="panel board-panel">
-      <span class="beta-corner" aria-hidden="true"><span>Beta</span></span>
-      <div class="board-wrap" id="board-wrap">
-        <img
-          id="board-art"
-          src="board.png"
-          alt="One Dollar Computer board (model 1.004 R2)"
-          width="389"
-          height="642"
-        />
-        <div id="led" class="led" title="Board pin 19 (LED)" aria-hidden="true"></div>
-        <button type="button" id="boot-btn" class="boot-btn" title="Board pin 13 (BUTTON)" aria-label="Board button (pin 13)"></button>
-      </div>
-      <p class="hint">Click <strong>Button</strong> (pin 13) or hold <kbd>Space</kbd>. Same path as the physical board.</p>
-    </section>
-
-    <section class="panel controls">
-      <h1>Virtual board</h1>
-      <p class="lede">
-        Runs the same raw <code>.bin</code> you flash to hardware. Motor:
-        <a href="https://github.com/OneDollarComputer/emulator/tree/main/r2">emulator/r2</a>
-        (WASM deploy lives here).
-      </p>
-
-      <div id="status" class="status" role="status">Loading emulator…</div>
-
-      <div class="row">
-        <button type="button" id="compile" class="compile" hidden>Compile</button>
-        <button type="button" id="run" class="primary" disabled>Run</button>
-        <button type="button" id="stop" disabled>Stop</button>
-      </div>
-
-      <dl class="metrics">
-        <div><dt>Cycles</dt><dd id="metric-cycles">—</dd></div>
-        <div><dt>PC</dt><dd id="metric-pc">—</dd></div>
-        <div><dt>Stop</dt><dd id="metric-stop">—</dd></div>
-      </dl>
-
-      <p class="fine">
-        Spec: <a href="/specification/">v1.004 R2</a> ·
-        Pins: <a href="/docs/board.yaml">board.yaml</a> ·
-        With a <code>?projectID=</code> link, use <strong>Compile</strong> then <strong>Run</strong>.
-      </p>
-    </section>
-  </main>
   </div>
 </body>
 </html>

@@ -22,7 +22,7 @@ window.addEventListener("message", async (event) => {
   const data = event.data;
   if (!data || data.type !== "odc-emulator") return;
 
-  const app = await import("./app.js");
+  const app = await import("./app.js?v=8");
 
   try {
     if (data.action === "loadBin" && data.bin) {

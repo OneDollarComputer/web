@@ -10,11 +10,41 @@ import {
   DATABASE_URL,
 } from "./auth-gate.js";
 
-const CYCLES_PER_FRAME = 80_000;
+/**
+ * sample.bin toggles ~every 667 cycles (SysTick stub). Keep frames short so the
+ * LED half-period spans many animation frames (~2–3 Hz blink).
+ */
+const CYCLES_PER_FRAME = 80;
+const SYNC_SLICE = 40;
+
+/** Header pin indicators — 389×642 display space (matches claudioos). */
+const PIN_INDICATORS = [
+  { pin: 0, signal: "PC0", port: "c", bit: 0, x: 33, y: 255, w: 14, h: 15 },
+  { pin: 1, signal: "PC1", port: "c", bit: 1, x: 33, y: 294, w: 14, h: 15 },
+  { pin: 2, signal: "PC2", port: "c", bit: 2, x: 33, y: 333, w: 14, h: 14 },
+  { pin: 3, signal: "PC3", port: "c", bit: 3, x: 33, y: 371, w: 14, h: 15 },
+  { pin: 4, signal: "PC4", port: "c", bit: 4, x: 33, y: 410, w: 14, h: 15 },
+  { pin: 5, signal: "PC5", port: "c", bit: 5, x: 33, y: 449, w: 14, h: 14 },
+  { pin: 6, signal: "PC6", port: "c", bit: 6, x: 33, y: 487, w: 14, h: 15 },
+  { pin: 7, signal: "PC7", port: "c", bit: 7, x: 33, y: 526, w: 14, h: 14 },
+  { pin: 8, signal: "PA1", port: "a", bit: 1, x: 33, y: 564, w: 14, h: 15 },
+  { pin: 9, signal: "PA2", port: "a", bit: 2, x: 33, y: 603, w: 14, h: 15 },
+  { pin: 12, signal: "PD1", port: "d", bit: 1, x: 342, y: 333, w: 15, h: 14 },
+  { pin: 13, signal: "PD7", port: "d", bit: 7, input: true, x: 342, y: 371, w: 15, h: 15 },
+  { pin: 14, signal: "PD0", port: "d", bit: 0, x: 342, y: 410, w: 15, h: 14 },
+  { pin: 15, signal: "PD2", port: "d", bit: 2, x: 342, y: 449, w: 15, h: 15 },
+  { pin: 19, signal: "PD6", port: "d", bit: 6, activeLow: true, led: true, x: 342, y: 603, w: 15, h: 15 },
+];
+
 const COMPILE_TIMEOUT_MS = 120_000;
 
 const statusEl = document.getElementById("status");
+const termLogEl = document.getElementById("term-log");
+const gpioReadoutEl = document.getElementById("gpio-readout");
+const metricLed = document.getElementById("metric-led");
 const ledEl = document.getElementById("led");
+const pinOverlayEl = document.getElementById("pin-overlay");
+const boardWrapEl = document.getElementById("board-wrap");
 const compileBtn = document.getElementById("compile");
 const runBtn = document.getElementById("run");
 const stopBtn = document.getElementById("stop");
@@ -32,10 +62,27 @@ let compiling = false;
 let authCtx = null;
 let projectID = null;
 let projectMeta = null;
+let pinDots = [];
+
+function termLog(text, kind = "") {
+  if (!termLogEl) return;
+  const line = document.createElement("p");
+  line.className = `term-line${kind ? ` ${kind}` : ""}`;
+  line.textContent = text;
+  termLogEl.appendChild(line);
+  while (termLogEl.childElementCount > 80) {
+    termLogEl.firstElementChild?.remove();
+  }
+  termLogEl.scrollTop = termLogEl.scrollHeight;
+}
 
 function setStatus(text, kind = "") {
-  statusEl.textContent = text;
-  statusEl.className = `status${kind ? ` ${kind}` : ""}`;
+  if (statusEl) {
+    statusEl.textContent = text;
+    statusEl.className = `term-status${kind ? ` ${kind}` : ""}`;
+  }
+  const prefix = kind === "error" ? "[err] " : kind === "ok" ? "[ok] " : kind === "warn" ? "[warn] " : "";
+  termLog(`${prefix}${text}`, kind);
 }
 
 function setRunEnabled(on) {
@@ -54,13 +101,74 @@ function updateMetrics(stopCode) {
   if (stopCode !== undefined) {
     metricStop.textContent = wasm.stopReasonName(stopCode);
   }
+  if (metricLed) {
+    const on = emu.ledOn();
+    metricLed.textContent = on ? "1" : "0";
+    metricLed.className = on ? "on" : "off";
+  }
 }
 
-function syncLed() {
+function gpioPortOut(port) {
+  if (!emu) return 0;
+  if (port === "a") return emu.gpioAOut();
+  if (port === "c") return emu.gpioCOut();
+  return emu.gpioDOut();
+}
+
+function pinElectricalHigh(ind) {
+  if (!emu) return false;
+  const word = ind.input ? emu.gpioDIn() : gpioPortOut(ind.port);
+  return ((word >> ind.bit) & 1) !== 0;
+}
+
+function pinActive(ind) {
+  const high = pinElectricalHigh(ind);
+  if (ind.activeLow) return !high;
+  return high;
+}
+
+function buildPinOverlay() {
+  if (!pinOverlayEl || !boardWrapEl) return;
+  const bw = 389;
+  const bh = 642;
+  pinOverlayEl.replaceChildren();
+  pinDots = PIN_INDICATORS.map((ind) => {
+    const dot = document.createElement("div");
+    dot.className = `pin-dot${ind.led ? " led-pin" : ""}`;
+    dot.style.left = `${(ind.x / bw) * 100}%`;
+    dot.style.top = `${(ind.y / bh) * 100}%`;
+    dot.style.width = `${(ind.w / bw) * 100}%`;
+    dot.style.height = `${(ind.h / bh) * 100}%`;
+    dot.title = `Pin ${ind.pin} (${ind.signal})`;
+    pinOverlayEl.appendChild(dot);
+    return { ind, dot };
+  });
+}
+
+function formatGpioReadout() {
+  if (!emu || !gpioReadoutEl) return;
+  const parts = PIN_INDICATORS.map((ind) => {
+    const active = pinActive(ind);
+    const val = active ? "1" : "0";
+    const cls = active ? (ind.led ? "led-hi" : "hi") : "";
+    return `<span class="${cls}">${String(ind.pin).padStart(2, " ")}:${val}</span>`;
+  });
+  gpioReadoutEl.innerHTML = parts.join("  ");
+}
+
+function syncBoard() {
   if (!emu) return;
-  const on = emu.ledOn();
-  ledEl.classList.toggle("on", on);
-  window.odcEmulatorNotify?.({ type: "odc-emulator", event: "led", on });
+
+  const ledOn = emu.ledOn();
+  ledEl.classList.toggle("on", ledOn);
+
+  for (const { ind, dot } of pinDots) {
+    dot.classList.toggle("on", pinActive(ind));
+  }
+  formatGpioReadout();
+  updateMetrics();
+
+  window.odcEmulatorNotify?.({ type: "odc-emulator", event: "led", on: ledOn });
 }
 
 function decodeBase64Binary(b64) {
@@ -289,8 +397,9 @@ async function compileAndLoad() {
 
 async function loadWasm() {
   if (wasm) return;
-  const mod = await import("./wasm/odc_emulator_r2_wasm.js");
-  await mod.default();
+  // Cache-bust when emulator WASM bindings change (gpio*, loadBin reset, run delta).
+  const mod = await import("./wasm/odc_emulator_r2_wasm.js?v=4");
+  await mod.default(new URL("./wasm/odc_emulator_r2_wasm_bg.wasm?v=4", import.meta.url));
   wasm = mod;
   emu = new wasm.OdcR2Emulator();
 }
@@ -299,9 +408,9 @@ async function loadBin(bytes) {
   if (!emu) await loadWasm();
   emu.loadBin(new Uint8Array(bytes));
   updateMetrics(0);
-  syncLed();
+  syncBoard();
   setRunEnabled(true);
-  setStatus(`Loaded ${bytes.byteLength} bytes`, "ok");
+  setStatus(`loaded ${bytes.byteLength} bytes`, "ok");
   window.odcEmulatorNotify?.({ type: "odc-emulator", event: "loaded", size: bytes.byteLength });
 }
 
@@ -315,17 +424,25 @@ function stopLoop() {
 
 function tick() {
   if (!running || !emu) return;
-  const code = emu.run(BigInt(CYCLES_PER_FRAME));
-  updateMetrics(code);
-  syncLed();
 
-  if (code !== 0 && code !== 3) {
-    setStatus(`Stopped: ${wasm.stopReasonName(code)}`, code === 4 ? "ok" : "");
-    stopLoop();
-    window.odcEmulatorNotify?.({ type: "odc-emulator", event: "stop", code });
-    return;
+  let remaining = CYCLES_PER_FRAME;
+  let stopCode = 0;
+
+  while (remaining > 0 && running) {
+    const slice = Math.min(remaining, SYNC_SLICE);
+    stopCode = emu.run(BigInt(slice));
+    remaining -= slice;
+    syncBoard();
+    if (stopCode !== 0 && stopCode !== 3) {
+      updateMetrics(stopCode);
+      setStatus(`Stopped: ${wasm.stopReasonName(stopCode)}`, stopCode === 4 ? "ok" : "error");
+      stopLoop();
+      window.odcEmulatorNotify?.({ type: "odc-emulator", event: "stop", code: stopCode });
+      return;
+    }
   }
 
+  updateMetrics(stopCode);
   rafId = requestAnimationFrame(tick);
 }
 
@@ -334,7 +451,8 @@ function startLoop() {
   running = true;
   runBtn.disabled = true;
   stopBtn.disabled = false;
-  setStatus("Running…");
+  setStatus("running", "ok");
+  termLog("$ run", "");
   rafId = requestAnimationFrame(tick);
 }
 
@@ -342,12 +460,12 @@ function wireInput() {
   const press = () => {
     bootBtn.classList.add("pressed");
     emu?.pressButton();
-    syncLed();
+    syncBoard();
   };
   const release = () => {
     bootBtn.classList.remove("pressed");
     emu?.releaseButton();
-    syncLed();
+    syncBoard();
   };
 
   bootBtn.addEventListener("mousedown", press);
@@ -385,43 +503,47 @@ runBtn.addEventListener("click", () => {
 stopBtn.addEventListener("click", stopLoop);
 
 wireInput();
+buildPinOverlay();
 
 if (new URLSearchParams(location.search).get("embed") === "1") {
   document.body.classList.add("embed");
 }
 
 if (isLocalDev()) {
-  const bar = document.querySelector(".bar-inner");
-  if (bar) {
-    const tag = document.createElement("span");
-    tag.className = "local-tag";
-    tag.textContent = "Local — no sign-in";
-    bar.appendChild(tag);
-  }
+  const tag = document.getElementById("local-tag");
+  if (tag) tag.hidden = false;
 }
 
 (async () => {
   try {
+    termLog("$ odc-emulator-r2 --target 1.004.R2", "");
+    termLog("RV32EC · 16K flash · 2K ram · pins 0..=19", "dim");
     authCtx = await ensureEmulatorAccess();
+    buildPinOverlay();
     await loadWasm();
+    termLog("wasm loaded", "ok");
 
+    // Web deploy: firmware comes from Firebase via ?projectID= (editor Lab → Simulate).
+    // No manual .bin upload — Compile then Run for the project owner.
     projectID = new URLSearchParams(location.search).get("projectID");
     if (projectID) {
       if (!authCtx.local) {
         projectMeta = await fetchProjectMeta(projectID, authCtx);
       }
       setCompileVisible(canCompileProject(projectMeta, authCtx));
+      termLog(`project ${projectID}`, "dim");
 
-      setStatus(`Loading ${projectID}…`);
+      setStatus(`loading ${projectID} from firebase…`);
       try {
         await loadBin(await fetchProjectBinary(projectID, authCtx));
+        setStatus("ready — $ run", "ok");
       } catch (err) {
         const msg = String(err.message || err);
         if (msg.includes("No compiled binary") || msg.includes("Compile")) {
           setStatus(canCompileProject(projectMeta, authCtx)
-            ? "No binary yet — Compile, then Run"
+            ? "no binary yet — $ compile, then $ run"
             : msg,
-            canCompileProject(projectMeta, authCtx) ? "" : "error");
+            canCompileProject(projectMeta, authCtx) ? "warn" : "error");
         } else {
           setStatus(msg, "error");
         }
@@ -429,7 +551,19 @@ if (isLocalDev()) {
       return;
     }
 
-    setStatus("Open from the editor — Lab → Simulate", "ok");
+    // Local-only fallback so the core can be exercised without Firebase.
+    if (isLocalDev()) {
+      try {
+        const res = await fetch("sample.bin");
+        await loadBin(await res.arrayBuffer());
+        setStatus("local sample.bin — $ run (use ?projectID= for firebase)", "ok");
+      } catch {
+        setStatus("no firmware — open Lab → Simulate (?projectID=)", "warn");
+      }
+      return;
+    }
+
+    setStatus("no firmware — open from editor (Lab → Simulate)", "warn");
   } catch (err) {
     if (String(err).includes("WASM")) {
       setStatus(

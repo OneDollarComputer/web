@@ -1,6 +1,6 @@
 # `web/emulator/r2/` — browser deploy
 
-Static deploy of **[emulator/r2](https://github.com/OneDollarComputer/emulator/tree/main/r2)** (WASM + UI).  
+Static deploy of **[emulator/r2](https://github.com/OneDollarComputer/emulator/tree/main/r2)** (WASM + terminal UI).  
 The board model is developed in the **emulator** repo; this folder is only hosting glue.
 
 ## URLs
@@ -8,8 +8,10 @@ The board model is developed in the **emulator** repo; this folder is only hosti
 | | |
 |--|--|
 | Full page | `/emulator/r2/?projectID=…` |
-| From editor | **Simulate** opens emulator with the current project |
-| Curriculum iframe | `/emulator/r2/?embed=1` |
+| From editor | User menu → **Lab → Simulate** (passes current `projectID`) |
+| Embed | iframe `/emulator/r2/?embed=1` |
+
+**Firmware source (web format):** Firebase `/projects/{id}/code` via `?projectID=` — owner uses **compile** then **run**. No manual `.bin` upload. Localhost without `projectID` may load `sample.bin` only for core smoke tests.
 
 **Access:** no sign-in on `localhost` / `127.0.0.1`. On **onedollarcomputer.com** the page requires Google sign-in.
 
