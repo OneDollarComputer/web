@@ -7,7 +7,7 @@
   <meta name="description" content="Virtual One Dollar Computer (model 1.004 R2). Run RV32EC firmware in the browser." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="style.css?v=13" />
   <style>
     #auth-gate[hidden],
     #emulator-main[hidden] {
@@ -15,15 +15,15 @@
     }
   </style>
   <script defer src="embed.js?v=2"></script>
-  <script type="module" src="app.js?v=8"></script>
+  <script type="module" src="app.js?v=9"></script>
 </head>
 <body>
   <section id="auth-gate" class="auth-gate" hidden>
     <div class="term-window auth-term">
       <div class="term-chrome">
-        <span class="dot red"></span>
-        <span class="dot yellow"></span>
-        <span class="dot green"></span>
+        <span class="dot red" aria-hidden="true"></span>
+        <span class="dot idle" aria-hidden="true"></span>
+        <span class="dot green" aria-hidden="true"></span>
         <span class="term-title">odc-emulator — sign in</span>
       </div>
       <div class="term-body">
@@ -40,9 +40,9 @@
     <div class="term-shell">
       <div class="term-window">
         <div class="term-chrome">
-          <span class="dot red"></span>
-          <span class="dot yellow"></span>
-          <span class="dot green"></span>
+          <button type="button" id="chromeClose" class="dot red" title="Close — back to editor" aria-label="Close — back to editor"></button>
+          <button type="button" id="chromeIdle" class="dot idle" title="" aria-hidden="true" tabindex="-1" disabled></button>
+          <button type="button" id="chromeFullscreen" class="dot green" title="Fullscreen" aria-label="Fullscreen"></button>
           <span class="term-title">odc-emulator — 1.004 R2</span>
           <span id="local-tag" class="term-badge" hidden>local</span>
           <a class="term-link" href="/">onedollarcomputer.com</a>

@@ -502,6 +502,28 @@ runBtn.addEventListener("click", () => {
 
 stopBtn.addEventListener("click", stopLoop);
 
+function editorUrlForProject() {
+  const id = projectID || new URLSearchParams(location.search).get("projectID");
+  return id ? `/editor/?projectID=${encodeURIComponent(id)}` : "/editor/";
+}
+
+function toggleFullscreen() {
+  const target = document.querySelector(".term-window") || document.documentElement;
+  if (!document.fullscreenElement) {
+    target.requestFullscreen?.().catch(() => {});
+  } else {
+    document.exitFullscreen?.().catch(() => {});
+  }
+}
+
+document.getElementById("chromeClose")?.addEventListener("click", () => {
+  location.href = editorUrlForProject();
+});
+
+document.getElementById("chromeFullscreen")?.addEventListener("click", () => {
+  toggleFullscreen();
+});
+
 wireInput();
 buildPinOverlay();
 
