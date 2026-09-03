@@ -7,4 +7,4 @@ args = ["curriculum/mcp/bin.js"]
 startup_timeout_sec = 20
 
 [mcp_servers.odc-curriculum.env]
-ODC_CURRICULUM_API = "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent"
+ODC_CURRICULUM_API = "https://api.onedollarcomputer.com"

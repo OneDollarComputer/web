@@ -9,3 +9,6 @@ firebase-debug.log
 
 # original ODB brand images kept locally while rebranding
 _legacy_images/
+
+# Machine-only agent notes (see .odc/README.md). Never commit.
+.odc/local/

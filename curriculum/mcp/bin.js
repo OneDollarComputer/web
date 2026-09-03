@@ -12,10 +12,14 @@ import { z } from "zod";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const DEFAULT_API =
-  process.env.ODC_CURRICULUM_API ||
-  "https://us-central1-odc-files.cloudfunctions.net/curriculumAgent";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const API_ORIGIN = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "..", "api-origin.json"), "utf8")
+).url;
+
+const DEFAULT_API = process.env.ODC_CURRICULUM_API || API_ORIGIN;
 
 const RTDB_URL =
   process.env.ODC_RTDB_URL ||

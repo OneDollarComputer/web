@@ -205,9 +205,9 @@ async function fetchProjectMeta(id, ctx) {
   const metaRes = await fetch(
     `${DATABASE_URL}/projects/${encodeURIComponent(id)}.json${authQuery}`,
   );
-  if (!metaRes.ok) throw new Error(`Project not found (${metaRes.status})`);
+  if (!metaRes.ok) throw new Error("project not found");
   const meta = await metaRes.json();
-  if (!meta) throw new Error("Project not found");
+  if (!meta) throw new Error("project not found");
   return meta;
 }
 
@@ -225,19 +225,19 @@ function canCompileProject(meta, ctx) {
 async function fetchProjectCode(id, ctx) {
   if (ctx.local) {
     const res = await fetch(`/api/projects/${encodeURIComponent(id)}`);
-    if (!res.ok) throw new Error(`Project not found (${res.status})`);
+    if (!res.ok) throw new Error("project not found");
     return res.json();
   }
 
   const meta = await fetchProjectMeta(id, ctx);
   if (!canAccessProject(meta, ctx)) {
-    throw new Error("Sign in as the project owner to simulate this firmware");
+    throw new Error("sign in required");
   }
 
   const codeRes = await fetch(
     `${DATABASE_URL}/projects/${encodeURIComponent(id)}/code.json`,
   );
-  if (!codeRes.ok) throw new Error(`Could not load project (${codeRes.status})`);
+  if (!codeRes.ok) throw new Error("could not load project");
   return codeRes.json();
 }
 
@@ -259,12 +259,12 @@ async function fetchProjectBinary(id, ctx) {
   if (!b64 && code?.binaryHash) {
     b64 = await fetchBinaryFromCache(code.binaryHash, code);
   }
-  if (!b64) throw new Error("No compiled binary — Compile to build a .bin");
+  if (!b64) throw new Error("no binary");
   if (code.compilationStatus === "error") {
-    throw new Error(code.compilationError || "Last compile failed — Compile again");
+    throw new Error(code.compilationError || "compile failed");
   }
   if (code.compilationStatus && code.compilationStatus !== "success") {
-    throw new Error("Compilation in progress — wait or Compile again");
+    throw new Error("compiling…");
   }
   return decodeBase64Binary(b64);
 }
@@ -284,11 +284,11 @@ async function waitForCloudCompile(id, expectedHash, startedAt) {
 
     if (data.compilationStatus === "pending") {
       sawPending = true;
-      setStatus("Compiling…");
+      setStatus("compiling…");
       continue;
     }
     if (data.compilationStatus === "error") {
-      throw new Error(data.compilationError || "Compile failed");
+      throw new Error(data.compilationError || "compile failed");
     }
     if (data.compilationStatus === "success" && data.binaryHash === expectedHash) {
       const updated = data.compilationUpdatedAt || data.binarySavedAt || "";
@@ -297,11 +297,11 @@ async function waitForCloudCompile(id, expectedHash, startedAt) {
       }
     }
   }
-  throw new Error("Compile timed out — try again");
+  throw new Error("compile timed out");
 }
 
 async function requestCompile(id, ctx, content) {
-  if (!content.trim()) throw new Error("No source code to compile");
+  if (!content.trim()) throw new Error("no source");
 
   if (ctx.local) {
     const res = await fetch("/api/compile", {
@@ -311,13 +311,13 @@ async function requestCompile(id, ctx, content) {
     });
     const result = await res.json();
     if (!res.ok || result.compilationStatus === "error" || result.ok === false) {
-      throw new Error(result.compilationError || result.error || "Compile failed");
+      throw new Error(result.compilationError || result.error || "compile failed");
     }
     return result;
   }
 
   if (!canCompileProject(projectMeta, ctx)) {
-    throw new Error("Only the project owner can compile");
+    throw new Error("owner only");
   }
 
   const binaryHash = await getCodeHash(content);
@@ -342,7 +342,7 @@ async function requestCompile(id, ctx, content) {
       body: JSON.stringify(data),
     },
   );
-  if (!putRes.ok) throw new Error(`Could not request compile (${putRes.status})`);
+  if (!putRes.ok) throw new Error("compile request failed");
 
   try {
     await fetch(
@@ -377,15 +377,15 @@ async function compileAndLoad() {
       const b64 = extractBinary(code) || await fetchBinaryFromCache(code.binaryHash, code);
       if (b64) {
         await loadBin(decodeBase64Binary(b64));
-        setStatus(`Loaded ${atob(b64).length} bytes`, "ok");
+        setStatus("emulator loaded", "ok");
         return;
       }
     }
 
-    setStatus("Compiling…");
+    setStatus("compiling…");
     await requestCompile(projectID, authCtx, content);
     await loadBin(await fetchProjectBinary(projectID, authCtx));
-    setStatus(`Compiled — ${loadedBin ? "ready to run" : "loaded"}`, "ok");
+    setStatus("emulator loaded", "ok");
   } catch (err) {
     setStatus(String(err.message || err), "error");
   } finally {
@@ -397,9 +397,9 @@ async function compileAndLoad() {
 
 async function loadWasm() {
   if (wasm) return;
-  // Cache-bust when emulator WASM bindings change (gpio*, loadBin reset, run delta).
-  const mod = await import("./wasm/odc_emulator_r2_wasm.js?v=4");
-  await mod.default(new URL("./wasm/odc_emulator_r2_wasm_bg.wasm?v=4", import.meta.url));
+  // Cache-bust when emulator WASM bindings change.
+  const mod = await import("./wasm/odc_emulator_r2_wasm.js?v=5");
+  await mod.default(new URL("./wasm/odc_emulator_r2_wasm_bg.wasm?v=5", import.meta.url));
   wasm = mod;
   emu = new wasm.OdcR2Emulator();
 }
@@ -410,7 +410,6 @@ async function loadBin(bytes) {
   updateMetrics(0);
   syncBoard();
   setRunEnabled(true);
-  setStatus(`loaded ${bytes.byteLength} bytes`, "ok");
   window.odcEmulatorNotify?.({ type: "odc-emulator", event: "loaded", size: bytes.byteLength });
 }
 
@@ -435,7 +434,7 @@ function tick() {
     syncBoard();
     if (stopCode !== 0 && stopCode !== 3) {
       updateMetrics(stopCode);
-      setStatus(`Stopped: ${wasm.stopReasonName(stopCode)}`, stopCode === 4 ? "ok" : "error");
+      setStatus(`stopped: ${wasm.stopReasonName(stopCode)}`, stopCode === 4 ? "ok" : "error");
       stopLoop();
       window.odcEmulatorNotify?.({ type: "odc-emulator", event: "stop", code: stopCode });
       return;
@@ -452,7 +451,6 @@ function startLoop() {
   runBtn.disabled = true;
   stopBtn.disabled = false;
   setStatus("running", "ok");
-  termLog("$ run", "");
   rafId = requestAnimationFrame(tick);
 }
 
@@ -538,33 +536,27 @@ if (isLocalDev()) {
 
 (async () => {
   try {
-    termLog("$ odc-emulator-r2 --target 1.004.R2", "");
-    termLog("RV32EC · 16K flash · 2K ram · pins 0..=19", "dim");
     authCtx = await ensureEmulatorAccess();
     buildPinOverlay();
     await loadWasm();
-    termLog("wasm loaded", "ok");
 
-    // Web deploy: firmware comes from Firebase via ?projectID= (editor Lab → Simulate).
-    // No manual .bin upload — Compile then Run for the project owner.
+    // Firmware via ?projectID= (editor Lab → Simulate). No manual .bin upload.
     projectID = new URLSearchParams(location.search).get("projectID");
     if (projectID) {
       if (!authCtx.local) {
         projectMeta = await fetchProjectMeta(projectID, authCtx);
       }
       setCompileVisible(canCompileProject(projectMeta, authCtx));
-      termLog(`project ${projectID}`, "dim");
 
-      setStatus(`loading ${projectID} from firebase…`);
       try {
         await loadBin(await fetchProjectBinary(projectID, authCtx));
-        setStatus("ready — $ run", "ok");
+        setStatus("emulator loaded", "ok");
       } catch (err) {
         const msg = String(err.message || err);
-        if (msg.includes("No compiled binary") || msg.includes("Compile")) {
+        if (msg.includes("no binary") || msg.includes("Compile") || msg.includes("compile")) {
           setStatus(canCompileProject(projectMeta, authCtx)
-            ? "no binary yet — $ compile, then $ run"
-            : msg,
+            ? "no binary — compile, then run"
+            : "no binary",
             canCompileProject(projectMeta, authCtx) ? "warn" : "error");
         } else {
           setStatus(msg, "error");
@@ -573,25 +565,21 @@ if (isLocalDev()) {
       return;
     }
 
-    // Local-only fallback so the core can be exercised without Firebase.
     if (isLocalDev()) {
       try {
         const res = await fetch("sample.bin");
         await loadBin(await res.arrayBuffer());
-        setStatus("local sample.bin — $ run (use ?projectID= for firebase)", "ok");
+        setStatus("emulator loaded", "ok");
       } catch {
-        setStatus("no firmware — open Lab → Simulate (?projectID=)", "warn");
+        setStatus("no firmware", "warn");
       }
       return;
     }
 
-    setStatus("no firmware — open from editor (Lab → Simulate)", "warn");
+    setStatus("no firmware", "warn");
   } catch (err) {
     if (String(err).includes("WASM")) {
-      setStatus(
-        "WASM not built. From emulator repo run: r2/scripts/deploy-web.sh",
-        "error",
-      );
+      setStatus("emulator failed to load", "error");
     } else {
       setStatus(String(err.message || err), "error");
     }
