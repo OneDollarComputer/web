@@ -616,6 +616,10 @@
       align-items: center;
       gap: 4px;
       font-weight: 600;
+      transition: opacity 0.35s ease;
+    }
+    .ai-session-badge.is-hiding {
+      opacity: 0;
     }
     .ai-session-active {
       display: inline-flex;
@@ -1540,6 +1544,55 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     const connectionTooltip = null;
 
     let isSyncing = false;
+    let aiBadgeHideTimer = null;
+    let aiBadgeShownKey = null;
+
+    function clearAiSessionBadge() {
+      const el = document.getElementById('aiSessionBadge');
+      if (!el) return;
+      if (aiBadgeHideTimer) {
+        clearTimeout(aiBadgeHideTimer);
+        aiBadgeHideTimer = null;
+      }
+      el.className = 'ai-session-badge';
+      el.innerHTML = '';
+      el.removeAttribute('title');
+      el.style.display = 'none';
+    }
+
+    function showAiSessionBadge(kind, html, title, { ephemeral = false, ms = 4000, key = null } = {}) {
+      const el = document.getElementById('aiSessionBadge');
+      if (!el) return;
+      if (key && key === aiBadgeShownKey) return;
+      if (key) aiBadgeShownKey = key;
+      if (aiBadgeHideTimer) {
+        clearTimeout(aiBadgeHideTimer);
+        aiBadgeHideTimer = null;
+      }
+      el.innerHTML = html;
+      el.className = `ai-session-badge ai-session-${kind}`;
+      el.title = title || '';
+      el.style.display = '';
+      if (!ephemeral) return;
+      aiBadgeHideTimer = setTimeout(() => {
+        el.classList.add('is-hiding');
+        setTimeout(() => {
+          clearAiSessionBadge();
+        }, 350);
+      }, ms);
+    }
+
+    function stripStaleAiTokenFromUrl() {
+      try {
+        const u = new URL(location.href);
+        if (!u.searchParams.has('aiToken')) return;
+        u.searchParams.delete('aiToken');
+        const next = u.pathname + (u.searchParams.toString() ? `?${u.searchParams}` : '') + u.hash;
+        history.replaceState(null, '', next);
+      } catch {
+        /* ignore */
+      }
+    }
     let isLocalChange = false; 
     let saveTimeout = null;
     let lastSavedContent = '';
@@ -3355,25 +3408,28 @@ fn main() {
             
             const urlParams = new URLSearchParams(window.location.search);
             const tokenInUrl = urlParams.get('aiToken');
-            const aiSessionBadge = document.getElementById('aiSessionBadge');
-            
-            if (aiSessionBadge) {
-              if (data.aiSessionActive && data.aiSessionToken) {
-                if (tokenInUrl === data.aiSessionToken) {
-                  aiSessionBadge.innerHTML = '<span>🔒</span> AI Secure';
-                  aiSessionBadge.className = 'ai-session-badge ai-session-active';
-                  aiSessionBadge.title = 'Current AI session is authorized';
-                } else if (tokenInUrl) {
-                  aiSessionBadge.innerHTML = '<span>⚠️</span> AI Expired';
-                  aiSessionBadge.className = 'ai-session-badge ai-session-invalid';
-                  aiSessionBadge.title = 'This AI link is old or invalid. Generate a new one.';
-                } else {
-                  
-                  aiSessionBadge.style.display = 'none';
-                }
-              } else {
-                aiSessionBadge.style.display = 'none';
+
+            if (data.aiSessionActive && data.aiSessionToken) {
+              if (tokenInUrl === data.aiSessionToken) {
+                showAiSessionBadge(
+                  'active',
+                  '<span>🔒</span> AI Secure',
+                  'Current AI session is authorized',
+                  { ephemeral: true, ms: 3500, key: `secure:${data.aiSessionToken}` }
+                );
+              } else if (tokenInUrl) {
+                showAiSessionBadge(
+                  'invalid',
+                  '<span>⚠️</span> AI Expired',
+                  'This AI link is old or invalid. Generate a new one.',
+                  { ephemeral: true, ms: 4000, key: `expired:${tokenInUrl}` }
+                );
+                stripStaleAiTokenFromUrl();
+              } else if (!aiBadgeHideTimer) {
+                clearAiSessionBadge();
               }
+            } else if (!aiBadgeHideTimer) {
+              clearAiSessionBadge();
             }
 
             
