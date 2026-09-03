@@ -630,56 +630,6 @@
       border: 1px solid rgba(248, 81, 73, 0.3);
     }
 
-    /* AI Help Button */
-    .ai-help-btn {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      background: #30363d;
-      color: #8b949e;
-      border: 1px solid #444c56;
-      border-radius: 8px;
-      padding: 11px 30px 11px 16px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: transform 0.2s, background 0.2s;
-      font-size: 1rem;
-      overflow: hidden;
-    }
-
-    .ai-help-btn:hover {
-      background: #444c56;
-      color: white;
-      transform: scale(1.05);
-    }
-
-    .ai-help-btn.new-help {
-      background: #8e44ad;
-      color: white;
-      border: none;
-      animation: pulse-purple 2s infinite;
-    }
-
-    .ai-help-btn.new-help:hover {
-      background: #9b59b6;
-    }
-
-    @keyframes pulse-purple {
-      0% { box-shadow: 0 0 0 0 rgba(142, 68, 173, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(142, 68, 173, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(142, 68, 173, 0); }
-    }
-
-    .ai-help-btn:active {
-      transform: scale(0.95);
-      background: #21262d;
-    }
-
     /* AI Modal */
     .ai-modal-overlay {
       position: fixed;
@@ -919,9 +869,6 @@
       </div>
     </div>
   </div>
-
-  
-  <button id="btnAIHelp" class="ai-help-btn" hidden aria-hidden="true" tabindex="-1">Help</button>
 
   
   <div id="aiModal" class="ai-modal-overlay">
