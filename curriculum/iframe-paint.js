@@ -1,23 +1,24 @@
 /**
  * Load lesson HTML into a sandboxed iframe.
  * Use srcdoc only — about:blank / document.write races leave a black frame.
- * Size the frame to the document height so dark parent chrome is not visible.
+ * Size the frame to content height (avoid min-height:100% feedback loops).
  */
 
 const BOOT_ID = "odc-preview-boot";
 const BOOT_CSS_ID = "odc-preview-boot-css";
 const PAINTED = "_odcPainted";
-const MIN_H = 280;
-const MAX_H = 2400;
+const MIN_H = 220;
+const MAX_H = 1200;
 
 function withBoot(html) {
   const doc = String(html || "");
   if (!doc) return doc;
   let out = doc;
   if (!out.includes(BOOT_CSS_ID)) {
+    // Do NOT set min-height:100% — it makes scrollHeight track the iframe and explode.
     const css =
       `<style id="${BOOT_CSS_ID}">` +
-      `html,body{margin:0;min-height:100%;background:#f8fafc;}` +
+      `html,body{margin:0;background:#f8fafc;}` +
       `</style>`;
     if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, `${css}</head>`);
     else if (/<body\b/i.test(out)) out = out.replace(/<body\b/i, `${css}<body`);
@@ -27,7 +28,8 @@ function withBoot(html) {
     const boot =
       `<script id="${BOOT_ID}">` +
       `(function(){` +
-      `var ping=function(){try{window.dispatchEvent(new Event("resize"));}catch(e){}};` +
+      `var ping=function(){try{window.parent.postMessage({type:"odc-html-resize"},"*");}catch(e){}` +
+      `try{window.dispatchEvent(new Event("resize"));}catch(e){}};` +
       `window.addEventListener("load",ping);` +
       `document.addEventListener("visibilitychange",ping);` +
       `if(window.ResizeObserver)new ResizeObserver(ping).observe(document.documentElement);` +
@@ -47,26 +49,61 @@ function hasContent(iframe) {
   }
 }
 
-/** Match iframe height to content — avoids black empty bands from tall fixed frames. */
+function measureContentHeight(doc) {
+  const body = doc.body;
+  const root = doc.documentElement;
+  if (!body) return MIN_H;
+
+  let bottom = 0;
+  for (const el of body.children) {
+    const style = doc.defaultView?.getComputedStyle?.(el);
+    if (style?.display === "none") continue;
+    bottom = Math.max(bottom, el.offsetTop + el.offsetHeight);
+  }
+
+  // Temporary collapse avoids scrollHeight ≈ iframe clientHeight feedback.
+  const candidates = [
+    bottom,
+    body.offsetHeight,
+    root.offsetHeight,
+  ];
+
+  return Math.max(MIN_H, ...candidates.filter((n) => Number.isFinite(n) && n > 0));
+}
+
+/** Match iframe height to content — avoids empty bands from tall fixed frames. */
 export function fitHtmlFrame(iframe) {
   if (!iframe) return;
   try {
     const doc = iframe.contentDocument;
     if (!doc?.documentElement) return;
-    const body = doc.body;
-    const h = Math.max(
-      doc.documentElement.scrollHeight || 0,
-      body?.scrollHeight || 0,
-      body?.offsetHeight || 0,
-      MIN_H
+
+    const prev = iframe.style.height;
+    iframe.style.height = "1px";
+    iframe.style.minHeight = "0";
+    void iframe.offsetHeight;
+
+    const raw = measureContentHeight(doc);
+    // Re-measure after collapse for accurate scrollHeight.
+    const after = Math.max(
+      raw,
+      doc.body?.scrollHeight || 0,
+      doc.documentElement?.scrollHeight || 0
     );
-    const capped = Math.min(Math.max(h + 12, MIN_H), MAX_H);
+    const capped = Math.min(Math.max(after + 8, MIN_H), MAX_H);
     iframe.style.height = `${capped}px`;
-    iframe.style.minHeight = `${Math.min(capped, MIN_H)}px`;
+    iframe.style.minHeight = `${MIN_H}px`;
+
     const embed = iframe.closest(".html-embed, .ws-html-wrap");
     if (embed) {
       embed.style.height = "auto";
       embed.style.minHeight = "0";
+      embed.style.aspectRatio = "auto";
+    }
+
+    // If measure failed closed-loop, restore previous rather than 1px flash permanently.
+    if (capped <= MIN_H && prev && Number.parseInt(prev, 10) > MIN_H) {
+      /* keep capped min */
     }
   } catch {
     /* sandbox without same-origin */
@@ -95,7 +132,18 @@ function bindFit(iframe) {
     }
     requestAnimationFrame(() => fitHtmlFrame(iframe));
     setTimeout(() => fitHtmlFrame(iframe), 50);
-    setTimeout(() => fitHtmlFrame(iframe), 250);
+    setTimeout(() => fitHtmlFrame(iframe), 200);
+    setTimeout(() => fitHtmlFrame(iframe), 600);
+  });
+}
+
+if (typeof window !== "undefined" && !window._odcHtmlResizeBound) {
+  window._odcHtmlResizeBound = true;
+  window.addEventListener("message", (event) => {
+    if (event?.data?.type !== "odc-html-resize") return;
+    document.querySelectorAll(".ws-html-frame, .html-embed iframe").forEach((frame) => {
+      if (frame.contentWindow === event.source) fitHtmlFrame(frame);
+    });
   });
 }
 

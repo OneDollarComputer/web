@@ -382,8 +382,8 @@ main {
 .ws-html-frame {
   display: block;
   width: 100%;
-  min-height: 20rem;
-  height: 28rem;
+  min-height: 14rem;
+  height: 18rem;
   border: 0;
   background: #f8fafc;
 }

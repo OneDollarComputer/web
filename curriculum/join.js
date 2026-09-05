@@ -336,9 +336,10 @@ async function enterWorkshop(pin) {
   pinGate.hidden = true;
   lessonView.hidden = false;
   setPinStatus("");
-  const shortPath = `/${normalizedPin}`;
-  if (location.pathname !== shortPath) {
-    history.replaceState(null, "", shortPath);
+  // Keep /curriculum/join/?pin= — do not replaceState to /NNNN (404 SPA is dark and confusing).
+  const joinPath = `/curriculum/join/?pin=${encodeURIComponent(normalizedPin)}`;
+  if (location.pathname + location.search !== joinPath) {
+    history.replaceState(null, "", joinPath);
   }
   watchSession(sid);
   try {
