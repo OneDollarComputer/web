@@ -191,7 +191,7 @@ function agentClipboardText(code) {
     "Rule: teaching HTML5 is free; any board firmware must be complete Simple Rust (use odc::*;).",
     "",
     "If you have MCP (odc-curriculum): curriculum_pair with this link, then curriculum_agent_brief,",
-    "then curriculum_list_lessons / curriculum_update_lesson.",
+    "then curriculum_create_lesson (new) or curriculum_list_lessons / curriculum_update_lesson.",
     "",
     "Connect link:",
     agentConnectUrl(code),
@@ -205,12 +205,14 @@ function agentClipboardText(code) {
     "export TOKEN",
     "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons\"",
     "",
-    "PATCH fields: overview, materials[], steps[], photos[], videos[], links[],",
-    "html[] with { \"title\": \"…\", \"html\": \"<!doctype html>…\" }.",
-    "When the lesson uses the board/emulator: put full Simple Rust in steps as 'Firmware (Simple Rust)'.",
-    "Example:",
+    "CREATE a lesson:",
+    "curl -sS -X POST -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
+    "  -d '{\"title\":\"My lesson\",\"overview\":\"…\",\"steps\":[\"Firmware (Simple Rust)\",\"```rust\\nuse odc::*;\\nfn main() { led_on(); }\\n```\"],\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html><body><h1>Hi</h1></body></html>\"}],\"links\":[{\"label\":\"Editor\",\"url\":\"https://onedollarcomputer.com/editor/\"},{\"label\":\"Virtual board\",\"url\":\"https://onedollarcomputer.com/emulator/r2/\"}]}' \\",
+    "  \"$API/lessons\"",
+    "",
+    "PATCH an existing lesson (fields: overview, materials[], steps[], photos[], videos[], links[], html[]):",
     "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
-    "  -d '{\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html>…</html>\"}],\"steps\":[\"Firmware (Simple Rust)\",\"```rust\\nuse odc::*;\\nfn main() { loop { led_on(); delay(500); led_off(); delay(500); } }\\n```\"]}' \\",
+    "  -d '{\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html>…</html>\"}]}' \\",
     "  \"$API/lessons/LESSON_ID\""
   ].join("\n");
 }

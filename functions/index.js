@@ -278,6 +278,86 @@ async function handleGetLesson(req, res, lid) {
   });
 }
 
+function newLessonId() {
+  return `l_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function resolveAgentDisplayName(uid) {
+  try {
+    const [uSnap, pSnap] = await Promise.all([
+      db.ref(`users/${uid}/username`).get(),
+      db.ref(`users/${uid}/displayName`).get()
+    ]);
+    return pSnap.val() || uSnap.val() || "Instructor";
+  } catch {
+    return "Instructor";
+  }
+}
+
+/** Agent creates a new lesson (same shape as the curriculum UI save). */
+async function handleCreateLesson(req, res) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  let body = {};
+  try {
+    body = typeof req.body === "object" && req.body ? req.body : JSON.parse(req.rawBody || "{}");
+  } catch {
+    return json(res, 400, { error: "Invalid JSON" });
+  }
+
+  const title = typeof body.title === "string" ? body.title.trim().slice(0, 120) : "";
+  if (!title) return json(res, 400, { error: "title required" });
+
+  const nested = body.body && typeof body.body === "object" ? body.body : {};
+  const src = { ...nested, ...body };
+  const html = coerceHtmlBlocks(
+    src.html !== undefined ? src.html
+      : src.games !== undefined ? src.games
+        : src.gameHtml !== undefined ? src.gameHtml
+          : []
+  ) || [];
+
+  const now = Date.now();
+  const id = newLessonId();
+  const ownerName = await resolveAgentDisplayName(agent.uid);
+  const lessonBody = {
+    overview: src.overview !== undefined ? String(src.overview) : "",
+    materials: Array.isArray(src.materials) ? src.materials : [],
+    steps: Array.isArray(src.steps) ? src.steps : [],
+    photos: Array.isArray(src.photos) ? src.photos : [],
+    videos: Array.isArray(src.videos) ? src.videos : [],
+    html,
+    quizzes: Array.isArray(src.quizzes) ? normalizeQuizzes(src.quizzes) : [],
+    links: Array.isArray(src.links) ? src.links : [],
+    games: null
+  };
+
+  const updates = {};
+  updates[`curriculum/lessons/${id}/title`] = title;
+  updates[`curriculum/lessons/${id}/ownerUid`] = agent.uid;
+  updates[`curriculum/lessons/${id}/ownerName`] = ownerName;
+  updates[`curriculum/lessons/${id}/createdAt`] = now;
+  updates[`curriculum/lessons/${id}/updatedAt`] = now;
+  updates[`curriculum/lessons/${id}/updatedBy`] = agent.uid;
+  updates[`curriculum/lessons/${id}/authors/${agent.uid}`] = {
+    name: ownerName,
+    role: "owner",
+    addedAt: now
+  };
+  updates[`curriculum/lessons/${id}/body`] = lessonBody;
+  updates[`curriculum/byUser/${agent.uid}/${id}`] = true;
+
+  await db.ref().update(updates);
+  return json(res, 201, {
+    ok: true,
+    id,
+    title,
+    updatedAt: now,
+    siteUrl: `${SITE}/curriculum/?lesson=${encodeURIComponent(id)}`
+  });
+}
+
 function normalizeQuizzes(list) {
   if (!Array.isArray(list)) return [];
   const out = [];
@@ -562,6 +642,9 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
     if (req.method === "GET" && parts[0] === "lessons" && !parts[1]) {
       return await handleListLessons(req, res);
     }
+    if (req.method === "POST" && parts[0] === "lessons" && !parts[1]) {
+      return await handleCreateLesson(req, res);
+    }
     if (req.method === "GET" && parts[0] === "lessons" && parts[1]) {
       return await handleGetLesson(req, res, parts[1]);
     }
@@ -580,6 +663,7 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
         "POST /invite",
         "POST /invite/claim",
         "GET /lessons",
+        "POST /lessons",
         "GET /lessons/:id",
         "PATCH /lessons/:id"
       ]

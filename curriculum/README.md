@@ -68,9 +68,9 @@ Until DNS is connected, use `https://odc-files-api.web.app` as `ODC_CURRICULUM_A
 
 Install MCP deps once: `cd curriculum/mcp && npm install`
 
-Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`
+Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curriculum_create_lesson`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`
 
-**Authoring contract (agents):** [AGENT_LESSONS.md](./AGENT_LESSONS.md) — teaching HTML5 is free; board firmware must be Simple Rust (`use odc::*;`). Call `curriculum_agent_brief` after pairing.
+**Authoring contract (agents):** [AGENT_LESSONS.md](./AGENT_LESSONS.md) — teaching HTML5 is free; board firmware must be Simple Rust (`use odc::*;`). Call `curriculum_agent_brief` after pairing. **Create** lessons with `curriculum_create_lesson` (API `POST /lessons`).
 
 Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair.
 
@@ -116,6 +116,8 @@ curl "$API/pair/status?code=YOUR_CODE"
 
 # Then:
 curl -H "Authorization: Bearer odc_agent_…" "$API/lessons"
+curl -X POST -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
+  -d '{"title":"New lesson","overview":"…"}' "$API/lessons"
 curl -H "Authorization: Bearer odc_agent_…" "$API/lessons/LESSON_ID"
 curl -X PATCH -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
   -d '{"overview":"Updated by agent"}' "$API/lessons/LESSON_ID"

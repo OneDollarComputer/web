@@ -154,8 +154,9 @@ server.tool(
           ok: true,
           status: "connected",
           message:
-            "Connected. Call curriculum_agent_brief next, then list/update lessons. HTML5 teaching UI is free; any board firmware must be complete Simple Rust (use odc::*;).",
+            "Connected. Call curriculum_agent_brief, then curriculum_create_lesson (or list/update). HTML5 teaching UI is free; board firmware must be complete Simple Rust (use odc::*;).",
           brief: "curriculum_agent_brief",
+          create: "curriculum_create_lesson",
           docs: "https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md",
           connectUrl
         });
@@ -218,6 +219,40 @@ server.registerTool(
       });
     }
     const data = await api("GET", "/lessons", { token });
+    return textResult(data);
+  }
+);
+
+server.tool(
+  "curriculum_create_lesson",
+  "Create a NEW curriculum lesson for the paired instructor. Requires title. Optional: overview, materials[], steps[], html[], links[], photos[], videos[]. Put teaching UI in html[]; if the board is used, put complete Simple Rust in steps under 'Firmware (Simple Rust)'. Returns { id, siteUrl }.",
+  {
+    title: z.string(),
+    overview: z.string().optional(),
+    materials: z.array(z.string()).optional(),
+    steps: z.array(z.string()).optional(),
+    photos: z.array(z.object({ url: z.string() })).optional(),
+    videos: z.array(z.object({ url: z.string() })).optional(),
+    html: z.array(z.object({
+      title: z.string().optional(),
+      html: z.string()
+    })).optional(),
+    links: z.array(z.object({ label: z.string().optional(), url: z.string() })).optional()
+  },
+  async (args) => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first." });
+    }
+    const body = { title: args.title };
+    if (args.overview !== undefined) body.overview = args.overview;
+    if (args.materials !== undefined) body.materials = args.materials;
+    if (args.steps !== undefined) body.steps = args.steps;
+    if (args.photos !== undefined) body.photos = args.photos;
+    if (args.videos !== undefined) body.videos = args.videos;
+    if (args.html !== undefined) body.html = args.html;
+    if (args.links !== undefined) body.links = args.links;
+    const data = await api("POST", "/lessons", { token, body });
     return textResult(data);
   }
 );

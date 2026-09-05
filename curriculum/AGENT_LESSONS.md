@@ -37,9 +37,15 @@ GPIO-capable: `0–9`, `12–15`, `19`. Power/GND/NC are not GPIO.
 
 ## How to put a lesson together (MCP)
 
-Tools: `curriculum_pair` → `curriculum_list_lessons` → `curriculum_get_lesson` → `curriculum_update_lesson`.
+Tools: `curriculum_pair` → `curriculum_agent_brief` → `curriculum_create_lesson` (or list/get) → `curriculum_update_lesson`.
 
-Useful `curriculum_update_lesson` fields:
+| Tool | Use |
+|------|-----|
+| `curriculum_create_lesson` | **New** lesson — requires `title`; optional overview, steps, `html[]`, links, … Returns `{ id, siteUrl }` |
+| `curriculum_update_lesson` | Patch an existing lesson by `lesson_id` |
+| `curriculum_list_lessons` / `curriculum_get_lesson` | Read |
+
+Useful fields (create + update):
 
 | Field | Use |
 |-------|-----|
@@ -47,6 +53,8 @@ Useful `curriculum_update_lesson` fields:
 | `html[]` | `{ "title": "…", "html": "<!doctype html>…" }` — **interactive teaching UI** |
 | `links[]` | Editor / emulator / docs links |
 | `photos[]`, `videos[]` | Media |
+
+**Prefer `curriculum_create_lesson`** for new work — do not overwrite unrelated lessons.
 
 ### Always when the board is involved
 
