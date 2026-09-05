@@ -22,7 +22,7 @@ import {
   normalizeLessonBody,
   renderHtmlActivities,
   renderSlide
-} from "./session-shared.js?v=20260905f";
+} from "./session-shared.js?v=20260905g";
 
 const app = initializeApp(FIREBASE);
 const auth = getAuth(app);

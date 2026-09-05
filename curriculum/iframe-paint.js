@@ -1,7 +1,7 @@
 /**
  * Load lesson HTML into a sandboxed iframe.
  * Use srcdoc only — about:blank / document.write races leave a black frame.
- * Size the frame to content height (avoid min-height:100% feedback loops).
+ * Size once to content height; do not reflow on scroll (that shakes the page).
  */
 
 const BOOT_ID = "odc-preview-boot";
@@ -9,6 +9,7 @@ const BOOT_CSS_ID = "odc-preview-boot-css";
 const PAINTED = "_odcPainted";
 const MIN_H = 220;
 const MAX_H = 1200;
+const FIT_EPS = 12;
 
 function withBoot(html) {
   const doc = String(html || "");
@@ -30,7 +31,6 @@ function withBoot(html) {
       `(function(){` +
       `var ping=function(){try{window.parent.postMessage({type:"odc-html-resize"},"*");}catch(e){}};` +
       `window.addEventListener("load",ping);` +
-      `document.addEventListener("visibilitychange",ping);` +
       `requestAnimationFrame(function(){requestAnimationFrame(ping);});` +
       `})();` +
       `</script>`;
@@ -47,6 +47,7 @@ function hasContent(iframe) {
   }
 }
 
+/** Height from element bottoms only — never collapses the iframe (no scroll jump). */
 function measureContentHeight(doc) {
   const body = doc.body;
   if (!body) return MIN_H;
@@ -57,17 +58,14 @@ function measureContentHeight(doc) {
     if (style?.display === "none") continue;
     bottom = Math.max(bottom, el.offsetTop + el.offsetHeight);
   }
-
-  // Also trust scrollHeight once iframe is collapsed to 1px (no feedback loop).
-  const scroll = Math.max(body.scrollHeight || 0, doc.documentElement?.scrollHeight || 0);
-  return Math.max(MIN_H, bottom, scroll);
+  return Math.max(MIN_H, bottom);
 }
 
-/** Match iframe height to content — avoids empty bands from tall fixed frames. */
+/** Match iframe height to content. Skips tiny changes to avoid shake. */
 export function fitHtmlFrame(iframe) {
   if (!iframe) return;
   clearTimeout(iframe._odcFitTimer);
-  iframe._odcFitTimer = setTimeout(() => fitHtmlFrameNow(iframe), 40);
+  iframe._odcFitTimer = setTimeout(() => fitHtmlFrameNow(iframe), 30);
 }
 
 function fitHtmlFrameNow(iframe) {
@@ -76,14 +74,14 @@ function fitHtmlFrameNow(iframe) {
     const doc = iframe.contentDocument;
     if (!doc?.documentElement) return;
 
-    iframe.style.height = "1px";
-    iframe.style.minHeight = "0";
-    void iframe.offsetHeight;
-
     const raw = measureContentHeight(doc);
-    const capped = Math.min(Math.max(raw + 8, MIN_H), MAX_H);
+    const capped = Math.min(Math.max(raw + 16, MIN_H), MAX_H);
+    const prev = iframe._odcStableHeight || 0;
+    if (prev && Math.abs(capped - prev) < FIT_EPS) return;
+
     iframe.style.height = `${capped}px`;
     iframe.style.minHeight = `${MIN_H}px`;
+    iframe._odcStableHeight = capped;
 
     const embed = iframe.closest(".html-embed, .ws-html-wrap");
     if (embed) {
@@ -97,29 +95,18 @@ function fitHtmlFrameNow(iframe) {
 }
 
 function nudge(iframe) {
-  try {
-    iframe.contentWindow?.dispatchEvent(new Event("resize"));
-  } catch {
-    /* ignore */
-  }
   fitHtmlFrame(iframe);
 }
 
 function bindFit(iframe) {
   if (!iframe || iframe._odcFitBound) return;
   iframe._odcFitBound = true;
-  const onResize = () => fitHtmlFrame(iframe);
   iframe.addEventListener("load", () => {
+    iframe._odcStableHeight = 0;
     fitHtmlFrame(iframe);
-    try {
-      iframe.contentWindow?.addEventListener("resize", onResize);
-    } catch {
-      /* ignore */
-    }
     requestAnimationFrame(() => fitHtmlFrame(iframe));
-    setTimeout(() => fitHtmlFrame(iframe), 50);
-    setTimeout(() => fitHtmlFrame(iframe), 200);
-    setTimeout(() => fitHtmlFrame(iframe), 600);
+    setTimeout(() => fitHtmlFrame(iframe), 80);
+    setTimeout(() => fitHtmlFrame(iframe), 300);
   });
 }
 
@@ -139,6 +126,7 @@ export function paintIframe(iframe, html) {
   const raw = String(html || "").trim();
   if (!raw) {
     iframe[PAINTED] = "";
+    iframe._odcStableHeight = 0;
     iframe.removeAttribute("src");
     iframe.removeAttribute("srcdoc");
     iframe.style.height = "";
@@ -151,6 +139,7 @@ export function paintIframe(iframe, html) {
     return iframe;
   }
   iframe[PAINTED] = doc;
+  iframe._odcStableHeight = 0;
   iframe.removeAttribute("src");
   iframe.srcdoc = doc;
   return iframe;
@@ -170,12 +159,15 @@ export function repaintHtmlPreviews(root = document) {
   });
 }
 
-/** When the embed becomes visible, resize to content — do not reload. */
+/** Fit once when the embed first becomes visible — not on every scroll intersection. */
 export function watchHtmlEmbed(iframe) {
   const embed = iframe?.closest(".html-embed, .ws-html-wrap") || iframe;
   if (!embed || !("IntersectionObserver" in window)) return;
+  if (iframe._embedIo) return;
   const io = new IntersectionObserver((entries) => {
-    if (entries.some((e) => e.isIntersecting)) nudge(iframe);
+    if (!entries.some((e) => e.isIntersecting)) return;
+    if (iframe._odcStableHeight) return;
+    nudge(iframe);
   }, { threshold: 0.01 });
   io.observe(embed);
   iframe._embedIo = io;
