@@ -24,10 +24,18 @@ const pinInput = document.getElementById("pinInput");
 const pinStatus = document.getElementById("pinStatus");
 const lessonView = document.getElementById("lessonView");
 const lessonTitle = document.getElementById("lessonTitle");
+const teacherHint = document.getElementById("teacherHint");
+const tabActivity = document.getElementById("tabActivity");
+const tabFollow = document.getElementById("tabFollow");
+const viewActivity = document.getElementById("viewActivity");
+const viewFollow = document.getElementById("viewFollow");
+const activityBody = document.getElementById("activityBody");
+const activityEmpty = document.getElementById("activityEmpty");
 const slideProgress = document.getElementById("slideProgress");
 const lessonBody = document.getElementById("lessonBody");
-const activityPanel = document.getElementById("activityPanel");
-const activityBody = document.getElementById("activityBody");
+const btnPrevSlide = document.getElementById("btnPrevSlide");
+const btnNextSlide = document.getElementById("btnNextSlide");
+const btnJumpTeacher = document.getElementById("btnJumpTeacher");
 const photoInput = document.getElementById("photoInput");
 const btnCamera = document.getElementById("btnCamera");
 const btnUpload = document.getElementById("btnUpload");
@@ -49,7 +57,12 @@ let cameraStream = null;
 let unsubSession = null;
 let heartbeatTimer = null;
 let slides = [];
-let currentSlide = 0;
+let teacherSlide = 0;
+let followSlide = 0;
+let followTeacher = true;
+let activeTab = "activity";
+let lastSession = null;
+let hasActivity = false;
 
 function setPinStatus(msg, isError = false) {
   pinStatus.textContent = msg || "";
@@ -208,28 +221,57 @@ async function restoreMyAnswers(sid) {
   });
 }
 
-function renderActivityPanel(session, slide) {
-  if (!activityPanel || !activityBody) return;
-  const body = normalizeLessonBody(session.body || {});
-  const skipIndex = slide?.kind === "html" ? slide.htmlIndex : -1;
-  const count = renderHtmlActivities(activityBody, body, { skipIndex });
-  const show = count > 0;
-  activityPanel.hidden = !show;
+function setTab(tab) {
+  activeTab = tab === "follow" ? "follow" : "activity";
+  const onActivity = activeTab === "activity";
+  tabActivity?.classList.toggle("is-active", onActivity);
+  tabFollow?.classList.toggle("is-active", !onActivity);
+  tabActivity?.setAttribute("aria-selected", onActivity ? "true" : "false");
+  tabFollow?.setAttribute("aria-selected", onActivity ? "false" : "true");
+  if (viewActivity) viewActivity.hidden = !onActivity;
+  if (viewFollow) viewFollow.hidden = onActivity;
+  if (!onActivity && lastSession) renderFollowSlide(lastSession);
 }
 
-function renderCurrentSlide(session) {
+function renderActivity(session) {
+  const body = normalizeLessonBody(session.body || {});
+  const count = renderHtmlActivities(activityBody, body);
+  hasActivity = count > 0;
+  if (activityEmpty) activityEmpty.hidden = hasActivity;
+  if (viewActivity) viewActivity.classList.toggle("is-empty", !hasActivity);
+}
+
+function updateTeacherHint() {
+  if (!teacherHint) return;
+  if (!slides.length) {
+    teacherHint.textContent = "";
+    return;
+  }
+  const idx = Math.min(Math.max(0, teacherSlide), slides.length - 1);
+  const slide = slides[idx];
+  const label = slide?.title || `Slide ${idx + 1}`;
+  teacherHint.textContent = `Teacher is on: ${label} (${idx + 1}/${slides.length})`;
+}
+
+function renderFollowSlide(session) {
   slides = lessonSlides(session.body || {});
   if (!slides.length) {
     lessonBody.innerHTML = `<p class="empty-wall">Waiting for your teacher…</p>`;
     slideProgress.textContent = "";
-    if (activityPanel) activityPanel.hidden = true;
+    btnPrevSlide.disabled = true;
+    btnNextSlide.disabled = true;
     return;
   }
-  const idx = Math.min(Math.max(0, currentSlide), slides.length - 1);
-  currentSlide = idx;
+
+  if (followTeacher) followSlide = teacherSlide;
+  const idx = Math.min(Math.max(0, followSlide), slides.length - 1);
+  followSlide = idx;
   slideProgress.textContent = `Slide ${idx + 1} of ${slides.length}`;
-  const slide = slides[idx];
-  renderSlide(lessonBody, session.body || {}, slide, {
+  btnPrevSlide.disabled = idx <= 0;
+  btnNextSlide.disabled = idx >= slides.length - 1;
+  btnJumpTeacher.hidden = followTeacher || followSlide === teacherSlide;
+
+  renderSlide(lessonBody, session.body || {}, slides[idx], {
     onAnswer: async (quizIndex, choiceIndex, section, btn) => {
       if (!sessionId) return;
       section.querySelectorAll(".ws-quiz-choice").forEach((el) => {
@@ -248,7 +290,20 @@ function renderCurrentSlide(session) {
       }
     }
   });
-  renderActivityPanel(session, slide);
+}
+
+function renderSession(session) {
+  lastSession = session;
+  lessonTitle.textContent = session.title || "Class";
+  slides = lessonSlides(session.body || {});
+  teacherSlide = typeof session.currentSlide === "number" ? session.currentSlide : 0;
+  if (followTeacher) followSlide = teacherSlide;
+  updateTeacherHint();
+  renderActivity(session);
+
+  if (!hasActivity && activeTab === "activity") setTab("follow");
+  else if (activeTab === "follow") renderFollowSlide(session);
+  else if (viewFollow && !viewFollow.hidden) renderFollowSlide(session);
 }
 
 function watchSession(sid) {
@@ -264,15 +319,13 @@ function watchSession(sid) {
       return;
     }
     const session = snap.val();
-    currentSlide = typeof session.currentSlide === "number" ? session.currentSlide : 0;
+    const prevTeacher = teacherSlide;
     renderSession(session);
+    if (followTeacher && session.currentSlide !== prevTeacher && activeTab === "follow") {
+      renderFollowSlide(session);
+    }
     await restoreMyAnswers(sid);
   });
-}
-
-function renderSession(session) {
-  lessonTitle.textContent = session.title || "Class";
-  renderCurrentSlide(session);
 }
 
 async function enterWorkshop(pin) {
@@ -301,6 +354,27 @@ function joinErrorMessage(err) {
   return err?.message || "Could not join.";
 }
 
+tabActivity?.addEventListener("click", () => setTab("activity"));
+tabFollow?.addEventListener("click", () => setTab("follow"));
+
+btnPrevSlide?.addEventListener("click", () => {
+  followTeacher = false;
+  followSlide = Math.max(0, followSlide - 1);
+  if (lastSession) renderFollowSlide(lastSession);
+});
+
+btnNextSlide?.addEventListener("click", () => {
+  followTeacher = false;
+  followSlide = Math.min(slides.length - 1, followSlide + 1);
+  if (lastSession) renderFollowSlide(lastSession);
+});
+
+btnJumpTeacher?.addEventListener("click", () => {
+  followTeacher = true;
+  followSlide = teacherSlide;
+  if (lastSession) renderFollowSlide(lastSession);
+});
+
 pinForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const pin = pinInput.value.replace(/\D/g, "").slice(0, 4);
@@ -317,18 +391,13 @@ pinForm?.addEventListener("submit", async (e) => {
 });
 
 btnUpload?.addEventListener("click", () => photoInput.click());
-
 btnCamera?.addEventListener("click", () => openCamera());
-
 btnCancelCamera?.addEventListener("click", async () => {
   await stopCamera();
   cameraDialog.close();
 });
-
-cameraDialog?.addEventListener("close", () => stopCamera());
-
 btnCapture?.addEventListener("click", () => captureFromCamera());
-
+cameraDialog?.addEventListener("close", () => stopCamera());
 btnClearPhoto?.addEventListener("click", () => {
   clearPhoto();
   setDoneStatus("");
@@ -337,13 +406,9 @@ btnClearPhoto?.addEventListener("click", () => {
 photoInput?.addEventListener("change", () => {
   const file = photoInput.files?.[0];
   if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    setDoneStatus("Choose an image file.", true);
-    return;
-  }
   const reader = new FileReader();
   reader.onload = () => setPhotoFromDataUrl(String(reader.result || ""));
-  reader.onerror = () => setDoneStatus("Could not read photo.", true);
+  reader.onerror = () => setDoneStatus("Could not read that file.", true);
   reader.readAsDataURL(file);
 });
 
@@ -358,25 +423,21 @@ btnDone?.addEventListener("click", async () => {
       dataUrl: pendingPhoto,
       at: Date.now()
     });
-    pendingPhoto = null;
-    photoInput.value = "";
     clearPhoto();
-    btnDone.disabled = false;
-    setDoneStatus("Photo sent!");
+    setDoneStatus("Sent — nice work!");
   } catch (err) {
     console.error(err);
     setDoneStatus("Could not send photo.", true);
+  } finally {
     btnDone.disabled = false;
   }
 });
 
-const urlPin = joinCodeFromLocation();
-if (urlPin) {
-  pinInput.value = urlPin;
-  if (urlPin.length === 4) {
-    enterWorkshop(urlPin).catch((err) => {
-      console.error(err);
-      setPinStatus(joinErrorMessage(err), true);
-    });
-  }
+const bootPin = joinCodeFromLocation();
+if (bootPin) {
+  pinInput.value = bootPin;
+  enterWorkshop(bootPin).catch((err) => {
+    console.error(err);
+    setPinStatus(joinErrorMessage(err), true);
+  });
 }

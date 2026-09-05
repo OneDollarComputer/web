@@ -27,13 +27,32 @@
 
     <section id="lessonView" class="panel slide-panel" hidden>
       <h1 id="lessonTitle" class="ws-lesson-title"></h1>
-      <p id="slideProgress" class="slide-progress"></p>
-      <div id="lessonBody" class="slide-body"></div>
-      <section id="activityPanel" class="activity-panel" hidden>
-        <h2 class="activity-heading">Do the activity</h2>
-        <p class="activity-lede">Use the interactive lesson below while your teacher advances the slides.</p>
+      <p id="teacherHint" class="teacher-hint"></p>
+
+      <div class="student-tabs" role="tablist" aria-label="Class views">
+        <button type="button" id="tabActivity" class="student-tab is-active" role="tab" aria-selected="true">Activity</button>
+        <button type="button" id="tabFollow" class="student-tab" role="tab" aria-selected="false">Follow class</button>
+      </div>
+
+      <div id="viewActivity" class="student-view" role="tabpanel">
+        <p class="activity-lede">Play the interactive lesson here. You can switch to Follow class anytime.</p>
         <div id="activityBody"></div>
-      </section>
+        <p id="activityEmpty" class="empty-wall" hidden>
+          No interactive activity in this room yet. Ask your teacher to tap <strong>Update room</strong>,
+          or open <strong>Follow class</strong> for the slides.
+        </p>
+      </div>
+
+      <div id="viewFollow" class="student-view" role="tabpanel" hidden>
+        <div class="student-slide-controls">
+          <button type="button" id="btnPrevSlide" class="ghost-sm" aria-label="Previous slide">←</button>
+          <span id="slideProgress" class="slide-progress">Slide 1 of 1</span>
+          <button type="button" id="btnNextSlide" class="ghost-sm" aria-label="Next slide">→</button>
+          <button type="button" id="btnJumpTeacher" class="ghost-sm">Jump to teacher</button>
+        </div>
+        <div id="lessonBody" class="slide-body"></div>
+      </div>
+
       <div class="done-panel">
         <p class="done-label">Finished your build?</p>
         <div class="done-actions">

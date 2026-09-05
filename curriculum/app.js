@@ -27,7 +27,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import { CURRICULUM_API } from "./api-origin.js";
 import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js";
-import { joinUrl, joinUrlAlt, normalizeLessonBody, renderLessonBody } from "./session-shared.js";
+import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -1134,7 +1134,7 @@ function attachLiveRoom(lessonId) {
 }
 
 function sessionBodyFromData(data) {
-  return {
+  return normalizeLessonBody({
     overview: data.overview,
     materials: data.materials,
     steps: data.steps,
@@ -1143,7 +1143,36 @@ function sessionBodyFromData(data) {
     html: data.html,
     quizzes: data.quizzes,
     links: data.links
-  };
+  });
+}
+
+/** Prefer form values, but keep HTML/media from RTDB if the editor rows are empty. */
+async function resolveLiveBody(lessonId, formData) {
+  let remote = {};
+  try {
+    const snap = await get(ref(db, `curriculum/lessons/${lessonId}/body`));
+    if (snap.exists()) remote = snap.val() || {};
+  } catch (err) {
+    console.error(err);
+  }
+  const form = normalizeLessonBody(formData || {});
+  const fromDb = normalizeLessonBody(remote);
+  return normalizeLessonBody({
+    overview: form.overview || fromDb.overview,
+    materials: form.materials.length ? form.materials : fromDb.materials,
+    steps: form.steps.length ? form.steps : fromDb.steps,
+    photos: form.photos.length ? form.photos : fromDb.photos,
+    videos: form.videos.length ? form.videos : fromDb.videos,
+    html: form.html.length ? form.html : fromDb.html,
+    quizzes: form.quizzes.length ? form.quizzes : fromDb.quizzes,
+    links: form.links.length ? form.links : fromDb.links
+  });
+}
+
+function firstActivitySlideIndex(body) {
+  const slides = lessonSlides(body);
+  const idx = slides.findIndex((s) => s.kind === "html");
+  return idx >= 0 ? idx : 0;
 }
 
 function attachPresence(lessonId) {
@@ -1534,6 +1563,7 @@ async function startWorkshop(durationMinutes = 45) {
   await saveCurrent();
   if (!currentId) return;
   const data = collectForm();
+  const body = await resolveLiveBody(currentId, data);
   let pin = "";
   for (let attempt = 0; attempt < 12; attempt++) {
     const candidate = String(Math.floor(1000 + Math.random() * 9000));
@@ -1558,9 +1588,9 @@ async function startWorkshop(durationMinutes = 45) {
     createdAt: now,
     durationMs,
     expiresAt: now + durationMs,
-    currentSlide: 0,
+    currentSlide: firstActivitySlideIndex(body),
     title: data.title,
-    body: sessionBodyFromData(data)
+    body
   };
   const liveRoom = {
     sessionId: sid,
@@ -1582,7 +1612,10 @@ async function startWorkshop(durationMinutes = 45) {
     });
     updateLiveRoomChrome(liveRoom);
     window.open(`/curriculum/live/?session=${encodeURIComponent(sid)}`, "_blank", "noopener");
-    setStatus(`Live · students type ${joinUrl(pin).replace(/^https?:\/\//, "")}`);
+    const hasHtml = body.html?.length;
+    setStatus(hasHtml
+      ? `Live · students type ${joinUrl(pin).replace(/^https?:\/\//, "")}`
+      : `Live · no HTML activity found — add HTML then Update room`);
   } catch (err) {
     console.error(err);
     const denied = String(err?.message || "").includes("PERMISSION_DENIED");
@@ -1596,13 +1629,17 @@ async function pushRoomUpdate() {
   if (!me || !currentId || !isAuthor || !activeLiveRoom?.sessionId) return;
   await saveCurrent();
   const data = collectForm();
+  const body = await resolveLiveBody(currentId, data);
   try {
     await update(ref(db), {
       [`curriculum/live/${activeLiveRoom.sessionId}/title`]: data.title,
-      [`curriculum/live/${activeLiveRoom.sessionId}/body`]: sessionBodyFromData(data),
+      [`curriculum/live/${activeLiveRoom.sessionId}/body`]: body,
+      [`curriculum/live/${activeLiveRoom.sessionId}/currentSlide`]: firstActivitySlideIndex(body),
       [`curriculum/live/${activeLiveRoom.sessionId}/updatedAt`]: Date.now()
     });
-    setStatus(`Room updated · PIN ${activeLiveRoom.pin}`);
+    setStatus(body.html?.length
+      ? `Room updated · PIN ${activeLiveRoom.pin} · activity ready`
+      : `Room updated · PIN ${activeLiveRoom.pin} · still no HTML activity`);
   } catch (err) {
     console.error(err);
     setStatus("Could not update room.");
