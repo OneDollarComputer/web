@@ -333,17 +333,21 @@ async function enterWorkshop(pin) {
   const { sid, pin: normalizedPin } = await loadSessionByPin(pin);
   sessionId = sid;
   sessionPin = normalizedPin;
-  await registerStudent(sid);
-  watchSession(sid);
-  clearInterval(heartbeatTimer);
-  heartbeatTimer = setInterval(() => heartbeat(sid), 30000);
   pinGate.hidden = true;
   lessonView.hidden = false;
+  setPinStatus("");
   const shortPath = `/${normalizedPin}`;
   if (location.pathname !== shortPath) {
     history.replaceState(null, "", shortPath);
   }
-  setPinStatus("");
+  watchSession(sid);
+  try {
+    await registerStudent(sid);
+  } catch (err) {
+    console.error(err);
+  }
+  clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(() => heartbeat(sid), 30000);
 }
 
 function joinErrorMessage(err) {

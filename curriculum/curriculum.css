@@ -489,32 +489,33 @@ h3 {
   position: relative;
   width: 100%;
   max-width: 48rem;
-  min-height: 22rem;
-  aspect-ratio: 16 / 10;
+  min-height: 12rem;
   border-radius: 8px;
   overflow: hidden;
-  background: #0f172a
+  background: #f8fafc;
+  border: 1px solid #e2e8f0
 }
 
 .media-row .html-embed iframe {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
-  height: 100%;
-  border: 0
+  min-height: 12rem;
+  height: 24rem;
+  border: 0;
+  background: #f8fafc
 }
 
 .html-embed:fullscreen {
   max-width: none;
   width: 100vw;
   height: 100vh;
-  aspect-ratio: auto;
   border-radius: 0
 }
 
 .html-embed:fullscreen iframe {
-  position: absolute;
-  inset: 0
+  width: 100%;
+  height: 100% !important;
+  min-height: 100% !important
 }
 
 .html-toolbar {
@@ -570,9 +571,9 @@ h3 {
 }
 
 .html-row.is-editing .html-embed {
-  max-width: 42rem;
+  max-width: 48rem;
   min-height: 12rem;
-  aspect-ratio: 16 / 10
+  aspect-ratio: auto
 }
 
 .html-editor {
@@ -1001,14 +1002,16 @@ h3 {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   overflow: hidden;
+  background: #f8fafc;
 }
 
 .preview-body .ws-html-frame {
   display: block;
   width: 100%;
-  min-height: min(60vh, 520px);
-  height: min(60vh, 520px);
+  min-height: 20rem;
+  height: 28rem;
   border: 0;
+  background: #f8fafc;
 }
 
 .preview-body .ws-block {

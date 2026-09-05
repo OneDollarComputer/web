@@ -59,6 +59,14 @@ main {
   padding: 1.5rem 1.25rem 3rem;
 }
 
+#lessonView.panel {
+  max-width: 56rem;
+}
+
+#viewActivity {
+  min-height: 12rem;
+}
+
 .live-main {
   max-width: 72rem;
 }
@@ -368,28 +376,28 @@ main {
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  background: #f8fafc;
 }
 
 .ws-html-frame {
   display: block;
   width: 100%;
-  min-height: min(70vh, 640px);
-  height: min(70vh, 640px);
+  min-height: 20rem;
+  height: 28rem;
   border: 0;
-  background: #fff;
+  background: #f8fafc;
 }
 
 .ws-html-wrap:fullscreen,
 .ws-html-wrap:-webkit-full-screen {
   border-radius: 0;
-  background: #fff;
+  background: #f8fafc;
 }
 
 .ws-html-wrap:fullscreen .ws-html-frame,
 .ws-html-wrap:-webkit-full-screen .ws-html-frame {
-  min-height: 100vh;
-  height: 100vh;
+  min-height: 100vh !important;
+  height: 100vh !important;
 }
 
 .ws-html-fullscreen {
