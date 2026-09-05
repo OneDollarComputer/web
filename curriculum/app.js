@@ -25,9 +25,9 @@ import {
   onDisconnect,
   push
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
-import { CURRICULUM_API } from "./api-origin.js?v=20260905c";
-import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260905c";
-import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js?v=20260905c";
+import { CURRICULUM_API } from "./api-origin.js?v=20260905d";
+import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260905d";
+import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js?v=20260905d";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",

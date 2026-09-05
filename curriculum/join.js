@@ -15,7 +15,7 @@ import {
   renderHtmlActivities,
   renderSlide,
   studentId
-} from "./session-shared.js?v=20260905c";
+} from "./session-shared.js?v=20260905d";
 
 const db = getDb();
 const pinGate = document.getElementById("pinGate");
@@ -233,7 +233,21 @@ function setTab(tab) {
   if (!onActivity && lastSession) renderFollowSlide(lastSession);
 }
 
+let lastActivityKey = "";
+
+function activityKey(session) {
+  const body = normalizeLessonBody(session?.body || {});
+  return body.html.map((b) => `${b.title || ""}:${(b.html || "").length}`).join("|");
+}
+
 function renderActivity(session) {
+  const key = activityKey(session);
+  if (key && key === lastActivityKey && activityBody?.children?.length) {
+    hasActivity = true;
+    if (activityEmpty) activityEmpty.hidden = true;
+    return;
+  }
+  lastActivityKey = key;
   const body = normalizeLessonBody(session.body || {});
   const count = renderHtmlActivities(activityBody, body);
   hasActivity = count > 0;

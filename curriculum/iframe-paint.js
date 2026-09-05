@@ -28,11 +28,9 @@ function withBoot(html) {
     const boot =
       `<script id="${BOOT_ID}">` +
       `(function(){` +
-      `var ping=function(){try{window.parent.postMessage({type:"odc-html-resize"},"*");}catch(e){}` +
-      `try{window.dispatchEvent(new Event("resize"));}catch(e){}};` +
+      `var ping=function(){try{window.parent.postMessage({type:"odc-html-resize"},"*");}catch(e){}};` +
       `window.addEventListener("load",ping);` +
       `document.addEventListener("visibilitychange",ping);` +
-      `if(window.ResizeObserver)new ResizeObserver(ping).observe(document.documentElement);` +
       `requestAnimationFrame(function(){requestAnimationFrame(ping);});` +
       `})();` +
       `</script>`;
@@ -74,6 +72,12 @@ function measureContentHeight(doc) {
 /** Match iframe height to content — avoids empty bands from tall fixed frames. */
 export function fitHtmlFrame(iframe) {
   if (!iframe) return;
+  clearTimeout(iframe._odcFitTimer);
+  iframe._odcFitTimer = setTimeout(() => fitHtmlFrameNow(iframe), 40);
+}
+
+function fitHtmlFrameNow(iframe) {
+  if (!iframe) return;
   try {
     const doc = iframe.contentDocument;
     if (!doc?.documentElement) return;
@@ -83,7 +87,6 @@ export function fitHtmlFrame(iframe) {
     void iframe.offsetHeight;
 
     const raw = measureContentHeight(doc);
-    // Prefer element bottoms — scrollHeight can track the iframe and explode.
     const capped = Math.min(Math.max(raw + 8, MIN_H), MAX_H);
     iframe.style.height = `${capped}px`;
     iframe.style.minHeight = `${MIN_H}px`;
