@@ -488,9 +488,9 @@ h3 {
 .media-row .html-embed {
   position: relative;
   width: 100%;
-  max-width: 42rem;
-  min-height: 16rem;
-  aspect-ratio: 4 / 3;
+  max-width: 48rem;
+  min-height: 22rem;
+  aspect-ratio: 16 / 10;
   border-radius: 8px;
   overflow: hidden;
   background: #0f172a
@@ -949,3 +949,95 @@ h3 {
   background: #ecfdf5 !important
 }
 
+
+.preview-dialog {
+  width: min(920px, 96vw);
+  max-height: 92vh;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.preview-dialog::backdrop {
+  background: rgba(15, 23, 42, .45);
+}
+
+.preview-shell {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 92vh;
+}
+
+.preview-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.preview-kicker {
+  margin: 0;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.preview-top h2 {
+  margin: .15rem 0 0;
+  font-size: 1.2rem;
+}
+
+.preview-body {
+  padding: 1rem 1.1rem 1.5rem;
+  overflow: auto;
+}
+
+.preview-body .ws-html-wrap {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.preview-body .ws-html-frame {
+  display: block;
+  width: 100%;
+  min-height: min(60vh, 520px);
+  height: min(60vh, 520px);
+  border: 0;
+}
+
+.preview-body .ws-block {
+  margin-bottom: 1.25rem;
+}
+
+.preview-body .ws-block h2 {
+  margin: 0 0 .5rem;
+  font-size: 1.05rem;
+}
+
+.preview-body .ws-block ul,
+.preview-body .ws-block ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.preview-body .ws-html-fullscreen {
+  position: absolute;
+  top: .45rem;
+  right: .45rem;
+  z-index: 2;
+  border: 0;
+  border-radius: 6px;
+  padding: .35rem .55rem;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, .72);
+  cursor: pointer;
+}

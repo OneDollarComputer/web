@@ -19,6 +19,8 @@ import {
   getDb,
   joinUrl,
   lessonSlides,
+  normalizeLessonBody,
+  renderHtmlActivities,
   renderSlide
 } from "./session-shared.js";
 
@@ -39,6 +41,8 @@ const slideIndicator = document.getElementById("slideIndicator");
 const btnPrevSlide = document.getElementById("btnPrevSlide");
 const btnNextSlide = document.getElementById("btnNextSlide");
 const lessonPreview = document.getElementById("lessonPreview");
+const activityPanel = document.getElementById("activityPanel");
+const activityBody = document.getElementById("activityBody");
 const quizResults = document.getElementById("quizResults");
 const photoWall = document.getElementById("photoWall");
 const sessionHistory = document.getElementById("sessionHistory");
@@ -68,6 +72,14 @@ function isOwner() {
   return me && sessionData && sessionData.ownerUid === me.uid;
 }
 
+function renderTeacherActivity(session, slide) {
+  if (!activityPanel || !activityBody) return;
+  const body = normalizeLessonBody(session.body || {});
+  const skipIndex = slide?.kind === "html" ? slide.htmlIndex : -1;
+  const count = renderHtmlActivities(activityBody, body, { skipIndex });
+  activityPanel.hidden = count <= 0;
+}
+
 function renderTeacherSlide(session) {
   slides = lessonSlides(session.body || {});
   if (!slides.length) {
@@ -75,6 +87,7 @@ function renderTeacherSlide(session) {
     slideIndicator.textContent = "0 / 0";
     btnPrevSlide.disabled = true;
     btnNextSlide.disabled = true;
+    if (activityPanel) activityPanel.hidden = true;
     return;
   }
   const idx = Math.min(Math.max(0, currentSlide), slides.length - 1);
@@ -82,7 +95,9 @@ function renderTeacherSlide(session) {
   slideIndicator.textContent = `${idx + 1} / ${slides.length}`;
   btnPrevSlide.disabled = idx <= 0;
   btnNextSlide.disabled = idx >= slides.length - 1;
-  renderSlide(lessonPreview, session.body || {}, slides[idx]);
+  const slide = slides[idx];
+  renderSlide(lessonPreview, session.body || {}, slide);
+  renderTeacherActivity(session, slide);
 }
 
 async function setSlide(next) {
@@ -190,7 +205,7 @@ function attachListeners(sid) {
     liveTitle.textContent = session.title || "Live class";
     currentSlide = typeof session.currentSlide === "number" ? session.currentSlide : 0;
     renderTeacherSlide(session);
-    renderQuizResults(session.body?.quizzes || [], lastAnswers);
+    renderQuizResults(normalizeLessonBody(session.body || {}).quizzes, lastAnswers);
     updateExpiry();
   }));
   unsubs.push(onValue(ref(db, `curriculum/live/${sid}/students`), (snap) => {
@@ -198,7 +213,7 @@ function attachListeners(sid) {
   }));
   unsubs.push(onValue(ref(db, `curriculum/live/${sid}/answers`), (snap) => {
     lastAnswers = snap.val() || {};
-    renderQuizResults(sessionData?.body?.quizzes || [], lastAnswers);
+    renderQuizResults(normalizeLessonBody(sessionData?.body || {}).quizzes, lastAnswers);
   }));
   unsubs.push(onValue(ref(db, `curriculum/live/${sid}/photos`), (snap) => {
     renderPhotos(snap.val() || {});
@@ -217,7 +232,7 @@ function showSession(session) {
     timeLeft.textContent = formatTimeLeft(session.expiresAt);
   }
   renderTeacherSlide(session);
-  renderQuizResults(session.body?.quizzes || [], {});
+  renderQuizResults(normalizeLessonBody(session.body || {}).quizzes, {});
   renderPhotos({});
   loadSessionHistory(session.lessonId);
   loadStatus.hidden = true;

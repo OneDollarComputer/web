@@ -11,6 +11,8 @@ import {
   joinCodeFromLocation,
   lessonSlides,
   MAX_PHOTO_BYTES,
+  normalizeLessonBody,
+  renderHtmlActivities,
   renderSlide,
   studentId
 } from "./session-shared.js";
@@ -24,6 +26,8 @@ const lessonView = document.getElementById("lessonView");
 const lessonTitle = document.getElementById("lessonTitle");
 const slideProgress = document.getElementById("slideProgress");
 const lessonBody = document.getElementById("lessonBody");
+const activityPanel = document.getElementById("activityPanel");
+const activityBody = document.getElementById("activityBody");
 const photoInput = document.getElementById("photoInput");
 const btnCamera = document.getElementById("btnCamera");
 const btnUpload = document.getElementById("btnUpload");
@@ -204,17 +208,28 @@ async function restoreMyAnswers(sid) {
   });
 }
 
+function renderActivityPanel(session, slide) {
+  if (!activityPanel || !activityBody) return;
+  const body = normalizeLessonBody(session.body || {});
+  const skipIndex = slide?.kind === "html" ? slide.htmlIndex : -1;
+  const count = renderHtmlActivities(activityBody, body, { skipIndex });
+  const show = count > 0;
+  activityPanel.hidden = !show;
+}
+
 function renderCurrentSlide(session) {
   slides = lessonSlides(session.body || {});
   if (!slides.length) {
     lessonBody.innerHTML = `<p class="empty-wall">Waiting for your teacher…</p>`;
     slideProgress.textContent = "";
+    if (activityPanel) activityPanel.hidden = true;
     return;
   }
   const idx = Math.min(Math.max(0, currentSlide), slides.length - 1);
   currentSlide = idx;
   slideProgress.textContent = `Slide ${idx + 1} of ${slides.length}`;
-  renderSlide(lessonBody, session.body || {}, slides[idx], {
+  const slide = slides[idx];
+  renderSlide(lessonBody, session.body || {}, slide, {
     onAnswer: async (quizIndex, choiceIndex, section, btn) => {
       if (!sessionId) return;
       section.querySelectorAll(".ws-quiz-choice").forEach((el) => {
@@ -233,6 +248,7 @@ function renderCurrentSlide(session) {
       }
     }
   });
+  renderActivityPanel(session, slide);
 }
 
 function watchSession(sid) {

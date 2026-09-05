@@ -362,12 +362,71 @@ main {
   border: 0;
 }
 
-.ws-html-frame {
+.ws-html-wrap {
+  position: relative;
   width: 100%;
-  min-height: 280px;
   border: 1px solid var(--line);
   border-radius: 10px;
+  overflow: hidden;
   background: #fff;
+}
+
+.ws-html-frame {
+  display: block;
+  width: 100%;
+  min-height: min(70vh, 640px);
+  height: min(70vh, 640px);
+  border: 0;
+  background: #fff;
+}
+
+.ws-html-wrap:fullscreen,
+.ws-html-wrap:-webkit-full-screen {
+  border-radius: 0;
+  background: #fff;
+}
+
+.ws-html-wrap:fullscreen .ws-html-frame,
+.ws-html-wrap:-webkit-full-screen .ws-html-frame {
+  min-height: 100vh;
+  height: 100vh;
+}
+
+.ws-html-fullscreen {
+  position: absolute;
+  top: .45rem;
+  right: .45rem;
+  z-index: 2;
+  border: 0;
+  border-radius: 6px;
+  padding: .35rem .55rem;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, .72);
+  cursor: pointer;
+}
+
+.ws-html-fullscreen:hover {
+  background: rgba(30, 41, 59, .92);
+}
+
+.activity-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.activity-heading {
+  margin: 0 0 .35rem;
+  font-size: 1.1rem;
+}
+
+.activity-lede {
+  margin: 0 0 1rem;
+  color: var(--sub);
+  font-size: .92rem;
 }
 
 .ws-quiz-choices {

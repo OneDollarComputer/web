@@ -27,7 +27,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import { CURRICULUM_API } from "./api-origin.js";
 import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js";
-import { joinUrl, joinUrlAlt } from "./session-shared.js";
+import { joinUrl, joinUrlAlt, normalizeLessonBody, renderLessonBody } from "./session-shared.js";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -75,8 +75,12 @@ const presenceBar = document.getElementById("presenceBar");
 const inviteUser = document.getElementById("inviteUser");
 const btnInvite = document.getElementById("btnInvite");
 const btnShare = document.getElementById("btnShare");
+const btnPreview = document.getElementById("btnPreview");
 const btnGoLive = document.getElementById("btnGoLive");
 const liveDurationDialog = document.getElementById("liveDurationDialog");
+const previewDialog = document.getElementById("previewDialog");
+const previewTitle = document.getElementById("previewTitle");
+const previewBody = document.getElementById("previewBody");
 const liveDuration = document.getElementById("liveDuration");
 const liveRoomChip = document.getElementById("liveRoomChip");
 const liveRoomLink = document.getElementById("liveRoomLink");
@@ -571,8 +575,8 @@ function addHtmlRow(values = {}, startEditing = false) {
 
   const iframe = document.createElement("iframe");
   iframe.title = values.title || "Lesson HTML";
-  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
-  iframe.setAttribute("allow", "fullscreen");
+  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups allow-forms allow-modals");
+  iframe.setAttribute("allow", "fullscreen; clipboard-write");
   iframe.setAttribute("allowfullscreen", "");
 
   const fsBtn = document.createElement("button");
@@ -1473,6 +1477,25 @@ function shareLink() {
   );
 }
 
+function openStudentPreview() {
+  if (!previewDialog || !previewBody) return;
+  const data = collectForm();
+  const body = normalizeLessonBody({
+    overview: data.overview,
+    materials: data.materials,
+    steps: data.steps,
+    photos: data.photos,
+    videos: data.videos,
+    html: data.html,
+    quizzes: data.quizzes,
+    links: data.links
+  });
+  if (previewTitle) previewTitle.textContent = data.title || "Untitled lesson";
+  renderLessonBody(previewBody, body, { activitiesFirst: true });
+  if (typeof previewDialog.showModal === "function") previewDialog.showModal();
+  else previewDialog.hidden = false;
+}
+
 // ——— Events ———
 
 btnGoogle?.addEventListener("click", async () => {
@@ -1504,6 +1527,7 @@ inviteUser?.addEventListener("keydown", (e) => {
 });
 
 btnShare?.addEventListener("click", () => shareLink());
+btnPreview?.addEventListener("click", () => openStudentPreview());
 
 async function startWorkshop(durationMinutes = 45) {
   if (!me || !currentId || !isAuthor) return;

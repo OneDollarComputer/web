@@ -78,6 +78,98 @@ export function formatDuration(ms) {
   return m ? `${h} h ${m} min` : `${h} h`;
 }
 
+/** Firebase may store arrays as objects with numeric keys. */
+export function listify(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") {
+    return Object.keys(value)
+      .filter((k) => /^\d+$/.test(k))
+      .sort((a, b) => Number(a) - Number(b))
+      .map((k) => value[k]);
+  }
+  return [];
+}
+
+/** Normalize lesson body for slides / student view (html aliases, list fields). */
+export function normalizeLessonBody(raw) {
+  const body = raw && typeof raw === "object" ? { ...raw } : {};
+  const htmlRaw = body.html ?? body.games ?? body.gameHtml ?? body.game_html;
+  const html = listify(htmlRaw).map((block) => {
+    if (typeof block === "string") return { html: block };
+    if (!block || typeof block !== "object") return null;
+    const markup = block.html || block.gameHtml || block.game_html || block.markup || "";
+    if (!String(markup).trim()) return null;
+    const row = { html: String(markup) };
+    if (block.title) row.title = String(block.title);
+    return row;
+  }).filter(Boolean);
+  return {
+    overview: body.overview || "",
+    materials: listify(body.materials),
+    steps: listify(body.steps),
+    photos: listify(body.photos),
+    videos: listify(body.videos),
+    html,
+    quizzes: listify(body.quizzes),
+    links: listify(body.links)
+  };
+}
+
+const HTML_SANDBOX = "allow-scripts allow-same-origin allow-popups allow-forms allow-modals";
+
+function mountHtmlFrame(host, html, title) {
+  const wrap = document.createElement("div");
+  wrap.className = "ws-html-wrap";
+
+  const frame = document.createElement("iframe");
+  frame.className = "ws-html-frame";
+  frame.setAttribute("sandbox", HTML_SANDBOX);
+  frame.setAttribute("allow", "fullscreen; clipboard-write");
+  frame.setAttribute("allowfullscreen", "");
+  frame.setAttribute("title", title || "Activity");
+
+  const fsBtn = document.createElement("button");
+  fsBtn.type = "button";
+  fsBtn.className = "ws-html-fullscreen";
+  fsBtn.setAttribute("aria-label", "Fullscreen");
+  fsBtn.textContent = "⛶";
+  fsBtn.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else wrap.requestFullscreen?.().catch(() => {});
+  });
+
+  wrap.appendChild(frame);
+  wrap.appendChild(fsBtn);
+  host.appendChild(wrap);
+  paintIframe(frame, html);
+  watchHtmlEmbed(frame);
+  return frame;
+}
+
+/** Render interactive HTML activities into a host (for student/live activity panels). */
+export function renderHtmlActivities(host, body, { skipIndex = -1 } = {}) {
+  if (!host) return 0;
+  host.replaceChildren();
+  const normalized = normalizeLessonBody(body);
+  let count = 0;
+  normalized.html.forEach((block, i) => {
+    if (i === skipIndex) return;
+    const html = block?.html?.trim();
+    if (!html) return;
+    const section = document.createElement("section");
+    section.className = "ws-block ws-html";
+    if (block.title) {
+      const h = document.createElement("h2");
+      h.textContent = block.title;
+      section.appendChild(h);
+    }
+    mountHtmlFrame(section, html, block.title || `Activity ${i + 1}`);
+    host.appendChild(section);
+    count += 1;
+  });
+  return count;
+}
+
 export function formatTimeLeft(expiresAt) {
   const left = expiresAt - Date.now();
   if (left <= 0) return "Expired";
@@ -97,41 +189,42 @@ export function countStudents(studentsMap, { activeMs = STUDENT_ACTIVE_MS } = {}
   return { joined, viewed, active };
 }
 
-/** Turn lesson body into teacher-controlled slides. */
-export function lessonSlides(body) {
-  if (!body) return [];
+/** Turn lesson body into teacher-controlled slides. HTML activities come early. */
+export function lessonSlides(rawBody) {
+  const body = normalizeLessonBody(rawBody);
   const slides = [];
   if (body.overview?.trim()) slides.push({ kind: "overview", title: "Overview" });
-  if (Array.isArray(body.materials) && body.materials.length) {
-    slides.push({ kind: "materials", title: "Materials" });
-  }
-  (body.steps || []).forEach((step, i) => {
-    if (String(step || "").trim()) slides.push({ kind: "step", title: `Step ${i + 1}`, stepIndex: i });
-  });
-  (body.photos || []).forEach((_, i) => {
-    if (body.photos[i]?.url?.trim()) slides.push({ kind: "photo", title: "Photo", photoIndex: i });
-  });
-  (body.videos || []).forEach((video, i) => {
-    if (youtubeId(video?.url)) slides.push({ kind: "video", title: "Video", videoIndex: i });
-  });
-  (body.html || []).forEach((block, i) => {
+  body.html.forEach((block, i) => {
     if (block?.html?.trim()) {
       slides.push({ kind: "html", title: block.title || "Activity", htmlIndex: i });
     }
   });
-  (body.quizzes || []).forEach((quiz, i) => {
+  if (body.materials.length) {
+    slides.push({ kind: "materials", title: "Materials" });
+  }
+  body.steps.forEach((step, i) => {
+    if (String(step || "").trim()) slides.push({ kind: "step", title: `Step ${i + 1}`, stepIndex: i });
+  });
+  body.photos.forEach((photo, i) => {
+    if (photo?.url?.trim()) slides.push({ kind: "photo", title: "Photo", photoIndex: i });
+  });
+  body.videos.forEach((video, i) => {
+    if (youtubeId(video?.url)) slides.push({ kind: "video", title: "Video", videoIndex: i });
+  });
+  body.quizzes.forEach((quiz, i) => {
     if (quiz?.question && Array.isArray(quiz.choices) && quiz.choices.length >= 2) {
       slides.push({ kind: "quiz", title: "Quiz", quizIndex: i });
     }
   });
-  if ((body.links || []).some((link) => link?.url?.trim())) {
+  if (body.links.some((link) => link?.url?.trim())) {
     slides.push({ kind: "links", title: "Links" });
   }
   return slides;
 }
 
-export function renderSlide(host, body, slide, { onAnswer = null } = {}) {
-  if (!host || !body || !slide) return;
+export function renderSlide(host, rawBody, slide, { onAnswer = null } = {}) {
+  if (!host || !rawBody || !slide) return;
+  const body = normalizeLessonBody(rawBody);
   host.replaceChildren();
   const block = document.createElement("section");
   block.className = "ws-block ws-slide";
@@ -139,7 +232,7 @@ export function renderSlide(host, body, slide, { onAnswer = null } = {}) {
   if (slide.kind === "overview") {
     block.innerHTML = `<h2>Overview</h2><p>${escapeHtml(body.overview)}</p>`;
   } else if (slide.kind === "materials") {
-    const items = (body.materials || []).map((m) => `<li>${escapeHtml(m)}</li>`).join("");
+    const items = body.materials.map((m) => `<li>${escapeHtml(m)}</li>`).join("");
     block.innerHTML = `<h2>Materials</h2><ul>${items}</ul>`;
   } else if (slide.kind === "step") {
     const step = body.steps?.[slide.stepIndex] || "";
@@ -168,14 +261,8 @@ export function renderSlide(host, body, slide, { onAnswer = null } = {}) {
       h.textContent = htmlBlock.title;
       block.appendChild(h);
     }
-    const frame = document.createElement("iframe");
-    frame.className = "ws-html-frame";
-    frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
-    frame.setAttribute("title", htmlBlock.title || "Activity");
-    block.appendChild(frame);
+    mountHtmlFrame(block, html, htmlBlock.title || "Activity");
     host.appendChild(block);
-    paintIframe(frame, html);
-    watchHtmlEmbed(frame);
     return;
   } else if (slide.kind === "quiz") {
     const quiz = body.quizzes?.[slide.quizIndex];
@@ -202,7 +289,7 @@ export function renderSlide(host, body, slide, { onAnswer = null } = {}) {
     });
     block.appendChild(list);
   } else if (slide.kind === "links") {
-    const items = (body.links || [])
+    const items = body.links
       .filter((link) => link?.url?.trim())
       .map((link) => {
         const label = link.label?.trim() || link.url;
@@ -231,9 +318,30 @@ export function youtubeId(url) {
   return null;
 }
 
-export function renderLessonBody(host, body, { interactiveQuizzes = null } = {}) {
-  if (!host || !body) return;
+export function renderLessonBody(host, rawBody, { interactiveQuizzes = null, activitiesFirst = true } = {}) {
+  if (!host || !rawBody) return;
+  const body = normalizeLessonBody(rawBody);
   host.replaceChildren();
+
+  const appendHtml = () => {
+    body.html.forEach((block, index) => {
+      const html = block?.html?.trim();
+      if (!html) return;
+      const section = document.createElement("section");
+      section.className = "ws-block ws-html";
+      if (block.title) {
+        const h = document.createElement("h2");
+        h.textContent = block.title;
+        section.appendChild(h);
+      } else {
+        const h = document.createElement("h2");
+        h.textContent = "Activity";
+        section.appendChild(h);
+      }
+      mountHtmlFrame(section, html, block.title || `Activity ${index + 1}`);
+      host.appendChild(section);
+    });
+  };
 
   if (body.overview) {
     const block = document.createElement("section");
@@ -242,7 +350,9 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     host.appendChild(block);
   }
 
-  if (Array.isArray(body.materials) && body.materials.length) {
+  if (activitiesFirst) appendHtml();
+
+  if (body.materials.length) {
     const block = document.createElement("section");
     block.className = "ws-block";
     const items = body.materials.map((m) => `<li>${escapeHtml(m)}</li>`).join("");
@@ -250,7 +360,7 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     host.appendChild(block);
   }
 
-  if (Array.isArray(body.steps) && body.steps.length) {
+  if (body.steps.length) {
     const block = document.createElement("section");
     block.className = "ws-block";
     const items = body.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
@@ -258,7 +368,7 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     host.appendChild(block);
   }
 
-  (body.photos || []).forEach((photo) => {
+  body.photos.forEach((photo) => {
     const url = photo?.url?.trim();
     if (!url) return;
     const block = document.createElement("section");
@@ -271,7 +381,7 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     host.appendChild(block);
   });
 
-  (body.videos || []).forEach((video) => {
+  body.videos.forEach((video) => {
     const id = youtubeId(video?.url);
     if (!id) return;
     const block = document.createElement("section");
@@ -283,28 +393,9 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     host.appendChild(block);
   });
 
-  (body.html || []).forEach((block, index) => {
-    const html = block?.html?.trim();
-    if (!html) return;
-    const section = document.createElement("section");
-    section.className = "ws-block ws-html";
-    if (block.title) {
-      const h = document.createElement("h2");
-      h.textContent = block.title;
-      section.appendChild(h);
-    }
-    const frame = document.createElement("iframe");
-    frame.className = "ws-html-frame";
-    frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
-    frame.setAttribute("title", block.title || `Interactive block ${index + 1}`);
-    section.appendChild(frame);
-    host.appendChild(section);
-    paintIframe(frame, html);
-    watchHtmlEmbed(frame);
-  });
+  if (!activitiesFirst) appendHtml();
 
-  const quizzes = body.quizzes || [];
-  quizzes.forEach((quiz, qi) => {
+  body.quizzes.forEach((quiz, qi) => {
     if (!quiz?.question || !Array.isArray(quiz.choices) || quiz.choices.length < 2) return;
     const section = document.createElement("section");
     section.className = "ws-block ws-quiz";
@@ -331,7 +422,7 @@ export function renderLessonBody(host, body, { interactiveQuizzes = null } = {})
     host.appendChild(section);
   });
 
-  (body.links || []).forEach((link) => {
+  body.links.forEach((link) => {
     const url = link?.url?.trim();
     if (!url) return;
     const block = document.createElement("section");

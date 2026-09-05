@@ -148,6 +148,7 @@
               </span>
               <button type="button" id="btnGoLive" class="primary-sm">Go live</button>
             </div>
+            <button type="button" id="btnPreview" class="ghost-sm">Preview</button>
             <p id="roleHint" class="role-hint"></p>
             <span id="saveStatus" class="status doc-status" role="status"></span>
             <button type="button" id="btnDelete" class="ghost-sm danger" hidden>Delete</button>
@@ -253,6 +254,19 @@
         <button type="submit" value="cancel" class="ghost-sm">Cancel</button>
         <button type="submit" value="go" class="primary-sm">Go live</button>
       </div>
+    </form>
+  </dialog>
+
+  <dialog id="previewDialog" class="preview-dialog">
+    <form method="dialog" class="preview-shell">
+      <header class="preview-top">
+        <div>
+          <p class="preview-kicker">Student view</p>
+          <h2 id="previewTitle">Lesson preview</h2>
+        </div>
+        <button type="submit" value="close" class="ghost-sm">Close</button>
+      </header>
+      <div id="previewBody" class="preview-body"></div>
     </form>
   </dialog>
 
