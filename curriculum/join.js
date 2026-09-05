@@ -15,7 +15,7 @@ import {
   renderHtmlActivities,
   renderSlide,
   studentId
-} from "./session-shared.js?v=20260905d";
+} from "./session-shared.js?v=20260905e";
 
 const db = getDb();
 const pinGate = document.getElementById("pinGate");

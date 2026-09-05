@@ -49,7 +49,6 @@ function hasContent(iframe) {
 
 function measureContentHeight(doc) {
   const body = doc.body;
-  const root = doc.documentElement;
   if (!body) return MIN_H;
 
   let bottom = 0;
@@ -59,14 +58,9 @@ function measureContentHeight(doc) {
     bottom = Math.max(bottom, el.offsetTop + el.offsetHeight);
   }
 
-  // Temporary collapse avoids scrollHeight ≈ iframe clientHeight feedback.
-  const candidates = [
-    bottom,
-    body.offsetHeight,
-    root.offsetHeight,
-  ];
-
-  return Math.max(MIN_H, ...candidates.filter((n) => Number.isFinite(n) && n > 0));
+  // Also trust scrollHeight once iframe is collapsed to 1px (no feedback loop).
+  const scroll = Math.max(body.scrollHeight || 0, doc.documentElement?.scrollHeight || 0);
+  return Math.max(MIN_H, bottom, scroll);
 }
 
 /** Match iframe height to content — avoids empty bands from tall fixed frames. */

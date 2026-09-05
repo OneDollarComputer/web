@@ -3,9 +3,9 @@
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
-import { paintIframe, watchHtmlEmbed } from "./iframe-paint.js?v=20260905d";
+import { paintIframe, watchHtmlEmbed } from "./iframe-paint.js?v=20260905e";
 
-export { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260905d";
+export { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260905e";
 
 export const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
