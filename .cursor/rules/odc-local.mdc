@@ -1,0 +1,21 @@
+---
+description: Read .odc/local/; hub is orchestrator; keep web deploy format (Firebase bin)
+alwaysApply: true
+---
+
+# Local agent bridge (`.odc/local/`)
+
+If `.odc/local/` exists, **read it** before acting (`STATUS.md`, `RUN.md`, `HUB.md`, `LINKS.md`).
+
+## This repo (`web`)
+
+- Owns site, editor, curriculum, `emulator/r2/` **browser shell**.
+- Emulator **core** is `~/github/emulator` — rebuild WASM via `emulator/r2/scripts/deploy-web.sh`.
+- Browser firmware path: Firebase via `?projectID=` (Lab → Simulate). No manual `.bin` upload on the page.
+- Localhost may use `sample.bin` only as smoke test.
+
+## Hub
+
+Map/contracts: `~/github/hub`. After flow changes, update hub docs or write `.odc/local/HUB.md`.
+
+Never commit `.odc/local/`.
