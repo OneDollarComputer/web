@@ -54,7 +54,7 @@ a:hover { text-decoration: underline }
 }
 
 main {
-  max-width: 56rem;
+  max-width: 64rem;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
 }
@@ -523,6 +523,19 @@ main {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--line);
+}
+
+.done-panel > summary.done-label {
+  display: list-item;
+  cursor: pointer;
+  margin: 0 0 .5rem;
+  font-weight: 600;
+  color: var(--sub);
+}
+
+.done-panel[open] > summary.done-label {
+  color: var(--text);
+  margin-bottom: .75rem;
 }
 
 .done-panel label,

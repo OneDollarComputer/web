@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache" />
   <title>Live class — One Dollar Computer</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="/curriculum/workshop.css" />
+  <link rel="stylesheet" href="/curriculum/workshop.css?v=20260905f" />
 </head>
 <body>
   <header class="top">
@@ -18,7 +19,7 @@
 
     <div id="liveView" hidden>
       <section class="panel live-hero">
-        <div>
+        <div class="live-meta">
           <h1 id="liveTitle" class="live-title"></h1>
           <div class="room-display">
             <p class="room-label">Class link</p>
@@ -30,18 +31,29 @@
             <span class="stat" id="activeCount">0 active now</span>
             <span class="stat stat-muted" id="timeLeft"></span>
           </div>
+        </div>
+
+        <div class="student-tabs live-tabs" role="tablist" aria-label="Live views">
+          <button type="button" id="tabActivity" class="student-tab is-active" role="tab" aria-selected="true">Activity</button>
+          <button type="button" id="tabSlides" class="student-tab" role="tab" aria-selected="false">Slides</button>
+        </div>
+
+        <div id="viewActivity" class="student-view" role="tabpanel">
+          <p class="activity-lede">Same interactive HTML your students see. Switch to Slides to advance the class.</p>
+          <div id="activityBody"></div>
+          <p id="activityEmpty" class="empty-wall" hidden>
+            No HTML activity in this room. Open the lesson, add HTML, then tap <strong>Update room</strong>.
+          </p>
+        </div>
+
+        <div id="viewSlides" class="student-view" role="tabpanel" hidden>
           <div class="slide-controls">
             <button type="button" id="btnPrevSlide" class="ghost-sm" aria-label="Previous slide">←</button>
             <span id="slideIndicator" class="slide-indicator">1 / 1</span>
             <button type="button" id="btnNextSlide" class="ghost-sm" aria-label="Next slide">→</button>
           </div>
+          <div id="lessonPreview" class="ws-lesson-preview"></div>
         </div>
-        <div id="lessonPreview" class="ws-lesson-preview"></div>
-        <section id="activityPanel" class="activity-panel" hidden>
-          <h2 class="activity-heading">Student activity (HTML)</h2>
-          <p class="activity-lede">What students can do while you advance slides.</p>
-          <div id="activityBody"></div>
-        </section>
       </section>
 
       <section class="panel">
@@ -67,6 +79,6 @@
     </div>
   </main>
 
-  <script type="module" src="/curriculum/live.js?v=20260905e"></script>
+  <script type="module" src="/curriculum/live.js?v=20260905f"></script>
 </body>
 </html>
