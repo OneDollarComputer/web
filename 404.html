@@ -4,6 +4,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    /* Class PIN → join (do this before any dark theme paint). */
+    (function () {
+      var m = location.pathname.match(/^\/(\d{4})\/?$/);
+      if (m) {
+        location.replace("/curriculum/join/?pin=" + encodeURIComponent(m[1]));
+      }
+    })();
+  </script>
   <title>Projects — One Dollar Computer</title>
   <meta name="description" content="Sign in with Google and publish your One Dollar Computer projects at onedollarcomputer.com/your-name/" />
   <link rel="canonical" href="https://onedollarcomputer.com/project/" />
@@ -16,12 +25,6 @@
   <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
   <meta property="og:site_name" content="One Dollar Computer" />
   <meta name="theme-color" content="#07090F" />
-  <script>
-    (function () {
-      var m = location.pathname.match(/^\/(\d{4})\/?$/);
-      if (m) location.replace("/curriculum/join/?pin=" + encodeURIComponent(m[1]));
-    })();
-  </script>
   <script defer src="/js/analytics.js"></script>
   <script defer src="/js/share.js"></script>
   <style>

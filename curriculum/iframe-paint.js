@@ -78,19 +78,13 @@ export function fitHtmlFrame(iframe) {
     const doc = iframe.contentDocument;
     if (!doc?.documentElement) return;
 
-    const prev = iframe.style.height;
     iframe.style.height = "1px";
     iframe.style.minHeight = "0";
     void iframe.offsetHeight;
 
     const raw = measureContentHeight(doc);
-    // Re-measure after collapse for accurate scrollHeight.
-    const after = Math.max(
-      raw,
-      doc.body?.scrollHeight || 0,
-      doc.documentElement?.scrollHeight || 0
-    );
-    const capped = Math.min(Math.max(after + 8, MIN_H), MAX_H);
+    // Prefer element bottoms — scrollHeight can track the iframe and explode.
+    const capped = Math.min(Math.max(raw + 8, MIN_H), MAX_H);
     iframe.style.height = `${capped}px`;
     iframe.style.minHeight = `${MIN_H}px`;
 
@@ -99,11 +93,6 @@ export function fitHtmlFrame(iframe) {
       embed.style.height = "auto";
       embed.style.minHeight = "0";
       embed.style.aspectRatio = "auto";
-    }
-
-    // If measure failed closed-loop, restore previous rather than 1px flash permanently.
-    if (capped <= MIN_H && prev && Number.parseInt(prev, 10) > MIN_H) {
-      /* keep capped min */
     }
   } catch {
     /* sandbox without same-origin */
