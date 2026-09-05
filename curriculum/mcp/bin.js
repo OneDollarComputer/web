@@ -27,6 +27,16 @@ const RTDB_URL =
 
 const TOKEN_PATH = path.join(os.homedir(), ".config", "odc", "curriculum-agent.json");
 
+const AGENT_LESSONS_PATH = path.join(__dirname, "..", "AGENT_LESSONS.md");
+
+function loadAgentLessonsBrief() {
+  try {
+    return fs.readFileSync(AGENT_LESSONS_PATH, "utf8");
+  } catch {
+    return "See https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md (HTML free; firmware must be Simple Rust).";
+  }
+}
+
 function loadStore() {
   try {
     return JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8"));
@@ -95,7 +105,7 @@ const server = new McpServer({
 
 server.tool(
   "curriculum_pair",
-  "Connect to ODC curriculum. Pass the Agent link from /curriculum/ (while instructor is signed in). REQUIRED: call this tool — do NOT fetch the URL as a webpage, do NOT create local HTML files. Then use curriculum_list_lessons and curriculum_update_lesson.",
+  "Connect to ODC curriculum. Pass the Agent link from /curriculum/ (while instructor is signed in). REQUIRED: call this tool — do NOT fetch the URL as a webpage, do NOT create local HTML files. After pairing: call curriculum_agent_brief, then curriculum_list_lessons / curriculum_update_lesson. Teaching HTML5 is free; board firmware must be Simple Rust (use odc::*;).",
   {
     connect_url_or_code: z.string().describe("Full Agent link or the connect code")
   },
@@ -143,7 +153,10 @@ server.tool(
         return textResult({
           ok: true,
           status: "connected",
-          message: "Connected. Use curriculum_list_lessons and curriculum_update_lesson.",
+          message:
+            "Connected. Call curriculum_agent_brief next, then list/update lessons. HTML5 teaching UI is free; any board firmware must be complete Simple Rust (use odc::*;).",
+          brief: "curriculum_agent_brief",
+          docs: "https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md",
           connectUrl
         });
       }
@@ -175,6 +188,21 @@ server.registerTool(
       tokenPreview: token ? `${token.slice(0, 16)}…` : null
     });
   }
+);
+
+server.registerTool(
+  "curriculum_agent_brief",
+  {
+    description:
+      "Return the curriculum authoring contract: HTML5 teaching UI is free; board firmware must be Simple Rust (use odc::*;). Call after curriculum_pair before writing lessons."
+  },
+  async () => textResult({
+    docsUrl: "https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md",
+    aiDocsUrl: "https://onedollarcomputer.com/editor/AI_DOCS.txt",
+    emulatorUrl: "https://onedollarcomputer.com/emulator/r2/",
+    editorUrl: "https://onedollarcomputer.com/editor/",
+    markdown: loadAgentLessonsBrief()
+  })
 );
 
 server.registerTool(
@@ -212,7 +240,7 @@ server.tool(
 
 server.tool(
   "curriculum_update_lesson",
-  "Update a curriculum lesson. Fields: overview, materials[], steps[], photos, videos, html[], links. Interactive content: html[] with { title?, html } — NOT gameHtml in overview. Aliases: games, gameHtml.",
+  "Update a curriculum lesson. Fields: overview, materials[], steps[], photos, videos, html[], links. Put interactive teaching UI in html[] ({ title?, html }). If the lesson uses the ODC board or virtual board, also put complete Simple Rust (use odc::*; fn main) in steps under 'Firmware (Simple Rust)'. Teaching metaphor is free; compiler input is always Rust. See curriculum_agent_brief.",
   {
     lesson_id: z.string(),
     title: z.string().optional(),

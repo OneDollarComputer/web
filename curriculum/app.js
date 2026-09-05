@@ -187,21 +187,31 @@ function agentConnectUrl(code) {
 function agentClipboardText(code) {
   return [
     "Edit my One Dollar Computer curriculum on the site (not local files).",
-    "Run this entire block in ONE persistent shell (approve once):",
+    "Read https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md first.",
+    "Rule: teaching HTML5 is free; any board firmware must be complete Simple Rust (use odc::*;).",
+    "",
+    "If you have MCP (odc-curriculum): curriculum_pair with this link, then curriculum_agent_brief,",
+    "then curriculum_list_lessons / curriculum_update_lesson.",
+    "",
+    "Connect link:",
+    agentConnectUrl(code),
+    "",
+    "Or run this entire block in ONE persistent shell (approve once):",
     "",
     "set -e",
     `API=${AGENT_API}`,
     `CODE=${code}`,
     "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('token',''); assert t, d; print(t)\")",
     "export TOKEN",
-    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons/l_mt8zguud_q7n6dg\"",
+    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons\"",
     "",
     "PATCH fields: overview, materials[], steps[], photos[], videos[], links[],",
-    "html[] with { \"title\": \"…\", \"html\": \"<!doctype html>…\" }  (NOT gameHtml).",
+    "html[] with { \"title\": \"…\", \"html\": \"<!doctype html>…\" }.",
+    "When the lesson uses the board/emulator: put full Simple Rust in steps as 'Firmware (Simple Rust)'.",
     "Example:",
     "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
-    "  -d '{\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html>…</html>\"}]}' \\",
-    "  \"$API/lessons/l_mt8zguud_q7n6dg\""
+    "  -d '{\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html>…</html>\"}],\"steps\":[\"Firmware (Simple Rust)\",\"```rust\\nuse odc::*;\\nfn main() { loop { led_on(); delay(500); led_off(); delay(500); } }\\n```\"]}' \\",
+    "  \"$API/lessons/LESSON_ID\""
   ].join("\n");
 }
 

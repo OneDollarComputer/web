@@ -68,7 +68,9 @@ Until DNS is connected, use `https://odc-files-api.web.app` as `ODC_CURRICULUM_A
 
 Install MCP deps once: `cd curriculum/mcp && npm install`
 
-Tools: `curriculum_pair`, `curriculum_status`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`
+Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`
+
+**Authoring contract (agents):** [AGENT_LESSONS.md](./AGENT_LESSONS.md) — teaching HTML5 is free; board firmware must be Simple Rust (`use odc::*;`). Call `curriculum_agent_brief` after pairing.
 
 Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair.
 
@@ -125,7 +127,8 @@ curl -X PATCH -H "Authorization: Bearer odc_agent_…" -H "Content-Type: applica
 
 - Title, overview, materials list, steps
 - Photo URLs, YouTube / Shorts, other links
-- **HTML** blocks (HTML5 markup, inline in the lesson)
+- **HTML** blocks (HTML5 markup, inline in the lesson) — any teaching metaphor the author wants
+- When the ODC board or virtual board is part of the lesson: include **complete Simple Rust** in steps (see [AGENT_LESSONS.md](./AGENT_LESSONS.md))
 
 ## Auth & data
 
