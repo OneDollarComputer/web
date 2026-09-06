@@ -160,21 +160,45 @@ h3 {
   font-size: .92rem
 }
 
-.studio-bar { padding: .65rem 1rem; margin-bottom: 1rem }
-
-.studio-tools {
+.side-agent {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .45rem .65rem;
+  flex-direction: column;
+  gap: .25rem;
+  padding: .15rem 0 .55rem;
+  margin-bottom: .35rem;
+  border-bottom: 1px solid var(--line);
 }
 
-.studio-tools .presence-bar {
-  margin-right: auto;
+.side-agent .agent-ready {
+  margin: 0;
 }
 
-.studio-tools .ghost-sm {
+.side-agent .ghost-sm {
   margin-top: 0;
+  padding: .3rem .55rem;
+  font-size: .8rem;
+}
+
+.side-agent .agent-status-inline {
+  margin: 0;
+  font-size: .75rem;
+}
+
+.side-signout {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: .15rem .1rem;
+  font: inherit;
+  font-size: .78rem;
+  color: var(--sub);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.side-signout:hover {
+  color: var(--text);
 }
 
 .user-row {
@@ -313,9 +337,8 @@ h3 {
   box-shadow: var(--shadow)
 }
 
-.doc-status {
-  margin-left: auto;
-  font-size: .82rem
+.doc-toolbar .presence-bar {
+  margin: 0;
 }
 
 .doc-page {
