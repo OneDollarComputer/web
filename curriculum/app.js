@@ -74,6 +74,8 @@ const roleHint = document.getElementById("roleHint");
 const presenceBar = document.getElementById("presenceBar");
 const inviteUser = document.getElementById("inviteUser");
 const btnInvite = document.getElementById("btnInvite");
+const btnInviteToggle = document.getElementById("btnInviteToggle");
+const invitePanel = document.getElementById("invitePanel");
 const btnShare = document.getElementById("btnShare");
 const btnPreview = document.getElementById("btnPreview");
 const btnGoLive = document.getElementById("btnGoLive");
@@ -84,6 +86,7 @@ const previewBody = document.getElementById("previewBody");
 const liveDuration = document.getElementById("liveDuration");
 const liveRoomChip = document.getElementById("liveRoomChip");
 const liveRoomLink = document.getElementById("liveRoomLink");
+const btnCopyClassLink = document.getElementById("btnCopyClassLink");
 const btnUpdateRoom = document.getElementById("btnUpdateRoom");
 const modeEdit = document.getElementById("modeEdit");
 const modeSuggest = document.getElementById("modeSuggest");
@@ -1125,6 +1128,9 @@ function updateLiveRoomChrome(room) {
     liveRoomLink.href = joinUrl(room.pin);
     liveRoomLink.title = joinUrlAlt(room.pin);
   }
+  if (btnCopyClassLink) {
+    btnCopyClassLink.dataset.pin = String(room.pin || "");
+  }
 }
 
 function attachLiveRoom(lessonId) {
@@ -1552,6 +1558,25 @@ inviteUser?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
     inviteCoAuthor();
+  }
+});
+
+btnInviteToggle?.addEventListener("click", () => {
+  if (!invitePanel) return;
+  const open = invitePanel.hidden;
+  invitePanel.hidden = !open;
+  if (open) inviteUser?.focus();
+});
+
+btnCopyClassLink?.addEventListener("click", async () => {
+  const pin = btnCopyClassLink.dataset.pin || activeLiveRoom?.pin;
+  if (!pin) return;
+  const text = `odc.rs/${pin}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus(`Copied ${text}`);
+  } catch {
+    setStatus("Could not copy.");
   }
 });
 

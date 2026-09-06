@@ -2,66 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Live class — One Dollar Computer</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="/curriculum/workshop.css" />
+  <meta http-equiv="refresh" content="0; url=/curriculum/live/" />
+  <link rel="canonical" href="https://onedollarcomputer.com/curriculum/live/" />
+  <title>Live class — One Dollar Computer</title>
+  <script>
+    location.replace("/curriculum/live/" + location.search + location.hash);
+  </script>
 </head>
 <body>
-  <header class="top">
-    <a class="brand" href="/">One Dollar Computer</a>
-    <button type="button" id="btnEnd" class="ghost-sm danger" hidden>End class</button>
-  </header>
-
-  <main class="live-main">
-    <p id="loadStatus" class="status">Loading…</p>
-
-    <div id="liveView" hidden>
-      <section class="panel live-hero">
-        <div>
-          <h1 id="liveTitle" class="live-title"></h1>
-          <div class="room-display">
-            <p class="room-label">Class link</p>
-            <p class="room-join"><a id="joinLink" class="room-join-link" href="#" target="_blank" rel="noopener"></a></p>
-          </div>
-          <div class="stats-row">
-            <span class="stat" id="studentCount">0 joined</span>
-            <span class="stat" id="viewedCount">0 viewed</span>
-            <span class="stat" id="activeCount">0 active now</span>
-            <span class="stat stat-muted" id="timeLeft"></span>
-          </div>
-          <div class="slide-controls">
-            <button type="button" id="btnPrevSlide" class="ghost-sm" aria-label="Previous slide">←</button>
-            <span id="slideIndicator" class="slide-indicator">1 / 1</span>
-            <button type="button" id="btnNextSlide" class="ghost-sm" aria-label="Next slide">→</button>
-          </div>
-        </div>
-        <div id="lessonPreview" class="ws-lesson-preview"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Quiz responses</h2>
-        <div id="quizResults" class="quiz-results">
-          <p class="empty-wall">No quizzes in this lesson.</p>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Build photos</h2>
-        <div id="photoWall" class="photo-wall">
-          <p class="empty-wall">Photos appear when students tap Done.</p>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Past classes</h2>
-        <ul id="sessionHistory" class="session-history">
-          <li class="empty-wall">Past classes will appear here.</li>
-        </ul>
-      </section>
-    </div>
-  </main>
-
-  <script type="module" src="/curriculum/live.js"></script>
+  <p><a href="/curriculum/live/">Open live class</a></p>
 </body>
 </html>

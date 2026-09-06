@@ -12,9 +12,10 @@ Workspace for **teachers and instructors** to build One Dollar Computer lessons.
 | Short links (share, join, agent connect) | `odc.rs` + same path |
 | Agent API (MCP / curl) | `api.onedollarcomputer.com` |
 
-Workshop join link shown on the projector: `odc.rs/curriculum/join/?pin=…`
+Workshop join link shown on the projector: **`odc.rs/XXXX`** (4-digit class code).  
+Fallback page: `/curriculum/join/?pin=XXXX`.
 
-**Virtual board (R2):** embed `/emulator/r2/?embed=1` to preview firmware without hardware (see `web/emulator/r2/README.md`).
+**Firmware practice:** Editor → Lab → Simulate (`/emulator/r2/?projectID=…`). Curriculum itself does not embed the virtual board.
 
 ## How it differs from Projects
 
@@ -36,7 +37,7 @@ Workshop join link shown on the projector: `odc.rs/curriculum/join/?pin=…`
 
 ## Co-authors
 
-Owner invites by **username** (must already claim a username on `/project/`).
+Owner invites by **username** or **email** (username must already be claimed on `/project/`).
 
 ## Agent (MCP)
 
@@ -123,14 +124,14 @@ curl -X PATCH -H "Authorization: Bearer odc_agent_…" -H "Content-Type: applica
   -d '{"overview":"Updated by agent"}' "$API/lessons/LESSON_ID"
 ```
 
-**Revoke:** on the site, **Revoke tokens**.
+**Revoke:** on the site, **Revoke**.
 
 ## Lesson materials
 
 - Title, overview, materials list, steps
 - Photo URLs, YouTube / Shorts, other links
 - **HTML** blocks (HTML5 markup, inline in the lesson) — any teaching metaphor the author wants
-- When the ODC board or virtual board is part of the lesson: include **complete Simple Rust** in steps (see [AGENT_LESSONS.md](./AGENT_LESSONS.md))
+- When the ODC board is part of the lesson: include **complete Simple Rust** in steps (see [AGENT_LESSONS.md](./AGENT_LESSONS.md)); practice in Editor → Lab → Simulate
 
 ## Auth & data
 

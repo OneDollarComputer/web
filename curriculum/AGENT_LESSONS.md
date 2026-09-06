@@ -60,10 +60,8 @@ Useful fields (create + update):
 
 1. **`html[]`** — the experience (whatever the instructor asked for).  
 2. **`steps[]` (or overview)** — include a clear section **Firmware (Simple Rust)** with the **full** Rust source in a fenced `rust` code block (copy-paste ready for the editor).  
-3. **`links[]`** — at least:
-   - Editor: `https://onedollarcomputer.com/editor/`
-   - Virtual board: `https://onedollarcomputer.com/emulator/r2/`
-   - Spec or AI docs if helpful
+3. **`links[]`** — at least the Editor: `https://onedollarcomputer.com/editor/`  
+   Optional: Spec / AI docs. Emulator only when the lesson actually uses Lab → Simulate.
 
 Students compile/load via the **editor** (Compile / Upload) or open **Lab → Simulate** with a project. The lesson HTML teaches; the Rust is what becomes the `.bin`.
 
@@ -71,8 +69,8 @@ Students compile/load via the **editor** (Compile / Upload) or open **Lab → Si
 
 - Prefer a full mini-document: `<!doctype html><html>…</html>` inside each `html` string.
 - Keep scripts self-contained (no secrets, no Firebase service keys).
-- Linking out to `/editor/` and `/emulator/r2/` is encouraged.
-- Embedding the emulator iframe is optional: `/emulator/r2/?embed=1` (parent can `postMessage` `{ type: "odc-emulator", action: "loadBin"|"run"|"stop" }` — see `web/emulator/r2/README.md`).
+- Link to `/editor/` when firmware is part of the lesson.
+- Emulator iframe embed is optional (advanced): `/emulator/r2/?embed=1` — see `web/emulator/r2/README.md`.
 
 ## Minimal blink example (Rust that must compile)
 

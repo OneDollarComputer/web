@@ -83,7 +83,7 @@ function photoBytes(dataUrl) {
 function showPhotoPreview(dataUrl) {
   photoPreviewImg.src = dataUrl;
   photoPreview.hidden = false;
-  btnDone.hidden = false;
+  btnDone.hidden = true;
 }
 
 function clearPhoto() {
@@ -92,6 +92,32 @@ function clearPhoto() {
   photoPreview.hidden = true;
   photoPreviewImg.removeAttribute("src");
   btnDone.hidden = true;
+}
+
+async function sendPendingPhoto() {
+  if (!sessionId || !pendingPhoto) return;
+  btnDone.disabled = true;
+  btnCamera.disabled = true;
+  btnUpload.disabled = true;
+  setDoneStatus("Sending…");
+  try {
+    const photoRef = push(ref(db, `curriculum/live/${sessionId}/photos`));
+    await set(photoRef, {
+      studentId: myId,
+      dataUrl: pendingPhoto,
+      at: Date.now()
+    });
+    clearPhoto();
+    setDoneStatus("Sent — nice work!");
+  } catch (err) {
+    console.error(err);
+    btnDone.hidden = false;
+    setDoneStatus("Could not send. Tap Send to try again.", true);
+  } finally {
+    btnDone.disabled = false;
+    btnCamera.disabled = false;
+    btnUpload.disabled = false;
+  }
 }
 
 function setPhotoFromDataUrl(dataUrl) {
@@ -106,7 +132,7 @@ function setPhotoFromDataUrl(dataUrl) {
   }
   pendingPhoto = dataUrl;
   showPhotoPreview(dataUrl);
-  setDoneStatus("Ready to send.");
+  sendPendingPhoto();
 }
 
 async function stopCamera() {
@@ -431,26 +457,7 @@ photoInput?.addEventListener("change", () => {
   reader.readAsDataURL(file);
 });
 
-btnDone?.addEventListener("click", async () => {
-  if (!sessionId || !pendingPhoto) return;
-  btnDone.disabled = true;
-  setDoneStatus("Sending…");
-  try {
-    const photoRef = push(ref(db, `curriculum/live/${sessionId}/photos`));
-    await set(photoRef, {
-      studentId: myId,
-      dataUrl: pendingPhoto,
-      at: Date.now()
-    });
-    clearPhoto();
-    setDoneStatus("Sent — nice work!");
-  } catch (err) {
-    console.error(err);
-    setDoneStatus("Could not send photo.", true);
-  } finally {
-    btnDone.disabled = false;
-  }
-});
+btnDone?.addEventListener("click", () => sendPendingPhoto());
 
 const bootPin = joinCodeFromLocation();
 if (bootPin) {

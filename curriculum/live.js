@@ -33,6 +33,7 @@ const loadStatus = document.getElementById("loadStatus");
 const liveView = document.getElementById("liveView");
 const liveTitle = document.getElementById("liveTitle");
 const joinLink = document.getElementById("joinLink");
+const btnCopyJoin = document.getElementById("btnCopyJoin");
 const timeLeft = document.getElementById("timeLeft");
 const studentCount = document.getElementById("studentCount");
 const viewedCount = document.getElementById("viewedCount");
@@ -265,6 +266,7 @@ function showSession(session) {
   const short = joinUrl(session.pin).replace(/^https?:\/\//, "");
   joinLink.href = joinUrl(session.pin);
   joinLink.textContent = short;
+  if (btnCopyJoin) btnCopyJoin.dataset.pin = String(session.pin || "");
   if (session.durationMs) {
     timeLeft.textContent = formatTimeLeft(session.expiresAt);
   }
@@ -367,6 +369,21 @@ tabSlides?.addEventListener("click", () => setTab("slides"));
 btnPrevSlide?.addEventListener("click", () => setSlide(currentSlide - 1));
 btnNextSlide?.addEventListener("click", () => setSlide(currentSlide + 1));
 btnEnd?.addEventListener("click", () => endWorkshop());
+
+btnCopyJoin?.addEventListener("click", async () => {
+  const pin = btnCopyJoin.dataset.pin || sessionData?.pin;
+  if (!pin) return;
+  const text = `odc.rs/${pin}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    setLoadStatus(`Copied ${text}`);
+    loadStatus.hidden = false;
+    setTimeout(() => { loadStatus.hidden = true; }, 2000);
+  } catch {
+    setLoadStatus("Could not copy.", true);
+    loadStatus.hidden = false;
+  }
+});
 
 onAuthStateChanged(auth, async (user) => {
   me = user;

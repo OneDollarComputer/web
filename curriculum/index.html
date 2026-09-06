@@ -20,7 +20,7 @@
   <script defer src="/js/share.js"></script>
   <link rel="stylesheet" href="/js/auth-nav.css" />
   <script type="module" src="/js/auth-nav.js"></script>
-  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260905g" />
+  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260906a" />
   <script>
     (function () {
       var c = new URLSearchParams(location.search).get("connect");
@@ -107,13 +107,12 @@
           <div id="presenceBar" class="presence-bar" aria-live="polite"></div>
           <div class="agent-ready">
             <span class="agent-ready-label">Agent</span>
-            <button type="button" id="btnCopyAgent" class="primary-sm">Copy</button>
+            <button type="button" id="btnCopyAgent" class="ghost-sm">Copy</button>
+            <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke</button>
           </div>
-          <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke</button>
           <button type="button" id="btnSignOut" class="ghost">Sign out</button>
         </div>
         <p id="agentStatus" class="agent-status-inline" hidden></p>
-        <p class="agent-hint">Copy → paste into your agent → approve commands.</p>
       </div>
 
       <div class="studio-grid">
@@ -133,7 +132,8 @@
               <button type="button" id="modeSuggest" class="mode-btn">Suggesting</button>
             </div>
             <div id="authorTools" class="author-tools">
-              <label class="invite">
+              <button type="button" id="btnInviteToggle" class="ghost-sm">Invite</button>
+              <label class="invite" id="invitePanel" hidden>
                 <span class="sr-only">Invite co-author</span>
                 <span class="invite-row">
                   <input id="inviteUser" type="text" placeholder="username or email" autocomplete="off" spellcheck="false" />
@@ -144,6 +144,7 @@
               <span id="liveRoomChip" class="live-room-chip" hidden>
                 <span class="live-room-label">Class link</span>
                 <a id="liveRoomLink" class="live-room-link" href="#" target="_blank" rel="noopener"></a>
+                <button type="button" id="btnCopyClassLink" class="ghost-sm">Copy</button>
                 <button type="button" id="btnUpdateRoom" class="ghost-sm">Update room</button>
               </span>
               <button type="button" id="btnGoLive" class="primary-sm">Go live</button>
