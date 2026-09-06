@@ -78,6 +78,7 @@ const btnInviteToggle = document.getElementById("btnInviteToggle");
 const invitePanel = document.getElementById("invitePanel");
 const btnShare = document.getElementById("btnShare");
 const btnPreview = document.getElementById("btnPreview");
+const btnPreviewSolo = document.getElementById("btnPreviewSolo");
 const btnGoLive = document.getElementById("btnGoLive");
 const liveDurationDialog = document.getElementById("liveDurationDialog");
 const previewDialog = document.getElementById("previewDialog");
@@ -88,6 +89,8 @@ const liveRoomChip = document.getElementById("liveRoomChip");
 const liveRoomLink = document.getElementById("liveRoomLink");
 const btnCopyClassLink = document.getElementById("btnCopyClassLink");
 const btnUpdateRoom = document.getElementById("btnUpdateRoom");
+const btnMore = document.getElementById("btnMore");
+const moreDrop = document.getElementById("moreDrop");
 const modeEdit = document.getElementById("modeEdit");
 const modeSuggest = document.getElementById("modeSuggest");
 const suggestPanel = document.getElementById("suggestPanel");
@@ -897,15 +900,30 @@ function setFormEditable(canEdit) {
   });
 }
 
+function closeMoreMenu() {
+  if (!moreDrop || moreDrop.hidden) return;
+  moreDrop.hidden = true;
+  if (btnMore) btnMore.setAttribute("aria-expanded", "false");
+  if (invitePanel) invitePanel.hidden = true;
+}
+
+function openMoreMenu() {
+  if (!moreDrop) return;
+  moreDrop.hidden = false;
+  if (btnMore) btnMore.setAttribute("aria-expanded", "true");
+}
+
 function updateCollabChrome() {
   if (!currentId || !me) {
     collabBar.hidden = true;
     suggestPanel.hidden = true;
+    closeMoreMenu();
     return;
   }
   collabBar.hidden = false;
   if (isAuthor) {
     authorTools.hidden = false;
+    if (btnPreviewSolo) btnPreviewSolo.hidden = true;
     roleHint.textContent = currentMeta?.ownerUid === me.uid
       ? "You own this lesson."
       : "You are a co-author.";
@@ -919,6 +937,8 @@ function updateCollabChrome() {
     suggestForm.hidden = true;
   } else {
     authorTools.hidden = true;
+    if (btnPreviewSolo) btnPreviewSolo.hidden = false;
+    closeMoreMenu();
     roleHint.textContent = "Suggest changes — an author can accept them.";
     modeEdit.hidden = true;
     modeSuggest.hidden = false;
@@ -1114,15 +1134,11 @@ async function openLesson(id) {
 
 function updateLiveRoomChrome(room) {
   activeLiveRoom = room;
-  if (!liveRoomChip || !isAuthor || !room?.sessionId) {
-    if (liveRoomChip) liveRoomChip.hidden = true;
-    return;
-  }
-  if (room.expiresAt && room.expiresAt < Date.now()) {
-    liveRoomChip.hidden = true;
-    return;
-  }
-  liveRoomChip.hidden = false;
+  const live = !!(isAuthor && room?.sessionId && !(room.expiresAt && room.expiresAt < Date.now()));
+  if (liveRoomChip) liveRoomChip.hidden = !live;
+  if (btnCopyClassLink) btnCopyClassLink.hidden = !live;
+  if (btnUpdateRoom) btnUpdateRoom.hidden = !live;
+  if (!live) return;
   if (liveRoomLink) {
     liveRoomLink.textContent = `odc.rs/${room.pin}`;
     liveRoomLink.href = joinUrl(room.pin);
@@ -1568,6 +1584,21 @@ btnInviteToggle?.addEventListener("click", () => {
   if (open) inviteUser?.focus();
 });
 
+btnMore?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!moreDrop) return;
+  if (moreDrop.hidden) openMoreMenu();
+  else closeMoreMenu();
+});
+
+moreDrop?.addEventListener("click", (e) => e.stopPropagation());
+
+document.addEventListener("click", () => closeMoreMenu());
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeMoreMenu();
+});
+
 btnCopyClassLink?.addEventListener("click", async () => {
   const pin = btnCopyClassLink.dataset.pin || activeLiveRoom?.pin;
   if (!pin) return;
@@ -1575,13 +1606,21 @@ btnCopyClassLink?.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(text);
     setStatus(`Copied ${text}`);
+    closeMoreMenu();
   } catch {
     setStatus("Could not copy.");
   }
 });
 
-btnShare?.addEventListener("click", () => shareLink());
-btnPreview?.addEventListener("click", () => openStudentPreview());
+btnShare?.addEventListener("click", () => {
+  shareLink();
+  closeMoreMenu();
+});
+btnPreview?.addEventListener("click", () => {
+  openStudentPreview();
+  closeMoreMenu();
+});
+btnPreviewSolo?.addEventListener("click", () => openStudentPreview());
 
 async function startWorkshop(durationMinutes = 45) {
   if (!me || !currentId || !isAuthor) return;
@@ -1681,7 +1720,10 @@ liveDurationDialog?.addEventListener("close", () => {
   const minutes = Number(liveDuration?.value || 45);
   startWorkshop(minutes);
 });
-btnUpdateRoom?.addEventListener("click", () => pushRoomUpdate());
+btnUpdateRoom?.addEventListener("click", () => {
+  closeMoreMenu();
+  pushRoomUpdate();
+});
 
 document.querySelectorAll("[data-add]").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -1712,7 +1754,10 @@ form?.addEventListener("submit", (e) => {
   saveCurrent();
 });
 
-btnDelete?.addEventListener("click", () => deleteCurrent());
+btnDelete?.addEventListener("click", () => {
+  closeMoreMenu();
+  deleteCurrent();
+});
 
 suggestForm?.addEventListener("submit", async (e) => {
   e.preventDefault();

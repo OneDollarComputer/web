@@ -20,7 +20,7 @@
   <script defer src="/js/share.js"></script>
   <link rel="stylesheet" href="/js/auth-nav.css" />
   <script type="module" src="/js/auth-nav.js"></script>
-  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260906a" />
+  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260906b" />
   <script>
     (function () {
       var c = new URLSearchParams(location.search).get("connect");
@@ -131,28 +131,33 @@
               <button type="button" id="modeEdit" class="mode-btn active">Editing</button>
               <button type="button" id="modeSuggest" class="mode-btn">Suggesting</button>
             </div>
+            <span id="liveRoomChip" class="live-room-chip" hidden>
+              <a id="liveRoomLink" class="live-room-link" href="#" target="_blank" rel="noopener"></a>
+            </span>
             <div id="authorTools" class="author-tools">
-              <button type="button" id="btnInviteToggle" class="ghost-sm">Invite</button>
-              <label class="invite" id="invitePanel" hidden>
-                <span class="sr-only">Invite co-author</span>
-                <span class="invite-row">
-                  <input id="inviteUser" type="text" placeholder="username or email" autocomplete="off" spellcheck="false" />
-                  <button type="button" id="btnInvite" class="ghost-sm">Add</button>
-                </span>
-              </label>
-              <button type="button" id="btnShare" class="ghost-sm">Share</button>
-              <span id="liveRoomChip" class="live-room-chip" hidden>
-                <span class="live-room-label">Class link</span>
-                <a id="liveRoomLink" class="live-room-link" href="#" target="_blank" rel="noopener"></a>
-                <button type="button" id="btnCopyClassLink" class="ghost-sm">Copy</button>
-                <button type="button" id="btnUpdateRoom" class="ghost-sm">Update room</button>
-              </span>
               <button type="button" id="btnGoLive" class="primary-sm">Go live</button>
+              <div class="more-menu">
+                <button type="button" id="btnMore" class="ghost-sm more-btn" aria-label="More" aria-haspopup="true" aria-expanded="false" title="More">⋯</button>
+                <div id="moreDrop" class="more-drop" hidden role="menu">
+                  <button type="button" id="btnInviteToggle" class="more-item" role="menuitem">Invite</button>
+                  <label class="invite more-invite" id="invitePanel" hidden>
+                    <span class="sr-only">Invite co-author</span>
+                    <span class="invite-row">
+                      <input id="inviteUser" type="text" placeholder="username or email" autocomplete="off" spellcheck="false" />
+                      <button type="button" id="btnInvite" class="ghost-sm">Add</button>
+                    </span>
+                  </label>
+                  <button type="button" id="btnShare" class="more-item" role="menuitem">Share</button>
+                  <button type="button" id="btnPreview" class="more-item" role="menuitem">Preview</button>
+                  <button type="button" id="btnCopyClassLink" class="more-item" role="menuitem" hidden>Copy class link</button>
+                  <button type="button" id="btnUpdateRoom" class="more-item" role="menuitem" hidden>Update room</button>
+                  <button type="button" id="btnDelete" class="more-item more-danger" role="menuitem" hidden>Delete</button>
+                </div>
+              </div>
             </div>
-            <button type="button" id="btnPreview" class="ghost-sm">Preview</button>
+            <button type="button" id="btnPreviewSolo" class="ghost-sm" hidden>Preview</button>
             <p id="roleHint" class="role-hint"></p>
             <span id="saveStatus" class="status doc-status" role="status"></span>
-            <button type="button" id="btnDelete" class="ghost-sm danger" hidden>Delete</button>
           </div>
 
           <form id="lessonForm" class="doc-page">
