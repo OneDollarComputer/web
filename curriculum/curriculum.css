@@ -160,7 +160,22 @@ h3 {
   font-size: .92rem
 }
 
-.studio-bar { padding: 1rem 1.25rem; margin-bottom: 1rem }
+.studio-bar { padding: .65rem 1rem; margin-bottom: 1rem }
+
+.studio-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem .65rem;
+}
+
+.studio-tools .presence-bar {
+  margin-right: auto;
+}
+
+.studio-tools .ghost-sm {
+  margin-top: 0;
+}
 
 .user-row {
   display: flex;
@@ -965,7 +980,6 @@ h3 {
   flex-wrap: wrap;
   align-items: center;
   gap: .35rem;
-  margin-left: auto
 }
 
 .agent-ready-label {

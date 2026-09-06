@@ -20,7 +20,7 @@
   <script defer src="/js/share.js"></script>
   <link rel="stylesheet" href="/js/auth-nav.css" />
   <script type="module" src="/js/auth-nav.js"></script>
-  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260906b" />
+  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260906c" />
   <script>
     (function () {
       var c = new URLSearchParams(location.search).get("connect");
@@ -98,19 +98,14 @@
 
     <section id="studio" hidden>
       <div class="studio-bar panel">
-        <div class="user-row compact">
-          <img id="userPhoto" alt="" width="40" height="40" />
-          <div>
-            <p class="user-name" id="userName">Teacher</p>
-            <p class="user-meta" id="userMeta"></p>
-          </div>
+        <div class="studio-tools">
           <div id="presenceBar" class="presence-bar" aria-live="polite"></div>
           <div class="agent-ready">
             <span class="agent-ready-label">Agent</span>
             <button type="button" id="btnCopyAgent" class="ghost-sm">Copy</button>
             <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke</button>
           </div>
-          <button type="button" id="btnSignOut" class="ghost">Sign out</button>
+          <button type="button" id="btnSignOut" class="ghost-sm">Sign out</button>
         </div>
         <p id="agentStatus" class="agent-status-inline" hidden></p>
       </div>

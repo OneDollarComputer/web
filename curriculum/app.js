@@ -58,9 +58,6 @@ const studio = document.getElementById("studio");
 const btnGoogle = document.getElementById("btnGoogle");
 const btnSignOut = document.getElementById("btnSignOut");
 const gateError = document.getElementById("gateError");
-const userPhoto = document.getElementById("userPhoto");
-const userName = document.getElementById("userName");
-const userMeta = document.getElementById("userMeta");
 const lessonList = document.getElementById("lessonList");
 const emptyList = document.getElementById("emptyList");
 const form = document.getElementById("lessonForm");
@@ -973,19 +970,8 @@ async function showStudio(user) {
   me = user;
   gate.hidden = true;
   studio.hidden = false;
-  userName.textContent = user.displayName || "Teacher";
-  if (user.photoURL) {
-    userPhoto.src = user.photoURL;
-    userPhoto.hidden = false;
-  } else {
-    userPhoto.removeAttribute("src");
-    userPhoto.hidden = true;
-  }
 
   myUsername = await usernameFor(user.uid);
-  userMeta.textContent = myUsername
-    ? `Instructor · /${myUsername}/`
-    : (user.email || "Signed in with Google");
 
   await refreshLessonIndex();
   claimEmailInvites();
