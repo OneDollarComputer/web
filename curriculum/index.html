@@ -20,7 +20,7 @@
   <script defer src="/js/share.js"></script>
   <link rel="stylesheet" href="/js/auth-nav.css" />
   <script type="module" src="/js/auth-nav.js"></script>
-  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260906e" />
+  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260907a" />
   <script>
     (function () {
       var c = new URLSearchParams(location.search).get("connect");
@@ -106,8 +106,13 @@
           <div class="side-agent">
             <div class="agent-ready">
               <span class="agent-ready-label">Agent</span>
+              <button type="button" id="btnAgentHelp" class="help-btn" aria-expanded="false" aria-controls="agentHelp" title="What is Agent?">?</button>
               <button type="button" id="btnCopyAgent" class="ghost-sm">Copy</button>
               <button type="button" id="btnAgentRevoke" class="ghost-sm">Revoke</button>
+            </div>
+            <div id="agentHelp" class="help-pop" hidden>
+              <p><strong>Copy</strong> pastes a link into your AI agent (Cursor, Codex, ChatGPT…) so it can create and edit your lessons.</p>
+              <p><strong>Revoke</strong> disconnects that agent.</p>
             </div>
             <p id="agentStatus" class="agent-status-inline" hidden></p>
             <button type="button" id="btnSignOut" class="side-signout">Sign out</button>
@@ -132,6 +137,11 @@
               <button type="button" id="btnPreviewSolo" class="ghost-sm" hidden>Preview</button>
               <div id="authorTools" class="author-tools">
                 <button type="button" id="btnGoLive" class="primary-sm">Go live</button>
+                <button type="button" id="btnLiveHelp" class="help-btn" aria-expanded="false" aria-controls="liveHelp" title="About Go live">?</button>
+                <div id="liveHelp" class="help-pop help-pop-toolbar" hidden>
+                  <p><strong>Go live</strong> opens a class. Students type <strong>odc.rs/XXXX</strong> to join.</p>
+                  <p>Use <strong>⋯</strong> for Invite, Share, Preview, and Update room.</p>
+                </div>
                 <div class="more-menu">
                   <button type="button" id="btnMore" class="ghost-sm more-btn" aria-label="More" aria-haspopup="true" aria-expanded="false" title="More">⋯</button>
                   <div id="moreDrop" class="more-drop" hidden role="menu">

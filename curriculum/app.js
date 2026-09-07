@@ -96,6 +96,23 @@ const sugList = document.getElementById("sugList");
 const agentStatus = document.getElementById("agentStatus");
 const btnCopyAgent = document.getElementById("btnCopyAgent");
 const btnAgentRevoke = document.getElementById("btnAgentRevoke");
+const btnAgentHelp = document.getElementById("btnAgentHelp");
+const agentHelp = document.getElementById("agentHelp");
+const btnLiveHelp = document.getElementById("btnLiveHelp");
+const liveHelp = document.getElementById("liveHelp");
+
+function toggleHelp(btn, panel) {
+  if (!btn || !panel) return;
+  const open = panel.hidden;
+  panel.hidden = !open;
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function closeHelp(btn, panel) {
+  if (!panel || panel.hidden) return;
+  panel.hidden = true;
+  btn?.setAttribute("aria-expanded", "false");
+}
 
 function el(id) {
   return document.getElementById(id);
@@ -1795,6 +1812,32 @@ btnCopyAgent?.addEventListener("click", async () => {
   }
 });
 btnAgentRevoke?.addEventListener("click", () => revokeAllAgents());
+
+btnAgentHelp?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeHelp(btnLiveHelp, liveHelp);
+  toggleHelp(btnAgentHelp, agentHelp);
+});
+
+btnLiveHelp?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeHelp(btnAgentHelp, agentHelp);
+  toggleHelp(btnLiveHelp, liveHelp);
+});
+
+agentHelp?.addEventListener("click", (e) => e.stopPropagation());
+liveHelp?.addEventListener("click", (e) => e.stopPropagation());
+
+document.addEventListener("click", () => {
+  closeHelp(btnAgentHelp, agentHelp);
+  closeHelp(btnLiveHelp, liveHelp);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  closeHelp(btnAgentHelp, agentHelp);
+  closeHelp(btnLiveHelp, liveHelp);
+});
 
 onAuthStateChanged(auth, (user) => {
   if (user) showStudio(user);

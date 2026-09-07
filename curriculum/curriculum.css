@@ -179,6 +179,70 @@ h3 {
   font-size: .8rem;
 }
 
+.help-btn {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--sub);
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.help-btn:hover,
+.help-btn[aria-expanded="true"] {
+  color: var(--text);
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.help-pop {
+  margin: .15rem 0 .25rem;
+  padding: .55rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--sub);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.help-pop[hidden] {
+  display: none !important;
+}
+
+.help-pop p {
+  margin: 0;
+}
+
+.help-pop p + p {
+  margin-top: .4rem;
+}
+
+.help-pop strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.author-tools {
+  position: relative;
+}
+
+.help-pop-toolbar {
+  position: absolute;
+  top: calc(100% + .4rem);
+  right: 0;
+  z-index: 35;
+  width: min(16rem, 70vw);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
 .side-agent .agent-status-inline {
   margin: 0;
   font-size: .75rem;
