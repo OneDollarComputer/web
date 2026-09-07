@@ -15,6 +15,8 @@
 
 Use **`html`**, not `gameHtml`, not iframe in overview. Each block: `{ "title": "…", "html": "<!doctype html>…" }`.
 
+**Contrast:** on light backgrounds use dark text (`#0f172a`). Never pale titles on white. Dark panels may use light text.
+
 Aliases accepted by API: `games`, `gameHtml`, `game_html` (mapped to `html`).
 
 ## Agent → Copy

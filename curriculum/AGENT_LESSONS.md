@@ -69,6 +69,8 @@ Students compile/load via the **editor** (Compile / Upload) or open **Lab → Si
 
 - Prefer a full mini-document: `<!doctype html><html>…</html>` inside each `html` string.
 - Keep scripts self-contained (no secrets, no Firebase service keys).
+- **Contrast:** titles and body text must be readable. On light backgrounds use dark text (`#0f172a` / `#334155`). Never pale gray/lavender titles on white. On dark panels use light text (`#f8fafc`).
+- Prefer CSS variables or solid hex colors with clear contrast; avoid near-white on white.
 - Link to `/editor/` when firmware is part of the lesson.
 - Emulator iframe embed is optional (advanced): `/emulator/r2/?embed=1` — see `web/emulator/r2/README.md`.
 

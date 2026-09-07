@@ -26,7 +26,7 @@ import {
   push
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import { CURRICULUM_API } from "./api-origin.js?v=20260905g";
-import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260905g";
+import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260907b";
 import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js?v=20260905g";
 
 const FIREBASE = {
