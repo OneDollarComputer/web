@@ -348,7 +348,8 @@ async function approveExternalLogin(code) {
 }
 
 function agentConnectUrl(code) {
-  return `${SHORT_ORIGIN}/project/?connect=${encodeURIComponent(code)}`;
+  // Same pairing path as curriculum — that page tells agents "MCP only, do not scrape".
+  return `${SHORT_ORIGIN}/curriculum/?connect=${encodeURIComponent(code)}`;
 }
 
 async function sha256Hex(text) {
@@ -558,27 +559,58 @@ function currentProjectContext() {
 function agentClipboardText(code) {
   const proj = currentProjectContext();
   const lines = [
-    proj
-      ? `Edit this One Dollar Computer project on the site (not local files): /${proj.username}/${proj.slug}`
-      : "Edit my One Dollar Computer projects on the site (not local files).",
-    "Firmware must be complete Simple Rust (use odc::*; fn main). Never read_button() / pin 13.",
+    "Edit my One Dollar Computer firmware projects on the site (not local files).",
+    "REQUIRED: use MCP tool curriculum_pair with the Connect link below — do NOT fetch that URL as a webpage, do NOT scrape onedollarcomputer.com, do NOT write local .rs files.",
+    "After pairing call project_brief, then edit via project_get / project_update.",
+    "Rule: complete Simple Rust only (use odc::*; fn main). Never read_button() / pin 13.",
     ""
   ];
   if (proj) {
-    lines.push(`project_id: ${proj.id}`);
-    lines.push(`site: https://onedollarcomputer.com/${proj.username}/${proj.slug}`);
+    lines.push(`Target project_id: ${proj.id}`);
+    lines.push(`Public URL (for humans only): https://onedollarcomputer.com/${proj.username}/${proj.slug}`);
     lines.push("");
   }
   lines.push(
-    "If you have MCP (odc): curriculum_pair with this link, then",
+    "MCP (odc):",
+    "  1. curriculum_pair with this Connect link",
+    "  2. project_brief",
     proj
-      ? "project_brief → project_get / project_update (this project_id) / project_publish."
-      : "project_brief → project_list / project_create / project_update / project_publish.",
+      ? "  3. project_get / project_update with the project_id above (then project_publish if asked)"
+      : "  3. project_list / project_create / project_update / project_publish",
     "Publishing is irreversible.",
     "",
     "Connect link:",
-    agentConnectUrl(code)
+    agentConnectUrl(code),
+    "",
+    "Or run this entire block in ONE persistent shell (approve once):",
+    "",
+    "set -e",
+    `API=${AGENT_API}`,
+    `CODE=${code}`,
+    "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('token',''); assert t, d; print(t)\")",
+    "export TOKEN",
+    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/projects\""
   );
+  if (proj) {
+    lines.push(
+      "",
+      "GET this project:",
+      `curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/projects/${proj.id}\"`,
+      "",
+      "PATCH name + code:",
+      "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
+      `  -d '{"name":"…","code":"use odc::*;\\nfn main() {\\n  …\\n}\\n"}' \\`,
+      `  \"$API/projects/${proj.id}\"`
+    );
+  } else {
+    lines.push(
+      "",
+      "CREATE a project:",
+      "curl -sS -X POST -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
+      "  -d '{\"name\":\"LED\",\"code\":\"use odc::*;\\nfn main() { led_on(); }\\n\"}' \\",
+      "  \"$API/projects\""
+    );
+  }
   return lines.join("\n");
 }
 

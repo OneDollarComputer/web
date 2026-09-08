@@ -29,8 +29,8 @@
       var d = document.querySelector('meta[name="description"]');
       if (d) {
         d.content =
-          "ODC curriculum agent connect link. For MCP curriculum_pair only — not lesson content. " +
-          "Do not scrape; use curriculum_list_lessons and curriculum_update_lesson after pairing.";
+          "ODC agent connect link. For MCP curriculum_pair only — not lesson or project content. " +
+          "Do not scrape; use curriculum_* or project_* tools after pairing.";
       }
     })();
   </script>
@@ -45,19 +45,19 @@
       if (!el) return;
       el.hidden = false;
       el.textContent = [
-        "One Dollar Computer — curriculum agent connect",
+        "One Dollar Computer — agent connect (curriculum + projects)",
         "",
-        "This URL is for MCP pairing, NOT a lesson to read or copy into local files.",
+        "This URL is for MCP pairing, NOT a page to read or copy into local files.",
         "",
-        "Agents with MCP:",
+        "Agents with MCP (odc):",
         "  1. curriculum_pair with this full URL",
-        "  2. curriculum_agent_brief  (HTML5 free; board firmware = Simple Rust)",
-        "  3. curriculum_create_lesson  (or list/get/update)",
+        "  2a. Lessons: curriculum_agent_brief → curriculum_create_lesson / update",
+        "  2b. Firmware projects: project_brief → project_list / project_get / project_update",
         "",
         "Authoring rules: https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md",
         "Firmware rules:  https://onedollarcomputer.com/editor/AI_DOCS.txt",
         "",
-        "Do NOT: fetch this page for content, search the web, or write outputs/*.html.",
+        "Do NOT: fetch this page for content, scrape the site, or write local lesson/project files.",
         "",
         "Connect code: " + c,
         "API: https://api.onedollarcomputer.com/pair/status?code=" + c

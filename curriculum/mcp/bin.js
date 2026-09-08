@@ -129,7 +129,7 @@ const server = new McpServer({
 
 server.tool(
   "curriculum_pair",
-  "Connect to ODC curriculum. Pass the Agent link from /curriculum/ (while instructor is signed in). REQUIRED: call this tool — do NOT fetch the URL as a webpage, do NOT create local HTML files. After pairing: call curriculum_agent_brief, then curriculum_list_lessons / curriculum_update_lesson. Teaching HTML5 is free; board firmware must be Simple Rust (use odc::*;).",
+  "Connect to ODC (curriculum lessons AND firmware projects). Pass the Agent link from /curriculum/ or /project/ (while signed in). REQUIRED: call this tool — do NOT fetch the URL as a webpage, do NOT scrape onedollarcomputer.com, do NOT create local files. After pairing: for lessons use curriculum_agent_brief; for firmware projects use project_brief then project_get / project_update. Board firmware must be Simple Rust (use odc::*;).",
   {
     connect_url_or_code: z.string().describe("Full Agent link or the connect code")
   },
