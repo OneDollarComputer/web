@@ -731,6 +731,12 @@ async function handleGetProject(req, res, pid) {
   return json(res, 200, {
     ...projectSummary(pid, p),
     ownerUid: p.ownerUid,
+    activeFile: p.activeFile || "main",
+    files: Object.entries(p.files || {}).map(([id, f]) => ({
+      id,
+      name: (f && f.name) || id,
+      content: (f && (f.content || f.code)) || ""
+    })),
     code: (p.code && p.code.content) || ""
   });
 }
@@ -755,6 +761,27 @@ async function handleCreateProject(req, res) {
   const slug = uniqueSlug(name, used);
   const id = newProjectId();
   const createdAt = new Date().toISOString();
+  const files = {};
+  if (Array.isArray(body.files) && body.files.length) {
+    for (const f of body.files) {
+      if (!f || typeof f !== "object") continue;
+      const fid = String(f.id || f.name || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 32) || "file";
+      files[fid] = {
+        name: String(f.name || fid).slice(0, 48),
+        content: typeof f.content === "string" ? f.content : code,
+        language: "rust",
+        updatedAt: createdAt
+      };
+    }
+  }
+  if (!Object.keys(files).length) {
+    files.main = { name: "main", content: code, language: "rust", updatedAt: createdAt };
+  }
+  const activeFile = files[body.activeFile] ? body.activeFile : (files.main ? "main" : Object.keys(files)[0]);
   const row = {
     ownerUid: agent.uid,
     username,
@@ -764,7 +791,9 @@ async function handleCreateProject(req, res) {
     public: false,
     createdAt,
     updatedAt: createdAt,
-    code: { content: code, language: "rust" }
+    activeFile,
+    files,
+    code: { content: files[activeFile].content, language: "rust" }
   };
   const updates = {};
   updates[`projects/${id}`] = row;
@@ -773,7 +802,9 @@ async function handleCreateProject(req, res) {
   return json(res, 201, {
     ok: true,
     ...projectSummary(id, row),
-    code
+    activeFile,
+    files: Object.entries(files).map(([fid, f]) => ({ id: fid, name: f.name, content: f.content })),
+    code: files[activeFile].content
   });
 }
 
@@ -797,10 +828,21 @@ async function handlePatchProject(req, res, pid) {
     updates.name = name;
   }
   if (typeof body.code === "string") {
+    const fileId = typeof body.file === "string" && /^[a-z0-9][a-z0-9-]{0,31}$/i.test(body.file)
+      ? body.file
+      : (p.activeFile || "main");
+    const fileName = typeof body.fileName === "string" && body.fileName.trim()
+      ? body.fileName.trim().slice(0, 48)
+      : ((p.files && p.files[fileId] && p.files[fileId].name) || fileId);
     updates.code = { content: body.code, language: "rust" };
+    updates.activeFile = fileId;
+    updates[`files/${fileId}/content`] = body.code;
+    updates[`files/${fileId}/language`] = "rust";
+    updates[`files/${fileId}/name`] = fileName;
+    updates[`files/${fileId}/updatedAt`] = now;
   }
   if (!Object.keys(updates).length) {
-    return json(res, 400, { error: "No fields to update (name, code)" });
+    return json(res, 400, { error: "No fields to update (name, code, file)" });
   }
   updates.updatedAt = now;
   await db.ref(`projects/${pid}`).update(updates);
@@ -810,7 +852,7 @@ async function handlePatchProject(req, res, pid) {
       updatedAt: now
     });
   }
-  return json(res, 200, { ok: true, id: pid, updatedAt: now });
+  return json(res, 200, { ok: true, id: pid, updatedAt: now, file: updates.activeFile || null });
 }
 
 async function handlePublishProject(req, res, pid) {
@@ -870,14 +912,33 @@ async function handleForkProject(req, res, sourceId) {
   }
 
   const body = readBody(req);
-  const code = typeof body.code === "string"
-    ? body.code
-    : ((src.code && src.code.content) || DEFAULT_PROJECT_CODE);
+  const createdAt = new Date().toISOString();
+  let files = {};
+  if (src.files && typeof src.files === "object") {
+    for (const [fid, f] of Object.entries(src.files)) {
+      if (!f || typeof f !== "object") continue;
+      files[fid] = {
+        name: f.name || fid,
+        content: f.content || f.code || DEFAULT_PROJECT_CODE,
+        language: "rust",
+        updatedAt: createdAt
+      };
+    }
+  }
+  if (!Object.keys(files).length) {
+    const code = typeof body.code === "string"
+      ? body.code
+      : ((src.code && src.code.content) || DEFAULT_PROJECT_CODE);
+    files = { main: { name: "main", content: code, language: "rust", updatedAt: createdAt } };
+  } else if (typeof body.code === "string") {
+    const aid = src.activeFile && files[src.activeFile] ? src.activeFile : Object.keys(files)[0];
+    files[aid] = { ...files[aid], content: body.code, updatedAt: createdAt };
+  }
+  const activeFile = src.activeFile && files[src.activeFile] ? src.activeFile : Object.keys(files)[0];
   const name = src.name || src.slug || "Project";
   const used = await usedSlugsForUser(agent.uid, username);
   const slug = uniqueSlug(name, used);
   const id = newProjectId();
-  const createdAt = new Date().toISOString();
   const row = {
     ownerUid: agent.uid,
     username,
@@ -894,7 +955,9 @@ async function handleForkProject(req, res, sourceId) {
     },
     createdAt,
     updatedAt: createdAt,
-    code: { content: code, language: "rust" }
+    activeFile,
+    files,
+    code: { content: files[activeFile].content, language: "rust" }
   };
   const updates = {};
   updates[`projects/${id}`] = row;
@@ -907,7 +970,9 @@ async function handleForkProject(req, res, sourceId) {
   return json(res, 201, {
     ok: true,
     ...projectSummary(id, row),
-    code
+    activeFile,
+    files: Object.entries(files).map(([fid, f]) => ({ id: fid, name: f.name, content: f.content })),
+    code: files[activeFile].content
   });
 }
 

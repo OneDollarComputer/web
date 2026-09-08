@@ -64,6 +64,14 @@
         window.location.replace(`${window.location.pathname}${nextSearch}${hash}`);
       }
     }
+    try {
+      const fileParam = new URLSearchParams(window.location.search).get('file');
+      window.PROJECT_FILE = fileParam && /^[a-z0-9][a-z0-9-]{0,31}$/i.test(fileParam)
+        ? fileParam
+        : 'main';
+    } catch {
+      window.PROJECT_FILE = 'main';
+    }
   </script>
 
   <style>
@@ -132,6 +140,31 @@
 
     .project-public-link:hover {
       text-decoration: underline;
+    }
+
+    .file-select-wrap {
+      display: inline-flex;
+      margin-top: 0.2rem;
+    }
+    .file-select-wrap select {
+      font: inherit;
+      font-size: 0.8rem;
+      background: #0d1220;
+      color: #7ee2b8;
+      border: 1px solid #1d2843;
+      border-radius: 6px;
+      padding: 0.2rem 0.45rem;
+      max-width: 12rem;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
     }
 
     .controls {
@@ -797,6 +830,10 @@
       <div class="header-titles">
         <h1>Editor</h1>
         <a id="projectPublicLink" class="project-public-link" hidden></a>
+        <label class="file-select-wrap" id="fileSelectWrap" hidden>
+          <span class="sr-only">Code</span>
+          <select id="fileSelect" aria-label="Project code"></select>
+        </label>
       </div>
     </div>
     <div class="controls">
@@ -1115,6 +1152,8 @@
           name: p.name || p.slug || 'Project',
           public: p.public === true,
           isMain: !!p.isMain,
+          files: p.files || null,
+          activeFile: p.activeFile || null,
           loaded: true
         };
         const name = projectAccess.name;
@@ -1125,12 +1164,66 @@
         } else if (link) {
           link.hidden = true;
         }
+        syncFileSelect(p);
       } catch {
         projectAccess = { ownerUid: null, username: null, slug: null, name: null, public: false, loaded: true };
         if (link) link.hidden = true;
       }
       updateSimulateLink();
       syncEditChrome();
+    }
+
+    function projectFileList(p) {
+      const files = (p && p.files) || {};
+      const ids = Object.keys(files);
+      if (ids.length) {
+        return ids.map((id) => ({
+          id,
+          name: (files[id] && files[id].name) || id,
+          content: (files[id] && (files[id].content || files[id].code)) || ''
+        }));
+      }
+      const content = (p && p.code && (p.code.content || p.code.code)) || '';
+      return [{ id: 'main', name: 'main', content: String(content || '') }];
+    }
+
+    function syncFileSelect(p) {
+      const wrap = document.getElementById('fileSelectWrap');
+      const sel = document.getElementById('fileSelect');
+      if (!wrap || !sel) return;
+      const list = projectFileList(p);
+      const current = window.PROJECT_FILE || p.activeFile || 'main';
+      if (!list.some((f) => f.id === current) && list[0]) {
+        window.PROJECT_FILE = list[0].id;
+      }
+      sel.innerHTML = list.map((f) => {
+        const selected = f.id === (window.PROJECT_FILE || 'main') ? ' selected' : '';
+        return `<option value="${f.id.replace(/"/g, '')}"${selected}>${(f.name || f.id).replace(/</g, '')}</option>`;
+      }).join('');
+      wrap.hidden = list.length < 2;
+      if (!sel._odcBound) {
+        sel._odcBound = true;
+        sel.addEventListener('change', () => {
+          const next = sel.value;
+          if (!next || next === window.PROJECT_FILE) return;
+          const url = new URL(window.location.href);
+          url.searchParams.set('file', next);
+          window.location.assign(url.pathname + url.search + url.hash);
+        });
+      }
+    }
+
+    async function loadActiveFileContent() {
+      if (!database || !window.PROJECT_CODE) return null;
+      const snap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
+      if (!snap.exists()) return null;
+      const p = snap.val() || {};
+      const list = projectFileList(p);
+      let fileId = window.PROJECT_FILE || p.activeFile || 'main';
+      let row = list.find((f) => f.id === fileId) || list[0];
+      if (!row) return null;
+      window.PROJECT_FILE = row.id;
+      return { fileId: row.id, content: row.content, project: p };
     }
 
     function updateSimulateLink() {
@@ -3073,7 +3166,25 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const result = await response.json();
+        await response.json();
+
+        // Mirror into projects/{id}/files/{file} so multi-code projects stay linked.
+        const fileId = window.PROJECT_FILE || 'main';
+        if (!IS_LOCAL && database && currentProjectCode) {
+          try {
+            const nowIso = new Date().toISOString();
+            await update(ref(database, `projects/${currentProjectCode}`), {
+              activeFile: fileId,
+              updatedAt: nowIso,
+              [`files/${fileId}/content`]: content,
+              [`files/${fileId}/language`]: 'rust',
+              [`files/${fileId}/name`]: fileId,
+              [`files/${fileId}/updatedAt`]: nowIso
+            });
+          } catch (mirrorErr) {
+            console.warn('Could not mirror file node:', mirrorErr);
+          }
+        }
 
         updateSyncIndicator('synced');
         updateStatus(IS_LOCAL ? 'Saved JSON' : 'Synced', 'connected');
@@ -3334,20 +3445,29 @@ fn main() {
       } else {
         
         try {
-          const response = await fetch(projectApiUrl());
-          if (response.ok) {
-            const data = await response.json();
-            initialData = data;
-            if (data && data.content) {
-              initialCode = data.content;
-              lastSavedContent = initialCode;
-              console.log(IS_LOCAL ? '✅ Code loaded from local JSON' : '✅ Code loaded from Firebase');
+          const fileRow = await loadActiveFileContent();
+          if (fileRow && typeof fileRow.content === 'string' && fileRow.content.length) {
+            initialCode = fileRow.content;
+            lastSavedContent = initialCode;
+            initialData = fileRow.project && fileRow.project.code ? fileRow.project.code : null;
+            syncFileSelect(fileRow.project || {});
+            console.log('✅ Code loaded from project file', fileRow.fileId);
+          } else {
+            const response = await fetch(projectApiUrl());
+            if (response.ok) {
+              const data = await response.json();
+              initialData = data;
+              if (data && data.content) {
+                initialCode = data.content;
+                lastSavedContent = initialCode;
+                console.log(IS_LOCAL ? '✅ Code loaded from local JSON' : '✅ Code loaded from Firebase');
 
-              
-              if (data.compilationStatus === 'success' && data.binaryHash) {
-                console.log('🔍 Compiled binaryHash found on page load');
-                console.log('   - binaryHash:', data.binaryHash);
-                console.log('   - binarySize:', data.binarySize);
+                
+                if (data.compilationStatus === 'success' && data.binaryHash) {
+                  console.log('🔍 Compiled binaryHash found on page load');
+                  console.log('   - binaryHash:', data.binaryHash);
+                  console.log('   - binarySize:', data.binarySize);
+                }
               }
             }
           }

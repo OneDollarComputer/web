@@ -28,6 +28,14 @@
         "code": {
           ".read": true,
           ".write": true
+        },
+        "files": {
+          ".read": true,
+          ".write": true
+        },
+        "activeFile": {
+          ".read": true,
+          ".write": true
         }
       }
     },

@@ -422,11 +422,13 @@ server.registerTool(
   "project_update",
   {
     description:
-      "Update a firmware project you own (name and/or code). Code must be complete Simple Rust (use odc::*;). Never read_button() / pin 13. Cannot unpublish.",
+      "Update a firmware project you own (name and/or code). Optional file id for multi-code projects (e.g. send, receive). Code must be complete Simple Rust (use odc::*;). Never read_button() / pin 13. Cannot unpublish.",
     inputSchema: {
       project_id: z.string(),
       name: z.string().optional(),
-      code: z.string().optional()
+      code: z.string().optional(),
+      file: z.string().optional().describe("File id within the project (default: active / main)"),
+      file_name: z.string().optional().describe("Display name when creating/updating a file")
     }
   },
   async (args) => {
@@ -437,6 +439,8 @@ server.registerTool(
     const body = {};
     if (args.name !== undefined) body.name = args.name;
     if (args.code !== undefined) body.code = args.code;
+    if (args.file !== undefined) body.file = args.file;
+    if (args.file_name !== undefined) body.fileName = args.file_name;
     const data = await api("PATCH", `/projects/${encodeURIComponent(args.project_id)}`, {
       token,
       body

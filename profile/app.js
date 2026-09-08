@@ -130,6 +130,77 @@ function newProjectId() {
   return "p" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function fileIdFromName(name) {
+  const id = slugify(String(name || "").trim()).replace(/-+/g, "-").slice(0, 32);
+  return id || "file";
+}
+
+function uniqueFileId(name, used) {
+  let id = fileIdFromName(name);
+  if (!used[id]) return id;
+  let n = 2;
+  while (used[`${id}-${n}`]) n += 1;
+  return `${id}-${n}`;
+}
+
+/** One project → many firmware sources. Legacy `code` becomes files.main. */
+function normalizeProjectFiles(data) {
+  const row = data || {};
+  const out = {};
+  if (row.files && typeof row.files === "object") {
+    for (const [id, f] of Object.entries(row.files)) {
+      if (!f || typeof f !== "object") continue;
+      const content = typeof f.content === "string"
+        ? f.content
+        : (typeof f.code === "string" ? f.code : "");
+      out[id] = {
+        name: (f.name && String(f.name).trim()) || id,
+        content,
+        language: f.language || "rust",
+        updatedAt: f.updatedAt || ""
+      };
+    }
+  }
+  if (!Object.keys(out).length) {
+    const content = (row.code && (row.code.content || row.code.code)) || DEFAULT_CODE;
+    out.main = { name: "main", content: String(content), language: "rust", updatedAt: "" };
+  }
+  const activeFile = (row.activeFile && out[row.activeFile])
+    ? row.activeFile
+    : (out.main ? "main" : Object.keys(out)[0]);
+  return { files: out, activeFile };
+}
+
+function editorUrl(projectId, fileId) {
+  let url = `/editor/?projectID=${encodeURIComponent(projectId)}`;
+  if (fileId && fileId !== "main") {
+    url += `&file=${encodeURIComponent(fileId)}`;
+  }
+  return url;
+}
+
+function codeBlob(content) {
+  return { content, language: "rust" };
+}
+
+function projectSeed(ownerUid, username, slug, name, createdAt, code = DEFAULT_CODE) {
+  return {
+    ownerUid,
+    username,
+    slug,
+    name,
+    isMain: false,
+    public: false,
+    createdAt,
+    updatedAt: createdAt,
+    activeFile: "main",
+    files: {
+      main: { name: "main", content: code, language: "rust", updatedAt: createdAt }
+    },
+    code: codeBlob(code)
+  };
+}
+
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -248,17 +319,10 @@ async function claimUsername(user, username) {
   if (!mainId) {
     mainId = newProjectId();
     mainSlug = uniqueSlug("led", usedSlugs);
-    await set(ref(db, `projects/${mainId}`), {
-      ownerUid: user.uid,
-      username: name,
-      slug: mainSlug,
-      name: "LED",
-      isMain: true,
-      public: false,
-      createdAt,
-      updatedAt: createdAt,
-      code: { content: DEFAULT_CODE, language: "rust" }
-    });
+    await set(ref(db, `projects/${mainId}`), projectSeed(
+      user.uid, name, mainSlug, "LED", createdAt, DEFAULT_CODE
+    ));
+    await update(ref(db, `projects/${mainId}`), { isMain: true });
   }
 
   const existingIds = (prev && prev.projectIds) || {};
@@ -431,9 +495,18 @@ async function cloneProject(sourceId, contentOverride) {
   }
   const srcSnap = await get(ref(db, `projects/${sourceId}`));
   const src = srcSnap.exists() ? srcSnap.val() : {};
-  const content = contentOverride
-    ?? (src.code && src.code.content)
-    ?? DEFAULT_CODE;
+  const { files: srcFiles, activeFile: srcActive } = normalizeProjectFiles(src);
+  // Prefer override for the active file when visitor edited the textarea before fork.
+  if (typeof contentOverride === "string") {
+    const aid = srcActive;
+    srcFiles[aid] = {
+      ...(srcFiles[aid] || { name: aid, language: "rust" }),
+      content: contentOverride,
+      language: "rust"
+    };
+  }
+  const activeFile = srcFiles[srcActive] ? srcActive : Object.keys(srcFiles)[0];
+  const activeContent = srcFiles[activeFile].content;
   const name = src.name || src.slug || "Project";
   const used = await usedSlugsForMe();
   const slug = uniqueSlug(name, used);
@@ -456,7 +529,9 @@ async function cloneProject(sourceId, contentOverride) {
     forkedFrom,
     createdAt,
     updatedAt: createdAt,
-    code: { content, language: "rust" }
+    activeFile,
+    files: srcFiles,
+    code: codeBlob(activeContent)
   });
   await update(ref(db, `users/${me.uid}/projectIds`), { [id]: true });
   if (profile.projectIds) profile.projectIds[id] = true;
@@ -968,19 +1043,26 @@ async function renderProject(username, slug, pub, owner) {
       fromEl.textContent = "";
     }
   }
-  const code = (data.code && data.code.content) || "";
+  const { files, activeFile: initialFile } = normalizeProjectFiles(data);
+  const activeFile = initialFile;
+  const code = (files[activeFile] && files[activeFile].content) || "";
   $("codeEditor").value = code;
   lastSavedCode = code;
-  $("btnOpenEditor").href = `/editor/?projectID=${encodeURIComponent(entry.id)}`;
-  $("btnOpenEditor").hidden = !owner;
-  const btnEdit = $("btnEdit");
-  const btnPublish = $("btnPublish");
-  if (btnEdit) btnEdit.hidden = !(!owner && isPublic);
-  if (btnPublish) btnPublish.hidden = !(owner && !isPublic);
   $("projectPane").dataset.projectId = entry.id;
   $("projectPane").dataset.username = username;
   $("projectPane").dataset.slug = slug;
   $("projectPane").dataset.public = isPublic ? "1" : "0";
+  $("projectPane").dataset.fileId = activeFile;
+  $("projectPane")._files = files;
+  renderFileTabs(owner);
+  const btnEdit = $("btnEdit");
+  const btnPublish = $("btnPublish");
+  const btnAddFile = $("btnAddFile");
+  const btnOpen = $("btnOpenEditor");
+  if (btnEdit) btnEdit.hidden = !(!owner && isPublic);
+  if (btnPublish) btnPublish.hidden = !(owner && !isPublic);
+  if (btnAddFile) btnAddFile.hidden = !owner;
+  if (btnOpen) btnOpen.hidden = false;
   const agentRow = $("projectAgentRow");
   if (agentRow) agentRow.hidden = !owner;
   if (owner) {
@@ -990,6 +1072,76 @@ async function renderProject(username, slug, pub, owner) {
     setStatus("");
     setAgentStatus("");
   }
+}
+
+function renderFileTabs(owner) {
+  const tabs = $("fileTabs");
+  const pane = $("projectPane");
+  if (!tabs || !pane) return;
+  const files = pane._files || {};
+  const active = pane.dataset.fileId || "main";
+  const ids = Object.keys(files);
+  // Always show tabs when there is more than one file, or owner can add more.
+  tabs.hidden = ids.length < 2 && !owner;
+  tabs.innerHTML = ids.map((id) => {
+    const label = escapeHtml(files[id].name || id);
+    const cls = id === active ? "file-tab active" : "file-tab";
+    return `<button type="button" class="${cls}" data-file-id="${escapeHtml(id)}">${label}</button>`;
+  }).join("");
+  tabs.querySelectorAll("[data-file-id]").forEach((btn) => {
+    btn.addEventListener("click", () => switchProjectFile(btn.getAttribute("data-file-id")));
+  });
+}
+
+async function switchProjectFile(fileId) {
+  const pane = $("projectPane");
+  if (!pane || !fileId || pane.dataset.fileId === fileId) return;
+  const files = pane._files || {};
+  if (!files[fileId]) return;
+  // Save current buffer first if owner.
+  if (isOwner(pane.dataset.username) && $("codeEditor").value !== lastSavedCode) {
+    await saveProjectCode();
+  }
+  pane.dataset.fileId = fileId;
+  const content = files[fileId].content || "";
+  $("codeEditor").value = content;
+  lastSavedCode = content;
+  renderFileTabs(isOwner(pane.dataset.username));
+  // Persist active selection for editor / Upload.
+  if (isOwner(pane.dataset.username) && pane.dataset.projectId) {
+    const updatedAt = nowIso();
+    await update(ref(db, `projects/${pane.dataset.projectId}`), {
+      activeFile: fileId,
+      updatedAt,
+      code: codeBlob(content)
+    }).catch(() => {});
+  }
+}
+
+async function addProjectFile() {
+  const pane = $("projectPane");
+  if (!pane || !isOwner(pane.dataset.username)) return;
+  const label = (prompt("Name for this code (e.g. send, receive)", "") || "").trim();
+  if (!label) return;
+  const files = pane._files || {};
+  const id = uniqueFileId(label, files);
+  const createdAt = nowIso();
+  const content = DEFAULT_CODE;
+  files[id] = { name: label, content, language: "rust", updatedAt: createdAt };
+  pane._files = files;
+  if ($("codeEditor").value !== lastSavedCode) await saveProjectCode();
+  pane.dataset.fileId = id;
+  $("codeEditor").value = content;
+  lastSavedCode = content;
+  const projectId = pane.dataset.projectId;
+  await update(ref(db, `projects/${projectId}`), {
+    updatedAt: createdAt,
+    activeFile: id,
+    [`files/${id}`]: files[id],
+    code: codeBlob(content)
+  });
+  renderFileTabs(true);
+  setStatus("Added.");
 }
 
 function needsUsername() {
@@ -1120,6 +1272,7 @@ async function saveProjectCode() {
   const id = pane.dataset.projectId;
   const username = pane.dataset.username;
   const slug = pane.dataset.slug;
+  const fileId = pane.dataset.fileId || "main";
   const content = $("codeEditor").value;
   if (!auth.currentUser || !id || !isOwner(username)) return;
   if (content === lastSavedCode || savingCode) return;
@@ -1127,11 +1280,22 @@ async function saveProjectCode() {
   setStatus("Saving…");
   try {
     const updatedAt = nowIso();
+    const files = pane._files || {};
+    const prev = files[fileId] || { name: fileId, language: "rust" };
+    files[fileId] = { ...prev, content, language: "rust", updatedAt };
+    pane._files = files;
     await update(ref(db, `projects/${id}`), {
       updatedAt,
-      code: { content, language: "rust" }
+      activeFile: fileId,
+      [`files/${fileId}/content`]: content,
+      [`files/${fileId}/language`]: "rust",
+      [`files/${fileId}/name`]: prev.name || fileId,
+      [`files/${fileId}/updatedAt`]: updatedAt,
+      code: codeBlob(content)
     });
-    await update(ref(db, `profiles/${username}/projects/${slug}`), { updatedAt });
+    if (pane.dataset.public === "1") {
+      await update(ref(db, `profiles/${username}/projects/${slug}`), { updatedAt });
+    }
     lastSavedCode = content;
     setStatus("Saved.");
   } catch (e) {
@@ -1168,21 +1332,27 @@ $("btnNew").addEventListener("click", async () => {
   let slug = uniqueSlug(name, used);
   const id = newProjectId();
   const createdAt = nowIso();
-  await set(ref(db, `projects/${id}`), {
-    ownerUid: me.uid,
-    username: profile.username,
-    slug,
-    name,
-    isMain: false,
-    public: false,
-    createdAt,
-    updatedAt: createdAt,
-    code: { content: DEFAULT_CODE, language: "rust" }
-  });
+  await set(ref(db, `projects/${id}`), projectSeed(
+    me.uid, profile.username, slug, name, createdAt, DEFAULT_CODE
+  ));
   await update(ref(db, `users/${me.uid}/projectIds`), { [id]: true });
   if (profile.projectIds) profile.projectIds[id] = true;
   $("newProjectName").value = "";
   go(`/${profile.username}/${slug}`);
+});
+
+$("btnOpenEditor")?.addEventListener("click", () => {
+  const pane = $("projectPane");
+  const id = pane?.dataset.projectId;
+  if (!id) {
+    setStatus("Open a project first.");
+    return;
+  }
+  location.assign(editorUrl(id, pane.dataset.fileId || "main"));
+});
+
+$("btnAddFile")?.addEventListener("click", () => {
+  addProjectFile().catch((e) => setStatus((e && e.message) || "Could not add code."));
 });
 
 $("codeEditor").addEventListener("beforeinput", (e) => {
