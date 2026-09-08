@@ -1511,6 +1511,7 @@
         }
       }
       syncEditChrome();
+    }
 
     function wireUserMenu() {
       const signIn = document.getElementById('btnEditorSignIn');
@@ -1765,9 +1766,9 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     })();
 
     wireUserMenu();
-    // Bare /editor/ redirects to a project; stop this module if we navigated away.
+    // Bare /editor/ redirects to a project; park this module if we navigated away.
     if (!(await resolveBareEditorUrl())) {
-      return;
+      await new Promise(() => {});
     }
     // Do not block Monaco on Firebase — private projects / slow auth used to hang here.
     refreshProjectPublicLink().catch((err) => {
