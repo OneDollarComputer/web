@@ -142,7 +142,7 @@
       text-decoration: underline;
     }
 
-    .file-select-wrap {
+    .file-select-wrap:not([hidden]) {
       display: inline-flex;
       margin-top: 0.2rem;
     }
@@ -3423,8 +3423,14 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     }
 
 
-    require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
-    require(['vs/editor/editor.main'], async function () {
+    // Monaco (AMD). Use window.require — ES modules do not always resolve bare `require`.
+    const amdRequire = window.require;
+    if (!amdRequire || typeof amdRequire.config !== 'function') {
+      console.error('Monaco loader missing (window.require).');
+      updateStatus('Editor failed to load', 'error');
+    } else {
+      amdRequire.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+      amdRequire(['vs/editor/editor.main'], async function () {
       
       let initialCode = `//! Example: blink the LED on the One Dollar Computer.
 
@@ -4071,7 +4077,11 @@ fn main() {
           }
         }, 2000); 
       }
+    }, function (err) {
+      console.error('Monaco AMD load failed', err);
+      try { updateStatus('Editor failed to load', 'error'); } catch (_) {}
     });
+    }
 
     
     function downloadBinary(binaryBase64, size = null) {
