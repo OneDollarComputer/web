@@ -364,6 +364,9 @@ function isOwner(username) {
   return !!(me && profile && profile.username === username);
 }
 
+/** False until the first Firebase Auth callback — avoids false "not found" on private projects. */
+let authReady = false;
+
 const AGENT_API = "https://api.onedollarcomputer.com";
 const SHORT_ORIGIN = "https://odc.rs";
 const PAIR_TTL_MS = 10 * 60 * 1000;
@@ -973,9 +976,37 @@ async function renderUser(username, pub, owner) {
 async function findProject(username, slug, pub, owner) {
   const listed = pub && pub.projects && pub.projects[slug];
   if (listed) return listed;
+  // Private projects only resolve after we know who is signed in.
+  if (!authReady) return undefined;
   if (!owner || !me) return null;
   const mine = await loadOwnerProjects(me.uid);
   return mine.find((p) => p.slug === slug) || null;
+}
+
+function showProjectMissing(username, slug, { loading = false } = {}) {
+  hideAll();
+  $("viewMissing").hidden = false;
+  if (loading) {
+    $("missingTitle").textContent = "Loading…";
+    $("missingText").textContent = "";
+    $("missingLogin").hidden = true;
+    document.title = "Loading — One Dollar Computer";
+    return;
+  }
+  if (!me) {
+    $("missingTitle").textContent = "Sign in";
+    $("missingText").textContent =
+      `“${slug}” is not a public project on /${username}/. If it is yours, sign in to open it — private projects stay hidden until you publish.`;
+    $("missingLogin").hidden = false;
+    document.title = "Sign in — One Dollar Computer";
+    return;
+  }
+  $("missingTitle").textContent = "Not found";
+  $("missingText").textContent = isOwner(username)
+    ? `No project “${slug}” on /${username}/.`
+    : `No public project “${slug}” on /${username}/.`;
+  $("missingLogin").hidden = true;
+  document.title = "Project not found — One Dollar Computer";
 }
 
 async function renderProject(username, slug, pub, owner) {
@@ -987,11 +1018,12 @@ async function renderProject(username, slug, pub, owner) {
   $("visitorNote").hidden = owner;
 
   const entry = await findProject(username, slug, pub, owner);
+  if (entry === undefined) {
+    showProjectMissing(username, slug, { loading: true });
+    return;
+  }
   if (!entry) {
-    $("viewPage").hidden = true;
-    $("viewMissing").hidden = false;
-    $("missingText").textContent = `No project “${slug}” on /${username}/.`;
-    document.title = "Project not found — One Dollar Computer";
+    showProjectMissing(username, slug);
     return;
   }
 
@@ -999,10 +1031,7 @@ async function renderProject(username, slug, pub, owner) {
   const data = snap.exists() ? snap.val() : {};
   const isPublic = data.public === true;
   if (!isPublic && !owner) {
-    $("viewPage").hidden = true;
-    $("viewMissing").hidden = false;
-    $("missingText").textContent = `No project “${slug}” on /${username}/.`;
-    document.title = "Project not found — One Dollar Computer";
+    showProjectMissing(username, slug);
     return;
   }
 
@@ -1450,6 +1479,7 @@ onAuthStateChanged(auth, async (user) => {
       showError((e && e.message) || "Could not load your account.");
     }
   }
+  authReady = true;
   syncNav();
   try {
     if (profile && profile.username && (await consumePendingClone())) return;
@@ -1462,6 +1492,7 @@ onAuthStateChanged(auth, async (user) => {
 {
   const route = parseRoute();
   if (route.kind === "user" || route.kind === "project") {
+    // Public pages can paint early; private project URLs wait for authReady inside renderProject.
     render().catch((e) => showError((e && e.message) || "Could not load this page."));
   }
 }
