@@ -505,7 +505,7 @@
     }
 
     /* Local flash: ask user to press ODC button (may need several presses) */
-    #flashGate, #editGate {
+    #flashGate, #editGate, #publishGate {
       display: none;
       position: fixed;
       inset: 0;
@@ -516,11 +516,11 @@
       padding: 1.5rem;
     }
 
-    #flashGate.visible, #editGate.visible {
+    #flashGate.visible, #editGate.visible, #publishGate.visible {
       display: flex;
     }
 
-    #flashGate .flash-gate-card, #editGate .flash-gate-card {
+    #flashGate .flash-gate-card, #editGate .flash-gate-card, #publishGate .flash-gate-card {
       max-width: 420px;
       width: 100%;
       background: #161b22;
@@ -531,13 +531,13 @@
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     }
 
-    #flashGate h2, #editGate h2 {
+    #flashGate h2, #editGate h2, #publishGate h2 {
       margin: 0 0 0.6rem;
       font-size: 1.1rem;
       font-weight: 600;
     }
 
-    #flashGate p, #editGate p {
+    #flashGate p, #editGate p, #publishGate p {
       margin: 0 0 0.75rem;
       color: #9fbad1;
       font-size: 0.92rem;
@@ -550,7 +550,7 @@
       margin-bottom: 1rem;
     }
 
-    #flashGate .flash-gate-actions, #editGate .flash-gate-actions {
+    #flashGate .flash-gate-actions, #editGate .flash-gate-actions, #publishGate .flash-gate-actions {
       display: flex;
       gap: 0.6rem;
       flex-wrap: wrap;
@@ -558,7 +558,7 @@
       justify-content: space-between;
     }
 
-    #flashGate button, #editGate button {
+    #flashGate button, #editGate button, #publishGate button {
       border: none;
       border-radius: 6px;
       padding: 0.55rem 0.9rem;
@@ -802,6 +802,8 @@
     <div class="controls">
       <span id="status" class="status-empty"></span>
       <button id="btnUpload" class="upload" disabled title="Upload: compile and flash">⬆️ Upload</button>
+      <button type="button" class="secondary" id="btnEditorEdit" hidden>Edit</button>
+      <button type="button" class="secondary" id="btnEditorPublish" hidden>Publish</button>
       <span id="aiSessionBadge" class="ai-session-badge"></span>
       <button type="button" class="secondary" id="btnShare" data-odc-share>Share</button>
       <div class="user-menu" id="userMenu">
@@ -858,6 +860,17 @@
     </div>
   </div>
 
+  <div id="publishGate" aria-hidden="true">
+    <div class="flash-gate-card" role="dialog" aria-labelledby="publishGateTitle">
+      <h2 id="publishGateTitle">Publish this project?</h2>
+      <p>Once public, you cannot make it private again. Anyone can view and copy it.</p>
+      <div class="flash-gate-actions">
+        <button type="button" id="btnPublishGateOk">Publish</button>
+        <button type="button" id="btnPublishGateCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   
   <div id="aiModal" class="ai-modal-overlay">
     <div class="ai-modal-content">
@@ -885,7 +898,10 @@
     ONE DOLLAR COMPUTER EDITOR — AI ASSISTANT INSTRUCTIONS
 
     This editor runs simple Rust firmware on the OneDollarComputer.
-    GPIO IS DIFFERENT: use board pins 0..=19 only (PCB silkscreen). LED=19, BUTTON=13.
+    GPIO IS DIFFERENT: use board pins 0..=19 only (PCB silkscreen). LED=19.
+    CRITICAL: pin 13 (BUTTON) is BOOTLOADER ENTRY ONLY — press to Upload via WebHID.
+    NEVER call read_button() or use pin 13 in beginner firmware (can break HID reflash).
+    See https://onedollarcomputer.com/docs/BUTTON.md
     Never use Arduino / ESP32 / MCU pad names (PD6, PC0, …).
 
     Full protocol: https://onedollarcomputer.com/editor/AI_DOCS.txt
@@ -897,13 +913,14 @@
        https://onedollarcomputer.com/editor/?projectID=ID&amp;aiToken=TOKEN&amp;code=BASE64
 
     STRICT OUTPUT RULES:
-      - Board pins 0..=19 only. GPIO-capable: 0–9, 12–15, 19.
+      - Board pins 0..=19 only. Beginner GPIO: 0–9, 12, 14–15, 19 (skip 13).
       - Power: 10=3.3V, 11/17=GND, 18=+5V. 16=NC. 12=SWIO (careful).
       - Do NOT write #![no_std], extern "C", or MCU pad names.
       - Never put JavaScript or web-editor automation in code=.
+      - Never use BUTTON / read_button() / pin 13.
 
     API: pin_output / pin_input / pin_set / pin_clear / pin_high / pin_low /
-         pin_read / delay / led_on / led_off / read_button
+         pin_read / delay / led_on / led_off
 
     BLINK EXAMPLE:
       use odc::*;
@@ -930,10 +947,11 @@
   
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+    import { getAuth, GoogleAuthProvider, signOut, onAuthStateChanged }
       from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js';
     import { getDatabase, ref, set, get, update, onValue }
       from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js';
+    import { signInWithGoogle } from '/js/sign-in.js?v=20260908a';
 
     const DEFAULT_FIREBASE = {
       apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -1018,6 +1036,7 @@
       username: null,
       slug: null,
       name: null,
+      public: false,
       loaded: false
     };
     let forkInProgress = false;
@@ -1077,13 +1096,15 @@
         projectAccess.loaded = true;
         if (link) link.hidden = true;
         updateSimulateLink();
+        syncEditChrome();
         return;
       }
       try {
         const snap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
         if (!snap.exists()) {
-          projectAccess = { ownerUid: null, username: null, slug: null, name: null, loaded: true };
+          projectAccess = { ownerUid: null, username: null, slug: null, name: null, public: false, loaded: true };
           if (link) link.hidden = true;
+          syncEditChrome();
           return;
         }
         const p = snap.val() || {};
@@ -1092,10 +1113,12 @@
           username: p.username || null,
           slug: p.slug || null,
           name: p.name || p.slug || 'Project',
+          public: p.public === true,
+          isMain: !!p.isMain,
           loaded: true
         };
         const name = projectAccess.name;
-        if (link && p.username && p.slug) {
+        if (link && projectAccess.public && p.username && p.slug) {
           link.hidden = false;
           link.href = `/${encodeURIComponent(p.username)}/${encodeURIComponent(p.slug)}`;
           link.textContent = `${p.username} / ${name}`;
@@ -1103,10 +1126,11 @@
           link.hidden = true;
         }
       } catch {
-        projectAccess = { ownerUid: null, username: null, slug: null, name: null, loaded: true };
+        projectAccess = { ownerUid: null, username: null, slug: null, name: null, public: false, loaded: true };
         if (link) link.hidden = true;
       }
       updateSimulateLink();
+      syncEditChrome();
     }
 
     function updateSimulateLink() {
@@ -1121,6 +1145,22 @@
       const uid = auth && auth.currentUser && auth.currentUser.uid;
       if (!projectAccess.loaded) return false;
       return !!(uid && projectAccess.ownerUid && uid === projectAccess.ownerUid);
+    }
+
+    function syncEditChrome() {
+      const btnEdit = document.getElementById('btnEditorEdit');
+      const btnPublish = document.getElementById('btnEditorPublish');
+      const upload = document.getElementById('btnUpload');
+      const owner = canEditOriginal();
+      const isPublic = projectAccess.public === true;
+      if (btnEdit) btnEdit.hidden = IS_LOCAL || !projectAccess.loaded || owner || !isPublic;
+      if (btnPublish) btnPublish.hidden = IS_LOCAL || !projectAccess.loaded || !owner || isPublic;
+      if (upload && !IS_LOCAL && projectAccess.loaded) {
+        upload.hidden = !owner;
+      }
+      if (typeof editor !== 'undefined' && editor && !IS_LOCAL && projectAccess.loaded) {
+        editor.updateOptions({ readOnly: !owner });
+      }
     }
 
     function rememberCloneIntent(content) {
@@ -1168,6 +1208,27 @@
       }
     }
 
+    async function usedSlugsForOwner(uid, username) {
+      const used = {};
+      try {
+        const pubSnap = await get(ref(database, `profiles/${username}/projects`));
+        Object.keys((pubSnap.exists() && pubSnap.val()) || {}).forEach((s) => { used[s] = true; });
+      } catch {
+        /* ignore */
+      }
+      try {
+        const idsSnap = await get(ref(database, `users/${uid}/projectIds`));
+        const ids = idsSnap.exists() ? Object.keys(idsSnap.val() || {}) : [];
+        for (const pid of ids) {
+          const s = await get(ref(database, `projects/${pid}/slug`));
+          if (s.exists() && s.val()) used[s.val()] = true;
+        }
+      } catch {
+        /* ignore */
+      }
+      return used;
+    }
+
     async function cloneProjectForMe(content) {
       const user = auth && auth.currentUser;
       if (!user || !database) throw new Error('Sign in to copy this project.');
@@ -1181,32 +1242,44 @@
       const srcSnap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
       const src = srcSnap.exists() ? srcSnap.val() : {};
       const name = src.name || src.slug || projectAccess.name || 'Project';
-      const pubSnap = await get(ref(database, `profiles/${rec.username}`));
-      const pub = pubSnap.exists() ? pubSnap.val() : null;
-      const used = (pub && pub.projects) || {};
+      const used = await usedSlugsForOwner(user.uid, rec.username);
       const slug = uniqueSlug(name, used);
       const id = newProjectId();
       const createdAt = new Date().toISOString();
       const codeContent = content || (src.code && src.code.content) || '';
+      const sourceId = window.PROJECT_CODE || null;
       await set(ref(database, `projects/${id}`), {
         ownerUid: user.uid,
         username: rec.username,
         slug,
         name,
         isMain: false,
-        public: true,
-        clonedFrom: window.PROJECT_CODE || null,
+        public: false,
+        clonedFrom: sourceId,
+        forkedFrom: {
+          projectId: sourceId,
+          username: src.username || '',
+          slug: src.slug || '',
+          ownerUid: src.ownerUid || ''
+        },
         createdAt,
         updatedAt: createdAt,
         code: { content: codeContent, language: 'rust' }
       });
       await update(ref(database, `users/${user.uid}/projectIds`), { [id]: true });
-      await update(ref(database, `profiles/${rec.username}/projects/${slug}`), {
-        id,
-        name,
-        isMain: false,
-        updatedAt: createdAt
-      });
+      if (sourceId) {
+        await set(ref(database, `forks/${sourceId}/${id}`), {
+          projectId: id,
+          byUid: user.uid,
+          byUsername: rec.username,
+          fromUid: src.ownerUid || '',
+          fromUsername: src.username || '',
+          fromSlug: src.slug || '',
+          toUsername: rec.username,
+          toSlug: slug,
+          createdAt
+        });
+      }
       return id;
     }
 
@@ -1310,9 +1383,21 @@
       if (list) {
         list.innerHTML = '';
         try {
-          const pubSnap = await get(ref(database, `profiles/${username}`));
-          const pub = pubSnap.exists() ? pubSnap.val() : null;
-          for (const p of projectEntries(pub)) {
+          const idsSnap = await get(ref(database, `users/${user.uid}/projectIds`));
+          const ids = idsSnap.exists() ? Object.keys(idsSnap.val() || {}) : [];
+          const rows = [];
+          await Promise.all(ids.map(async (pid) => {
+            const snap = await get(ref(database, `projects/${pid}`));
+            if (!snap.exists()) return;
+            const p = snap.val() || {};
+            rows.push({ id: pid, name: p.name || p.slug, slug: p.slug, isMain: p.isMain, updatedAt: p.updatedAt });
+          }));
+          rows.sort((a, b) => {
+            if (a.isMain) return -1;
+            if (b.isMain) return 1;
+            return (a.name || '').localeCompare(b.name || '');
+          });
+          for (const p of rows) {
             if (!p.id) continue;
             const a = document.createElement('a');
             a.href = editorQueryWithProject(p.id);
@@ -1324,7 +1409,7 @@
           /* ignore */
         }
       }
-    }
+      syncEditChrome();
 
     function wireUserMenu() {
       const signIn = document.getElementById('btnEditorSignIn');
@@ -1339,7 +1424,7 @@
           return;
         }
         try {
-          const cred = await signInWithPopup(auth, google);
+          const cred = await signInWithGoogle(auth, google);
           const snap = await get(ref(database, `users/${cred.user.uid}`));
           if (!snap.exists() || !snap.val().username) {
             window.location.href = '/project/';
@@ -1376,7 +1461,7 @@
           return;
         }
         try {
-          await signInWithPopup(auth, google);
+          await signInWithGoogle(auth, google);
         } catch (err) {
           if (err && err.code !== 'auth/popup-closed-by-user') {
             console.warn('Sign-in failed', err);
@@ -1388,6 +1473,53 @@
         finishEditGate(false);
       });
 
+      document.getElementById('btnEditorEdit')?.addEventListener('click', async () => {
+        const content = (typeof editor !== 'undefined' && editor) ? editor.getValue() : lastSavedContent;
+        await ensureCanSave(content);
+      });
+
+      const publishGate = document.getElementById('publishGate');
+      function showPublishGate() {
+        if (publishGate) {
+          publishGate.classList.add('visible');
+          publishGate.setAttribute('aria-hidden', 'false');
+        }
+      }
+      function hidePublishGate() {
+        if (publishGate) {
+          publishGate.classList.remove('visible');
+          publishGate.setAttribute('aria-hidden', 'true');
+        }
+      }
+      document.getElementById('btnEditorPublish')?.addEventListener('click', () => {
+        if (!canEditOriginal() || projectAccess.public) return;
+        showPublishGate();
+      });
+      document.getElementById('btnPublishGateCancel')?.addEventListener('click', hidePublishGate);
+      document.getElementById('btnPublishGateOk')?.addEventListener('click', async () => {
+        hidePublishGate();
+        if (!canEditOriginal() || !projectAccess.username || !projectAccess.slug) return;
+        const id = window.PROJECT_CODE;
+        const now = new Date().toISOString();
+        try {
+          await update(ref(database, `projects/${id}`), {
+            public: true,
+            publishedAt: now,
+            updatedAt: now
+          });
+          await update(ref(database, `profiles/${projectAccess.username}/projects/${projectAccess.slug}`), {
+            id,
+            name: projectAccess.name,
+            isMain: !!projectAccess.isMain,
+            updatedAt: now
+          });
+          await refreshProjectPublicLink();
+          updateStatus('Published.', '');
+        } catch (e) {
+          updateStatus((e && e.message) || 'Publish failed.', 'error');
+        }
+      });
+
       if (!auth) {
         renderUserMenu(null);
         return;
@@ -1395,6 +1527,7 @@
       onAuthStateChanged(auth, (user) => {
         renderUserMenu(user);
         if (user && editGateWaiter) finishEditGate(true);
+        refreshProjectPublicLink().catch(() => {});
       });
     }
 
@@ -1443,12 +1576,13 @@
 
 CRITICAL — THIS BOARD USES A DIFFERENT GPIO MAP:
 - Address I/O ONLY by board pin numbers 0..=19 printed on the PCB silkscreen.
-- LED = pin 19 (constant LED). Button = pin 13 (constant BUTTON).
+- LED = pin 19 (constant LED).
+- Pin 13 (BUTTON) is BOOTLOADER ONLY — press to enter HID for Upload. NEVER use read_button() or pin 13 in beginner firmware (can break WebHID reflash). See https://onedollarcomputer.com/docs/BUTTON.md
 - NEVER use Arduino pins, ESP32 pins, or MCU pad names (PD6, PC0, PA1, …).
 - NEVER write #![no_std], #![no_main], extern "C", firmware::hal, or system_init.
 - Prefer: use odc::*; fn main() { ... }
-- API: pin_output, pin_input, pin_set, pin_clear, pin_high, pin_low, pin_read, delay, led_on, led_off, read_button.
-- GPIO-capable pins: 0–9, 12–15, 19. Power: 10=3.3V, 11/17=GND, 18=+5V. 16=NC. 12=SWIO (careful).
+- API: pin_output, pin_input, pin_set, pin_clear, pin_high, pin_low, pin_read, delay, led_on, led_off.
+- Beginner GPIO: 0–9, 12, 14–15, 19 (skip 13). Power: 10=3.3V, 11/17=GND, 18=+5V. 16=NC. 12=SWIO (careful).
 
 CURRENT FIRMWARE SOURCE:
 \`\`\`rust
@@ -1467,7 +1601,7 @@ ${productionProjectUrl}&code=BASE64_UTF8_RUST_FIRMWARE
 Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
 
         const chatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
-        const qrPrompt = `Program the One Dollar Computer. Follow ${docsUrl}. projectID ${projectID}, aiToken ${aiToken}. Use board pins 0..=19 only (LED=19, BUTTON=13). use odc::*; fn main(). No MCU pad names, no #![no_std]. Magic Link: ${productionProjectUrl}&code=BASE64_UTF8_RUST.`;
+        const qrPrompt = `Program the One Dollar Computer. Follow ${docsUrl} and https://onedollarcomputer.com/docs/BUTTON.md. projectID ${projectID}, aiToken ${aiToken}. Board pins 0..=19 only (LED=19). Pin 13 is bootloader only — never read_button(). use odc::*; fn main(). No MCU pad names, no #![no_std]. Magic Link: ${productionProjectUrl}&code=BASE64_UTF8_RUST.`;
         const qrChatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(qrPrompt)}`;
 
         if (qrcodeContainer) {
@@ -3231,8 +3365,10 @@ fn main() {
         fontSize: 14,
         minimap: { enabled: true },
         scrollBeyondLastLine: false,
-        wordWrap: 'on'
+        wordWrap: 'on',
+        readOnly: !IS_LOCAL && projectAccess.loaded && !canEditOriginal()
       });
+      syncEditChrome();
 
       
       

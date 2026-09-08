@@ -238,13 +238,31 @@ def reject_chip_pin_names(content: str):
             return (
                 "MCU-named GPIO helpers are forbidden. "
                 "Use board pins 0..=19: pin_output(LED), pin_set(LED), pin_clear(LED). "
-                "LED = 19, BUTTON = 13."
+                "LED = 19. Pin 13 is bootloader only — see https://onedollarcomputer.com/docs/BUTTON.md"
             )
     m = re.search(r"\bP[ABCD]\d+\b", cleaned)
     if m:
         return (
             f"MCU pad name '{m.group(0)}' is forbidden in user firmware. "
-            "Use board pin numbers 0..=19 (LED = 19, BUTTON = 13)."
+            "Use board pin numbers 0..=19 (LED = 19). "
+            "Pin 13 is bootloader only — see https://onedollarcomputer.com/docs/BUTTON.md"
+        )
+    return None
+
+
+def reject_bootloader_button_misuse(content: str):
+    """Pin 13 / BUTTON / read_button are reserved for bootloader / WebHID Upload."""
+    cleaned = clean_code_for_hash(content)
+    if "read_button" in cleaned or re.search(r"\bBUTTON\b", cleaned):
+        return (
+            "Pin 13 (BUTTON) is bootloader entry only — do not use read_button() or BUTTON "
+            "in user firmware (can break WebHID Upload). "
+            "See https://onedollarcomputer.com/docs/BUTTON.md"
+        )
+    if re.search(r"pin_(?:input|output|set|clear|high|low|read)\s*\(\s*13\s*\)", cleaned):
+        return (
+            "Do not drive board pin 13 in user firmware — it is the bootloader button. "
+            "See https://onedollarcomputer.com/docs/BUTTON.md"
         )
     return None
 
@@ -256,7 +274,7 @@ def compile_rust(content: str) -> dict:
             "compilationStatus": "error",
             "compilationError": "wrap_odc not available; set ODC_MONOREPO",
         }
-    bad = reject_chip_pin_names(content)
+    bad = reject_chip_pin_names(content) or reject_bootloader_button_misuse(content)
     if bad:
         return {
             "ok": False,

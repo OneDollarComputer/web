@@ -1,11 +1,11 @@
 {
-  "name": "@onedollarcomputer/curriculum-mcp",
-  "version": "0.1.0",
+  "name": "@onedollarcomputer/odc-mcp",
+  "version": "0.2.0",
   "private": true,
-  "description": "MCP server for One Dollar Computer curriculum lessons (pair + edit)",
+  "description": "MCP server for One Dollar Computer — curriculum lessons and firmware projects",
   "type": "module",
   "bin": {
-    "odc-curriculum-mcp": "./bin.js"
+    "odc-mcp": "./bin.js"
   },
   "engines": {
     "node": ">=18"

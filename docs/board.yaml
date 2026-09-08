@@ -1,6 +1,10 @@
 # One Dollar Computer — board pins (logical)
 # Model 1.004 (fixed). Current published revision: R2.
 
+# ⚠ PIN 13 (BUTTON) = BOOTLOADER ENTRY ONLY.
+# Do NOT use as user-firmware input. Reclaiming it can break WebHID Upload.
+# See /docs/BUTTON.md and /editor/AI_DOCS.txt
+
 model: "1.004"
 revision: R2
 version: 1.004 R2
@@ -10,6 +14,7 @@ rj_connector: RJ45
 # User firmware must use these numbers only (0..=19).
 # MCU pad names are NOT part of the public API.
 # Chip mapping: mcu/CH32V003F4U6.yaml (internal).
+# Beginner GPIO: 0–9, 12, 14–15, 19. Skip pin 13.
 
 pins:
   0:
@@ -86,7 +91,7 @@ pins:
     printed_label: "13"
     type: button
     alias: BUTTON
-    description: "Boot / user button (pull-up). Firmware owns HID bootloader re-entry."
+    description: "Bootloader entry only (pull-up). Press to enter HID for Upload. Do not use as user-firmware input — reclaiming pin 13 can break WebHID reflash."
 
   14:
     printed_label: "14"

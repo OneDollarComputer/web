@@ -62,7 +62,9 @@ That host has **no** `/api/*` → the page falls back to **firebase** mode (same
 
 1. Edit simple Rust (`use odc::*;`).
 2. **Upload** → Cargo compile on host via `serve.py`.
-3. Press the physical ODC button to enter bootloader (HID).
+3. Press the physical ODC button to enter bootloader (HID) — that is its **only** role for users.
+   Do **not** write firmware that reads pin 13 / `read_button()`; it can break WebHID reflash.
+   See [`/docs/BUTTON.md`](../docs/BUTTON.md) and [`AI_DOCS.txt`](AI_DOCS.txt).
 4. Flash via host FlashingPro (local mode) or WebHID (firebase).
 
 ## Brand / product names

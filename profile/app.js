@@ -37,7 +37,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebas
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
@@ -49,6 +48,7 @@ import {
   update,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+import { signInWithGoogle } from "/js/sign-in.js?v=20260908a";
 
 const app = initializeApp(FIREBASE);
 const auth = getAuth(app);
@@ -211,6 +211,7 @@ async function claimUsername(user, username) {
 
   const createdAt = nowIso();
   const projectsIndex = {};
+  const usedSlugs = {};
   let mainId = prev && prev.mainProjectId;
   let mainSlug = "led";
 
@@ -220,49 +221,47 @@ async function claimUsername(user, username) {
       if (!pSnap.exists()) continue;
       const p = pSnap.val();
       let slug = p.slug || slugify(p.name || "project");
-      if (projectsIndex[slug]) {
+      if (usedSlugs[slug]) {
         let n = 2;
-        while (projectsIndex[`${slug}-${n}`]) n += 1;
+        while (usedSlugs[`${slug}-${n}`]) n += 1;
         slug = `${slug}-${n}`;
       }
+      usedSlugs[slug] = true;
       await update(ref(db, `projects/${pid}`), {
         username: name,
-        slug,
-        public: true
+        slug
       });
       const isMain = !!(p.isMain || pid === prev.mainProjectId);
-      projectsIndex[slug] = {
-        id: pid,
-        name: p.name || slug,
-        isMain,
-        updatedAt: p.updatedAt || createdAt
-      };
+      const isPublic = p.public === true;
+      if (isPublic) {
+        projectsIndex[slug] = {
+          id: pid,
+          name: p.name || slug,
+          isMain,
+          updatedAt: p.updatedAt || createdAt
+        };
+      }
       if (isMain) mainSlug = slug;
     }
   }
 
-  if (!Object.keys(projectsIndex).length) {
+  if (!mainId) {
     mainId = newProjectId();
-    mainSlug = "led";
+    mainSlug = uniqueSlug("led", usedSlugs);
     await set(ref(db, `projects/${mainId}`), {
       ownerUid: user.uid,
       username: name,
       slug: mainSlug,
       name: "LED",
       isMain: true,
-      public: true,
+      public: false,
       createdAt,
       updatedAt: createdAt,
       code: { content: DEFAULT_CODE, language: "rust" }
     });
-    projectsIndex[mainSlug] = {
-      id: mainId,
-      name: "LED",
-      isMain: true,
-      updatedAt: createdAt
-    };
   }
 
+  const existingIds = (prev && prev.projectIds) || {};
   await set(ref(db, `profiles/${name}`), {
     uid: user.uid,
     displayName: user.displayName || name,
@@ -277,10 +276,8 @@ async function claimUsername(user, username) {
     displayName: user.displayName || "",
     photoURL: user.photoURL || "",
     username: name,
-    mainProjectId: mainId || projectsIndex[mainSlug].id,
-    projectIds: prev && prev.projectIds
-      ? { ...prev.projectIds, [projectsIndex[mainSlug].id]: true }
-      : { [projectsIndex[mainSlug].id]: true },
+    mainProjectId: mainId,
+    projectIds: { ...existingIds, [mainId]: true },
     createdAt: (prev && prev.createdAt) || createdAt
   });
 
@@ -301,6 +298,118 @@ async function loadPublicProfile(username) {
 
 function isOwner(username) {
   return !!(me && profile && profile.username === username);
+}
+
+const AGENT_API = "https://api.onedollarcomputer.com";
+const SHORT_ORIGIN = "https://odc.rs";
+const PAIR_TTL_MS = 10 * 60 * 1000;
+const PUBLISH_WARN = "Once public, you cannot make it private again. Anyone can view and copy it.";
+
+function connectQueryCode() {
+  return new URLSearchParams(location.search).get("connect") || null;
+}
+
+function loginQueryCode() {
+  return new URLSearchParams(location.search).get("login") || null;
+}
+
+function clearConnectQuery() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has("connect")) return;
+  url.searchParams.delete("connect");
+  history.replaceState(null, "", url.pathname + url.search + url.hash);
+}
+
+function clearLoginQuery() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has("login")) return;
+  url.searchParams.delete("login");
+  history.replaceState(null, "", url.pathname + url.search + url.hash);
+}
+
+async function approveExternalLogin(code) {
+  if (!code || !me) return false;
+  const res = await fetch(`${AGENT_API}/login/approve`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${await me.getIdToken()}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ code })
+  });
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) throw new Error(data.error || "Could not approve sign-in");
+  return true;
+}
+
+function agentConnectUrl(code) {
+  return `${SHORT_ORIGIN}/project/?connect=${encodeURIComponent(code)}`;
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function randomSecret(bytes = 18) {
+  const a = new Uint8Array(bytes);
+  crypto.getRandomValues(a);
+  let s = "";
+  for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function usedSlugsForMe() {
+  const used = {};
+  if (!me || !profile || !profile.username) return used;
+  const pub = await loadPublicProfile(profile.username);
+  Object.keys((pub && pub.projects) || {}).forEach((s) => { used[s] = true; });
+  const ids = Object.keys((profile && profile.projectIds) || {});
+  for (const pid of ids) {
+    const snap = await get(ref(db, `projects/${pid}/slug`));
+    if (snap.exists() && snap.val()) used[snap.val()] = true;
+  }
+  return used;
+}
+
+async function loadOwnerProjects(uid) {
+  const snap = await get(ref(db, `users/${uid}/projectIds`));
+  const ids = snap.exists() ? Object.keys(snap.val() || {}) : [];
+  const rows = [];
+  await Promise.all(ids.map(async (id) => {
+    const p = await get(ref(db, `projects/${id}`));
+    if (!p.exists()) return;
+    const v = p.val();
+    rows.push({
+      id,
+      slug: v.slug,
+      name: v.name,
+      isMain: v.isMain,
+      public: v.public === true,
+      updatedAt: v.updatedAt,
+      forkedFrom: v.forkedFrom || null
+    });
+  }));
+  return rows;
+}
+
+async function recordFork(source, dest) {
+  await set(ref(db, `forks/${source.id}/${dest.id}`), {
+    projectId: dest.id,
+    byUid: dest.ownerUid,
+    byUsername: dest.username,
+    fromUid: source.ownerUid || "",
+    fromUsername: source.username || "",
+    fromSlug: source.slug || "",
+    toUsername: dest.username,
+    toSlug: dest.slug,
+    createdAt: dest.createdAt
+  });
 }
 
 function rememberCloneIntent(projectId, content, returnTo) {
@@ -325,30 +434,35 @@ async function cloneProject(sourceId, contentOverride) {
     ?? (src.code && src.code.content)
     ?? DEFAULT_CODE;
   const name = src.name || src.slug || "Project";
-  const pub = await loadPublicProfile(profile.username);
-  const used = (pub && pub.projects) || {};
+  const used = await usedSlugsForMe();
   const slug = uniqueSlug(name, used);
   const id = newProjectId();
   const createdAt = nowIso();
+  const forkedFrom = {
+    projectId: sourceId,
+    username: src.username || "",
+    slug: src.slug || "",
+    ownerUid: src.ownerUid || ""
+  };
   await set(ref(db, `projects/${id}`), {
     ownerUid: me.uid,
     username: profile.username,
     slug,
     name,
     isMain: false,
-    public: true,
+    public: false,
     clonedFrom: sourceId,
+    forkedFrom,
     createdAt,
     updatedAt: createdAt,
     code: { content, language: "rust" }
   });
   await update(ref(db, `users/${me.uid}/projectIds`), { [id]: true });
-  await update(ref(db, `profiles/${profile.username}/projects/${slug}`), {
-    id,
-    name,
-    isMain: false,
-    updatedAt: createdAt
-  });
+  if (profile.projectIds) profile.projectIds[id] = true;
+  await recordFork(
+    { id: sourceId, ownerUid: src.ownerUid, username: src.username, slug: src.slug },
+    { id, ownerUid: me.uid, username: profile.username, slug, createdAt }
+  );
   return { id, slug, username: profile.username, name };
 }
 
@@ -366,7 +480,7 @@ async function handleEditAttempt() {
     if (!me) {
       setStatus("Sign in to edit — we'll copy this project to your page.");
       try {
-        await signInWithPopup(auth, google);
+        await signInWithGoogle(auth, google);
       } catch (e) {
         if (e && e.code === "auth/popup-closed-by-user") {
           setStatus("Sign in to edit this project.");
@@ -422,12 +536,235 @@ async function consumePendingClone() {
   return true;
 }
 
+function setAgentStatus(msg) {
+  for (const id of ["agentStatus", "projectAgentStatus"]) {
+    const el = $(id);
+    if (!el) continue;
+    el.hidden = !msg;
+    el.textContent = msg || "";
+  }
+}
+
+function currentProjectContext() {
+  const pane = $("projectPane");
+  if (!pane || pane.hidden) return null;
+  const id = pane.dataset.projectId;
+  const username = pane.dataset.username;
+  const slug = pane.dataset.slug;
+  if (!id || !username || !slug) return null;
+  return { id, username, slug };
+}
+
+function agentClipboardText(code) {
+  const proj = currentProjectContext();
+  const lines = [
+    proj
+      ? `Edit this One Dollar Computer project on the site (not local files): /${proj.username}/${proj.slug}`
+      : "Edit my One Dollar Computer projects on the site (not local files).",
+    "Firmware must be complete Simple Rust (use odc::*; fn main). Never read_button() / pin 13.",
+    ""
+  ];
+  if (proj) {
+    lines.push(`project_id: ${proj.id}`);
+    lines.push(`site: https://onedollarcomputer.com/${proj.username}/${proj.slug}`);
+    lines.push("");
+  }
+  lines.push(
+    "If you have MCP (odc): curriculum_pair with this link, then",
+    proj
+      ? "project_brief → project_get / project_update (this project_id) / project_publish."
+      : "project_brief → project_list / project_create / project_update / project_publish.",
+    "Publishing is irreversible.",
+    "",
+    "Connect link:",
+    agentConnectUrl(code)
+  );
+  return lines.join("\n");
+}
+
+let pendingAgentCode = null;
+let pendingAgentExpiresAt = 0;
+
+async function copyAgentPrompt() {
+  if (!pendingAgentCode) await ensureAgentLink({ autoCopy: false });
+  if (!pendingAgentCode) return Promise.reject(new Error("No agent code"));
+  const text = agentClipboardText(pendingAgentCode);
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
+  return Promise.reject(new Error("Clipboard unavailable"));
+}
+
+function pairingLinkReady(row) {
+  if (!row) return false;
+  if (row.expiresAt && Date.now() > row.expiresAt) return false;
+  if (row.status === "denied" || row.status === "expired") return false;
+  return !!row.tokenPending;
+}
+
+async function approveAgentPairingCode(c) {
+  if (!c || !me) return;
+  const snap = await get(ref(db, `curriculum/agentPairing/${c}`));
+  if (!snap.exists()) throw new Error("Unknown or expired code");
+  const row = snap.val();
+  if (row.expiresAt && Date.now() > row.expiresAt) {
+    await update(ref(db, `curriculum/agentPairing/${c}`), { status: "expired" });
+    throw new Error("Code expired");
+  }
+  if (row.status === "connected" && row.tokenPending) return;
+  if (row.status === "approved" && row.tokenPending) return;
+  if (row.status !== "pending") {
+    throw new Error(`Pairing is ${row.status}`);
+  }
+  const token = `odc_agent_${randomSecret(32)}`;
+  const tokenHash = await sha256Hex(token);
+  const now = Date.now();
+  await set(ref(db, `curriculum/agentTokens/${tokenHash}`), {
+    uid: me.uid,
+    createdAt: now,
+    pairingCode: c
+  });
+  await set(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes/${tokenHash}`), {
+    createdAt: now
+  });
+  await update(ref(db, `curriculum/agentPairing/${c}`), {
+    status: "approved",
+    uid: me.uid,
+    tokenHash,
+    tokenPending: token,
+    confirmedAt: now
+  });
+}
+
+async function ensureAgentLink({ autoCopy = false, forceNew = false } = {}) {
+  if (!me) return null;
+  if (!forceNew && pendingAgentCode && pendingAgentExpiresAt - Date.now() > 60_000) {
+    try {
+      const snap = await get(ref(db, `curriculum/agentPairing/${pendingAgentCode}`));
+      if (pairingLinkReady(snap.val())) {
+        if (autoCopy) {
+          try {
+            await copyAgentPrompt();
+            setAgentStatus("Copied — paste into your agent.");
+          } catch {
+            setAgentStatus("Could not copy.");
+          }
+        }
+        return agentConnectUrl(pendingAgentCode);
+      }
+    } catch {
+      /* new link below */
+    }
+    forceNew = true;
+  }
+
+  const code = randomSecret(18);
+  const now = Date.now();
+  const expiresAt = now + PAIR_TTL_MS;
+  await set(ref(db, `curriculum/agentPairing/${code}`), {
+    status: "pending",
+    createdBy: me.uid,
+    createdAt: now,
+    expiresAt
+  });
+  await approveAgentPairingCode(code);
+  pendingAgentCode = code;
+  pendingAgentExpiresAt = expiresAt;
+  if (autoCopy) {
+    try {
+      await copyAgentPrompt();
+      setAgentStatus("Copied — paste into your agent.");
+    } catch {
+      setAgentStatus("Could not copy.");
+    }
+  } else {
+    setAgentStatus("");
+  }
+  return agentConnectUrl(code);
+}
+
+async function finishConnectVisit(code) {
+  if (!code || !me) return;
+  try {
+    const snap = await get(ref(db, `curriculum/agentPairing/${code}`));
+    if (snap.exists() && snap.val()?.status === "pending") {
+      await approveAgentPairingCode(code);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+  clearConnectQuery();
+}
+
+async function revokeAllAgents() {
+  if (!me) return;
+  if (!confirm("Revoke all agent access?")) return;
+  try {
+    const snap = await get(ref(db, `curriculum/byUser/${me.uid}/agentTokenHashes`));
+    const hashes = snap.exists() ? Object.keys(snap.val()) : [];
+    const updates = {};
+    const now = Date.now();
+    hashes.forEach((th) => {
+      updates[`curriculum/agentTokens/${th}/revoked`] = true;
+      updates[`curriculum/agentTokens/${th}/revokedAt`] = now;
+      updates[`curriculum/byUser/${me.uid}/agentTokenHashes/${th}`] = null;
+    });
+    if (hashes.length) await update(ref(db), updates);
+    try {
+      await fetch(`${AGENT_API}/pair/revoke`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${await me.getIdToken()}`,
+          "Content-Type": "application/json"
+        },
+        body: "{}"
+      });
+    } catch {
+      /* optional */
+    }
+    pendingAgentCode = null;
+    setAgentStatus(hashes.length ? "Access revoked." : "Nothing to revoke.");
+  } catch (err) {
+    console.error(err);
+    setAgentStatus(err.message || "Revoke failed.");
+  }
+}
+
+async function publishCurrentProject() {
+  const pane = $("projectPane");
+  if (!pane || pane.hidden) return;
+  const id = pane.dataset.projectId;
+  const username = pane.dataset.username;
+  const slug = pane.dataset.slug;
+  if (!me || !id || !isOwner(username)) return;
+  const snap = await get(ref(db, `projects/${id}`));
+  const row = snap.exists() ? snap.val() : {};
+  const name = row.name || $("selectedTitle").textContent || slug;
+  const updatedAt = nowIso();
+  await update(ref(db, `projects/${id}`), {
+    public: true,
+    publishedAt: updatedAt,
+    updatedAt
+  });
+  await update(ref(db, `profiles/${username}/projects/${slug}`), {
+    id,
+    name,
+    isMain: !!row.isMain,
+    updatedAt
+  });
+  go(`/${username}/${slug}`, true);
+}
+
 function renderLogin() {
   hideAll();
   $("viewLogin").hidden = false;
   document.title = "Sign in — One Dollar Computer";
   setCanonical("/project/");
-  $("pageLede").textContent = "Continue with Google. Pick a short name, then your projects live at onedollarcomputer.com/your-name/";
+  if (loginQueryCode()) {
+    $("pageLede").textContent = "Sign in here to approve the other app or window. You can close this tab after.";
+  } else if (connectQueryCode()) {
+    $("pageLede").textContent = "This link is for your agent. Sign in to connect it.";
+  } else {
+    $("pageLede").textContent = "Continue with Google. Pick a short name, then your projects live at onedollarcomputer.com/your-name/";
+  }
 }
 
 function renderClaim(user, preferredName) {
@@ -470,33 +807,16 @@ function projectEntries(pub) {
     });
 }
 
-function renderUser(username, pub, owner) {
-  hideAll();
-  $("viewPage").hidden = false;
-  $("projectPane").hidden = true;
-  $("listPane").hidden = false;
-  $("ownerBar").hidden = !owner;
-  $("visitorNote").hidden = owner;
-  $("visitorNote").textContent = "Public projects on this computer.";
-  document.title = `${username} — One Dollar Computer`;
-  setCanonical(`/${username}/`);
-  $("profileName").textContent = (pub && pub.displayName) || username;
-  $("profileHandle").textContent = `onedollarcomputer.com/${username}/`;
-  const photo = $("profilePhoto");
-  if (pub && pub.photoURL) {
-    photo.src = pub.photoURL;
-    photo.hidden = false;
-  } else {
-    photo.hidden = true;
-  }
-  const items = projectEntries(pub);
+function renderProjectCards(username, items, pub, owner) {
+  const main = pub && pub.mainSlug;
   $("projectGrid").innerHTML = items.length
     ? items
         .map((p) => {
-          const main = p.slug === (pub && pub.mainSlug) || p.isMain;
+          const isMain = p.slug === main || p.isMain;
+          const vis = owner && !p.public ? " · only you" : "";
           return `<a class="proj-card" href="/${encodeURIComponent(username)}/${encodeURIComponent(p.slug)}">
             <strong>${escapeHtml(p.name || p.slug)}</strong>
-            <span>/${username}/${p.slug}${main ? " · main" : ""}</span>
+            <span>/${username}/${p.slug}${isMain ? " · main" : ""}${vis}</span>
           </a>`;
         })
         .join("")
@@ -509,6 +829,46 @@ function renderUser(username, pub, owner) {
   });
 }
 
+async function renderUser(username, pub, owner) {
+  hideAll();
+  $("viewPage").hidden = false;
+  $("projectPane").hidden = true;
+  $("listPane").hidden = false;
+  $("ownerBar").hidden = !owner;
+  $("visitorNote").hidden = owner;
+  $("visitorNote").textContent = "Public projects on this computer.";
+  if (owner) ensureAgentLink({ autoCopy: false }).catch(() => setAgentStatus("Could not prepare agent link."));
+  document.title = `${username} — One Dollar Computer`;
+  setCanonical(`/${username}/`);
+  $("profileName").textContent = (pub && pub.displayName) || username;
+  $("profileHandle").textContent = `onedollarcomputer.com/${username}/`;
+  const photo = $("profilePhoto");
+  if (pub && pub.photoURL) {
+    photo.src = pub.photoURL;
+    photo.hidden = false;
+  } else {
+    photo.hidden = true;
+  }
+  let items = projectEntries(pub);
+  if (owner && me) {
+    const mine = await loadOwnerProjects(me.uid);
+    items = mine.sort((a, b) => {
+      if (a.slug === (pub && pub.mainSlug) || a.isMain) return -1;
+      if (b.slug === (pub && pub.mainSlug) || b.isMain) return 1;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }
+  renderProjectCards(username, items, pub, owner);
+}
+
+async function findProject(username, slug, pub, owner) {
+  const listed = pub && pub.projects && pub.projects[slug];
+  if (listed) return listed;
+  if (!owner || !me) return null;
+  const mine = await loadOwnerProjects(me.uid);
+  return mine.find((p) => p.slug === slug) || null;
+}
+
 async function renderProject(username, slug, pub, owner) {
   hideAll();
   $("viewPage").hidden = false;
@@ -516,10 +876,8 @@ async function renderProject(username, slug, pub, owner) {
   $("projectPane").hidden = false;
   $("ownerBar").hidden = !owner;
   $("visitorNote").hidden = owner;
-  $("visitorNote").textContent = "Public project. Start editing to copy it to your page.";
-  $("codeEditor").readOnly = false;
 
-  const entry = pub && pub.projects && pub.projects[slug];
+  const entry = await findProject(username, slug, pub, owner);
   if (!entry) {
     $("viewPage").hidden = true;
     $("viewMissing").hidden = false;
@@ -530,6 +888,17 @@ async function renderProject(username, slug, pub, owner) {
 
   const snap = await get(ref(db, `projects/${entry.id}`));
   const data = snap.exists() ? snap.val() : {};
+  const isPublic = data.public === true;
+  if (!isPublic && !owner) {
+    $("viewPage").hidden = true;
+    $("viewMissing").hidden = false;
+    $("missingText").textContent = `No project “${slug}” on /${username}/.`;
+    document.title = "Project not found — One Dollar Computer";
+    return;
+  }
+
+  $("visitorNote").textContent = "Public project.";
+  $("codeEditor").readOnly = !owner;
   const name = data.name || entry.name || slug;
   document.title = `${name} — ${username} — One Dollar Computer`;
   setCanonical(`/${username}/${slug}`);
@@ -547,17 +916,46 @@ async function renderProject(username, slug, pub, owner) {
     photo.hidden = true;
   }
   $("selectedTitle").textContent = name;
-  $("selectedMeta").textContent = `onedollarcomputer.com/${username}/${slug}`;
+  $("selectedMeta").textContent = isPublic
+    ? `onedollarcomputer.com/${username}/${slug}`
+    : "Only you can see this until you publish.";
+  const from = data.forkedFrom;
+  const fromEl = $("forkedFrom");
+  if (fromEl) {
+    if (from && from.username && from.slug) {
+      fromEl.hidden = false;
+      fromEl.innerHTML = `From <a href="/${encodeURIComponent(from.username)}/${encodeURIComponent(from.slug)}">/${escapeHtml(from.username)}/${escapeHtml(from.slug)}</a>`;
+      fromEl.querySelector("a")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        go(`/${from.username}/${from.slug}`);
+      });
+    } else {
+      fromEl.hidden = true;
+      fromEl.textContent = "";
+    }
+  }
   const code = (data.code && data.code.content) || "";
   $("codeEditor").value = code;
   lastSavedCode = code;
   $("btnOpenEditor").href = `/editor/?projectID=${encodeURIComponent(entry.id)}`;
-  $("btnOpenEditor").hidden = false;
+  $("btnOpenEditor").hidden = !owner;
+  const btnEdit = $("btnEdit");
+  const btnPublish = $("btnPublish");
+  if (btnEdit) btnEdit.hidden = !(!owner && isPublic);
+  if (btnPublish) btnPublish.hidden = !(owner && !isPublic);
   $("projectPane").dataset.projectId = entry.id;
   $("projectPane").dataset.username = username;
   $("projectPane").dataset.slug = slug;
-  if (owner) setStatus("Edits save automatically.");
-  else setStatus("");
+  $("projectPane").dataset.public = isPublic ? "1" : "0";
+  const agentRow = $("projectAgentRow");
+  if (agentRow) agentRow.hidden = !owner;
+  if (owner) {
+    setStatus("Edits save automatically.");
+    ensureAgentLink({ autoCopy: false }).catch(() => setAgentStatus("Could not prepare agent link."));
+  } else {
+    setStatus("");
+    setAgentStatus("");
+  }
 }
 
 function needsUsername() {
@@ -571,7 +969,30 @@ async function render() {
   $("missingLogin").hidden = true;
 
   if (view.kind === "login") {
-    if (me && profile && profile.username) {
+    const loginCode = loginQueryCode();
+    if (me && loginCode) {
+      try {
+        await approveExternalLogin(loginCode);
+        clearLoginQuery();
+        setStatus("Approved — return to the other app.");
+        hideAll();
+        $("viewLogin").hidden = false;
+        $("pageLede").textContent = "Approved. You can close this tab and return to the other app.";
+        $("btnGoogle").hidden = true;
+        return;
+      } catch (e) {
+        showError((e && e.message) || "Could not approve sign-in.");
+      }
+    }
+    const connectCode = connectQueryCode();
+    if (me && connectCode) {
+      try {
+        await finishConnectVisit(connectCode);
+      } catch {
+        /* still continue */
+      }
+    }
+    if (me && profile && profile.username && !loginCode) {
       go(`/${profile.username}/`, true);
       return;
     }
@@ -611,7 +1032,7 @@ async function render() {
   $("missingLogin").hidden = true;
 
   if (view.kind === "user") {
-    renderUser(view.username, pub, isOwner(view.username));
+    await renderUser(view.username, pub, isOwner(view.username));
     return;
   }
   await renderProject(view.username, view.slug, pub, isOwner(view.username));
@@ -620,7 +1041,7 @@ async function render() {
 $("btnGoogle").addEventListener("click", async () => {
   showError("");
   try {
-    await signInWithPopup(auth, google);
+    await signInWithGoogle(auth, google);
   } catch (e) {
     const code = e && e.code;
     if (code === "auth/popup-closed-by-user") showError("Sign-in window was closed.");
@@ -709,8 +1130,7 @@ $("btnNew").addEventListener("click", async () => {
     $("newProjectName").focus();
     return;
   }
-  const pub = await loadPublicProfile(profile.username);
-  const used = (pub && pub.projects) || {};
+  const used = await usedSlugsForMe();
   let slug = uniqueSlug(name, used);
   const id = newProjectId();
   const createdAt = nowIso();
@@ -720,29 +1140,59 @@ $("btnNew").addEventListener("click", async () => {
     slug,
     name,
     isMain: false,
-    public: true,
+    public: false,
     createdAt,
     updatedAt: createdAt,
     code: { content: DEFAULT_CODE, language: "rust" }
   });
   await update(ref(db, `users/${me.uid}/projectIds`), { [id]: true });
-  await update(ref(db, `profiles/${profile.username}/projects/${slug}`), {
-    id,
-    name,
-    isMain: false,
-    updatedAt: createdAt
-  });
+  if (profile.projectIds) profile.projectIds[id] = true;
   $("newProjectName").value = "";
   go(`/${profile.username}/${slug}`);
 });
 
-$("codeEditor").addEventListener("beforeinput", async (e) => {
+$("codeEditor").addEventListener("beforeinput", (e) => {
   const pane = $("projectPane");
   if (!pane || pane.hidden) return;
   if (isOwner(pane.dataset.username)) return;
   e.preventDefault();
-  await handleEditAttempt();
 });
+
+$("btnEdit")?.addEventListener("click", () => {
+  handleEditAttempt().catch((e) => setStatus((e && e.message) || "Could not copy this project."));
+});
+
+$("btnPublish")?.addEventListener("click", () => {
+  const dialog = $("publishDialog");
+  if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+  else if (confirm(PUBLISH_WARN)) publishCurrentProject().catch((e) => setStatus((e && e.message) || "Publish failed."));
+});
+
+$("btnPublishConfirm")?.addEventListener("click", async () => {
+  const dialog = $("publishDialog");
+  try {
+    await publishCurrentProject();
+  } catch (e) {
+    setStatus((e && e.message) || "Publish failed.");
+  } finally {
+    dialog?.close();
+  }
+});
+
+$("btnPublishCancel")?.addEventListener("click", () => $("publishDialog")?.close());
+
+async function onCopyAgent() {
+  try {
+    await ensureAgentLink({ autoCopy: true });
+  } catch (err) {
+    setAgentStatus(err?.message || "Could not copy.");
+  }
+}
+
+$("btnCopyAgent")?.addEventListener("click", () => onCopyAgent());
+$("btnCopyAgentProject")?.addEventListener("click", () => onCopyAgent());
+
+$("btnAgentRevoke")?.addEventListener("click", () => revokeAllAgents());
 
 window.addEventListener("popstate", () => {
   render().catch((e) => showError((e && e.message) || "Could not load page."));

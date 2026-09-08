@@ -17,13 +17,15 @@ Fallback page: `/curriculum/join/?pin=XXXX`.
 
 **Firmware practice:** Editor → Lab → Simulate (`/emulator/r2/?projectID=…`). Curriculum itself does not embed the virtual board.
 
+**Hardware constraint for agents:** the physical button (pin 13) is **bootloader / Upload only**. Never put `read_button()` in lesson firmware — see [`/docs/BUTTON.md`](../docs/BUTTON.md) and [`AGENT_LESSONS.md`](AGENT_LESSONS.md).
+
 ## How it differs from Projects
 
 | | Projects (`/project/`, `/{user}/`) | Curriculum (`/curriculum/`) |
 |---|---|---|
 | Who | Anyone | Teachers & instructors |
-| Access | Title public on share link; body needs sign-in | Sign-in required for content |
-| What | Personal published builds | Classroom lessons |
+| Access | Private until **Publish** (irreversible). Public pages at `/{user}/{slug}`; visitors **Edit** to copy | Sign-in required for content |
+| What | Personal firmware projects | Classroom lessons |
 
 ## Share link
 
@@ -34,6 +36,7 @@ Fallback page: `/curriculum/join/?pin=XXXX`.
 - **Authors** edit live (Firebase RTDB)
 - **Everyone else** can **Suggest** changes; authors Accept / Reject
 - Presence chips show who else is in the lesson (and which field)
+- Signed-in teachers can **Like** a lesson; **Popular** ranks by likes, live classes, and views
 
 ## Co-authors
 
@@ -69,9 +72,13 @@ Until DNS is connected, use `https://odc-files-api.web.app` as `ODC_CURRICULUM_A
 
 Install MCP deps once: `cd curriculum/mcp && npm install`
 
-Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curriculum_create_lesson`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`
+Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curriculum_create_lesson`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`, `project_brief`, `project_list`, `project_create`, `project_get`, `project_update`, `project_publish`, `project_fork`
 
-**Authoring contract (agents):** [AGENT_LESSONS.md](./AGENT_LESSONS.md) — teaching HTML5 is free; board firmware must be Simple Rust (`use odc::*;`). Call `curriculum_agent_brief` after pairing. **Create** lessons with `curriculum_create_lesson` (API `POST /lessons`).
+**Authoring contract (agents):** [AGENT_LESSONS.md](./AGENT_LESSONS.md) — teaching HTML5 is free; board firmware must be Simple Rust (`use odc::*;`). Call `curriculum_agent_brief` after pairing. **Create** lessons with `curriculum_create_lesson` (API `POST /lessons`). Same token creates firmware projects: `project_brief` → `project_create` / `project_update` / `project_publish` (publish is irreversible). Agent → **Copy** also works from `/project/`.
+
+### Cursor
+
+This repo ships [`.cursor/mcp.json`](../.cursor/mcp.json) (`odc` → `curriculum/mcp/bin.js`). Enable the MCP server in Cursor settings, then pair with Agent → Copy.
 
 Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair.
 
@@ -122,6 +129,12 @@ curl -X POST -H "Authorization: Bearer odc_agent_…" -H "Content-Type: applicat
 curl -H "Authorization: Bearer odc_agent_…" "$API/lessons/LESSON_ID"
 curl -X PATCH -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
   -d '{"overview":"Updated by agent"}' "$API/lessons/LESSON_ID"
+
+# Firmware projects (same token):
+curl -H "Authorization: Bearer odc_agent_…" "$API/projects"
+curl -X POST -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
+  -d '{"name":"LED","code":"use odc::*;\nfn main() { led_on(); }\n"}' "$API/projects"
+curl -X POST -H "Authorization: Bearer odc_agent_…" "$API/projects/PROJECT_ID/publish"
 ```
 
 **Revoke:** on the site, **Revoke**.

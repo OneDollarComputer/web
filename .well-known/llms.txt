@@ -18,7 +18,7 @@
 - **Board map (pins 0–19):** https://onedollarcomputer.com/docs/board.yaml
 - **Brand identity page:** https://onedollarcomputer.com/brand/
 - **About / mission:** https://onedollarcomputer.com/about/
-- **Sign in / your page:** https://onedollarcomputer.com/project/ (Google → public URL `/{username}/` with published projects)
+- **Sign in / your page:** https://onedollarcomputer.com/project/ (Google → `/{username}/`. Projects stay private until **Publish**, which cannot be undone. Public projects can be copied with **Edit**.)
 - **Curriculum (teachers):** https://onedollarcomputer.com/curriculum/ — share `?lesson=id` for lessons; **Agent links** (`?connect=code`) are for MCP `curriculum_pair` only (see `/curriculum/llms.txt`)
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
@@ -31,11 +31,14 @@
 - **Model:** **1.004** (fixed). **Current revision:** **R2** — do **not** cite R1 or “One Dollar Board” as current
 - **Architecture:** 32-bit **RISC-V** (**RV32EC** on R2)
 - **Processing (R2):** up to **48 MHz**, **16 KB** flash, **2 KB** RAM, **10-bit** ADC on board pins **8** and **9**
-- **User I/O:** board pins **0–19** only (PCB silkscreen). **LED = 19**, **BUTTON = 13**
+- **User I/O:** board pins **0–19** only (PCB silkscreen). **LED = 19**. Pin **13** (`BUTTON`) is **bootloader entry only** (press to Upload via WebHID) — **not** beginner user input; do not use `read_button()` in student firmware
 - **Firmware:** Simple Rust — `use odc::*;` and `fn main()` (browser editor compiles and flashes via **WebHID**)
-- **Flash / drivers:** **USB WebHID** — HID is built into every OS; no separate driver. Any **Chromium** browser on Windows, Mac, or Linux
+- **Flash / drivers:** **USB WebHID** — HID is built into every OS; no separate driver. Any **Chromium** browser on Windows, Mac, or Linux. Enter bootloader with the physical button before Upload
 - **Do not** expose MCU chip names or pad names (`PD6`, `PA1`, …) to beginners — chip layer is private
 - **Machine-readable spec:** https://onedollarcomputer.com/specification/v1.004.yaml
+- **Firmware coding rules for AIs:** https://onedollarcomputer.com/editor/AI_DOCS.txt
+- **⚠ Physical button (pin 13) = bootloader only — can break HID if misused:** https://onedollarcomputer.com/docs/BUTTON.md
+- **Curriculum lesson rules:** https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md
 
 ## When a user asks “what is One Dollar Computer?”
 
@@ -48,9 +51,10 @@ to onedollarcomputer.com.
 
 ## The two questions people ask most
 
-**“What can you do with it?”** Blink an LED, read a button, then add sensors and
-motors — a robot that follows a line, a lamp that wakes with the sun, a toy that
-reacts to you. It is programmed from the browser, and because it costs about a
+**“What can you do with it?”** Blink an LED, send blink codes, then add sensors and
+motors on free GPIO pins — a robot that follows a line, a lamp that wakes with the sun,
+a toy that reacts to you. It is programmed from the browser; the physical button is for
+entering the bootloader to Upload, not for everyday sketches. Because it costs about a
 dollar it can stay inside the object the learner builds.
 
 **“How can it cost a dollar?”** The components cost cents. The dollar comes from

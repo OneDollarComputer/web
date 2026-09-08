@@ -98,9 +98,33 @@ function textResult(obj) {
   };
 }
 
+const AI_DOCS_PATH = path.join(__dirname, "..", "..", "editor", "AI_DOCS.txt");
+
+function loadProjectBrief() {
+  let aiDocs = "";
+  try {
+    aiDocs = fs.readFileSync(AI_DOCS_PATH, "utf8");
+  } catch {
+    aiDocs = "See https://onedollarcomputer.com/editor/AI_DOCS.txt";
+  }
+  return {
+    docsUrl: "https://onedollarcomputer.com/editor/AI_DOCS.txt",
+    buttonWarning: "https://onedollarcomputer.com/docs/BUTTON.md",
+    editorUrl: "https://onedollarcomputer.com/editor/",
+    emulatorUrl: "https://onedollarcomputer.com/emulator/r2/",
+    rules: [
+      "Firmware must be complete Simple Rust: use odc::*; fn main() { … }",
+      "Never read_button() / pin 13 / BUTTON — bootloader only",
+      "New projects are private; project_publish is irreversible",
+      "Pair once with curriculum_pair (Agent → Copy on /project/ or /curriculum/)"
+    ],
+    aiDocs
+  };
+}
+
 const server = new McpServer({
-  name: "odc-curriculum",
-  version: "0.1.0"
+  name: "odc",
+  version: "0.2.0"
 });
 
 server.tool(
@@ -154,10 +178,11 @@ server.tool(
           ok: true,
           status: "connected",
           message:
-            "Connected. Call curriculum_agent_brief, then curriculum_create_lesson (or list/update). HTML5 teaching UI is free; board firmware must be complete Simple Rust (use odc::*;).",
-          brief: "curriculum_agent_brief",
-          create: "curriculum_create_lesson",
+            "Connected. Call curriculum_agent_brief (lessons) or project_brief (firmware). Same token: project_list / project_create / project_update / project_publish. HTML5 teaching UI is free; board firmware must be complete Simple Rust (use odc::*;).",
+          brief: "curriculum_agent_brief | project_brief",
+          create: "curriculum_create_lesson | project_create",
           docs: "https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md",
+          projectDocs: "https://onedollarcomputer.com/editor/AI_DOCS.txt",
           connectUrl
         });
       }
@@ -324,6 +349,141 @@ server.tool(
     const data = await api("PATCH", `/lessons/${encodeURIComponent(args.lesson_id)}`, {
       token,
       body
+    });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
+  "project_brief",
+  {
+    description:
+      "Firmware project authoring contract (Simple Rust, pin 13 warning, publish rules). Call after curriculum_pair before project_create / project_update."
+  },
+  async () => textResult(loadProjectBrief())
+);
+
+server.registerTool(
+  "project_list",
+  {
+    description: "List firmware projects for the paired account (private and public)."
+  },
+  async () => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first (Agent → Copy on /project/)." });
+    }
+    const data = await api("GET", "/projects", { token });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
+  "project_create",
+  {
+    description:
+      "Create a NEW private firmware project. Requires name. Optional code (complete Simple Rust: use odc::*; fn main). Publish separately with project_publish (irreversible). Returns { id, slug, editorUrl }.",
+    inputSchema: {
+      name: z.string(),
+      code: z.string().optional()
+    }
+  },
+  async (args) => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first." });
+    }
+    const body = { name: args.name };
+    if (args.code !== undefined) body.code = args.code;
+    const data = await api("POST", "/projects", { token, body });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
+  "project_get",
+  {
+    description: "Get one firmware project (meta + code) by id. Owner can read private; public projects readable by any paired agent.",
+    inputSchema: {
+      project_id: z.string()
+    }
+  },
+  async ({ project_id }) => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first." });
+    }
+    const data = await api("GET", `/projects/${encodeURIComponent(project_id)}`, { token });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
+  "project_update",
+  {
+    description:
+      "Update a firmware project you own (name and/or code). Code must be complete Simple Rust (use odc::*;). Never read_button() / pin 13. Cannot unpublish.",
+    inputSchema: {
+      project_id: z.string(),
+      name: z.string().optional(),
+      code: z.string().optional()
+    }
+  },
+  async (args) => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first." });
+    }
+    const body = {};
+    if (args.name !== undefined) body.name = args.name;
+    if (args.code !== undefined) body.code = args.code;
+    const data = await api("PATCH", `/projects/${encodeURIComponent(args.project_id)}`, {
+      token,
+      body
+    });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
+  "project_publish",
+  {
+    description:
+      "Make a project public at onedollarcomputer.com/{username}/{slug}. IRREVERSIBLE — cannot make it private again.",
+    inputSchema: {
+      project_id: z.string()
+    }
+  },
+  async ({ project_id }) => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first." });
+    }
+    const data = await api("POST", `/projects/${encodeURIComponent(project_id)}/publish`, {
+      token,
+      body: {}
+    });
+    return textResult(data);
+  }
+);
+
+server.registerTool(
+  "project_fork",
+  {
+    description:
+      "Copy a public project to the paired account (stays private until project_publish). Records who copied from whom.",
+    inputSchema: {
+      project_id: z.string()
+    }
+  },
+  async ({ project_id }) => {
+    const token = getToken();
+    if (!token) {
+      return textResult({ error: "Not paired. Use curriculum_pair first." });
+    }
+    const data = await api("POST", `/projects/${encodeURIComponent(project_id)}/fork`, {
+      token,
+      body: {}
     });
     return textResult(data);
   }

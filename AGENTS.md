@@ -22,13 +22,15 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | Current revision | **R2** — do not cite **R1** or legacy **One Dollar Board** as current |
 | ISA | **RISC-V RV32EC** (32-bit) |
 | Clock / memory (R2) | up to **48 MHz**, **16 KB** flash, **2 KB** RAM |
-| User I/O | Board pins **0–19** only; **LED = 19**, **BUTTON = 13** |
+| User I/O | Board pins **0–19** only; **LED = 19**; pin **13** (`BUTTON`) = **bootloader only** (not student input) |
 | Firmware API | Simple Rust — `use odc::*;` (`/editor/AI_DOCS.txt`) |
-| Flash | Browser editor, **WebHID** (Chromium on Windows/Mac/Linux — no driver install) |
+| Flash | Browser editor, **WebHID** (Chromium on Windows/Mac/Linux — no driver install); press physical button to enter bootloader |
 
 - **Do** use board pin numbers and `odc` in user-facing firmware help.
 - **Don’t** name the MCU chip or pad names in beginner docs — chip mapping is internal (`docs/board.yaml` comment only).
 - **Don’t** invent specs; if unsure, link `/specification/`.
+- **Don’t** teach `read_button()` / pin **13** as beginner I/O — it can break HID Upload. **Canonical warning:** [`/docs/BUTTON.md`](docs/BUTTON.md). Curriculum: [`/curriculum/AGENT_LESSONS.md`](curriculum/AGENT_LESSONS.md).
+- **Don’t** promise live browser ↔ board HID control in lessons until that path is validated.
 
 ## Repo layout (this site)
 
@@ -36,7 +38,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 |------|------|
 | `index.html` | Marketing homepage |
 | `brand/` | Canonical brand / Knowledge entity page |
-| `project/` | Google sign-in; claim a username; publish public projects |
+| `project/` | Google sign-in; claim a username; **Publish** (irreversible) to `/{user}/{slug}` |
 | `/{user}/` | Public project list (`onedollarcomputer.com/cloud/`) |
 | `/{user}/{slug}` | One public project (`/cloud/led`) |
 | `about/` | Mission & story |

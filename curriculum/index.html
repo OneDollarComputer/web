@@ -20,7 +20,7 @@
   <script defer src="/js/share.js"></script>
   <link rel="stylesheet" href="/js/auth-nav.css" />
   <script type="module" src="/js/auth-nav.js"></script>
-  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260907a" />
+  <link rel="stylesheet" href="/curriculum/curriculum.css?v=20260907d" />
   <script>
     (function () {
       var c = new URLSearchParams(location.search).get("connect");
@@ -103,6 +103,10 @@
             <h2>Lessons</h2>
             <button type="button" id="btnNew" class="primary-sm">New</button>
           </div>
+          <div class="list-mode" role="tablist" aria-label="Lesson list">
+            <button type="button" id="listMine" class="list-mode-btn active" role="tab" aria-selected="true">Mine</button>
+            <button type="button" id="listPopular" class="list-mode-btn" role="tab" aria-selected="false">Popular</button>
+          </div>
           <div class="side-agent">
             <div class="agent-ready">
               <span class="agent-ready-label">Agent</span>
@@ -134,6 +138,7 @@
             <div class="toolbar-end">
               <p id="roleHint" class="role-hint"></p>
               <span id="saveStatus" class="status doc-status" role="status"></span>
+              <button type="button" id="btnLike" class="ghost-sm like-btn" hidden>Like</button>
               <button type="button" id="btnPreviewSolo" class="ghost-sm" hidden>Preview</button>
               <div id="authorTools" class="author-tools">
                 <button type="button" id="btnGoLive" class="primary-sm">Go live</button>
@@ -280,6 +285,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="/curriculum/app.js?v=20260905g"></script>
+  <script type="module" src="/curriculum/app.js?v=20260907d"></script>
 </body>
 </html>

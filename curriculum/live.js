@@ -2,14 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebas
 import {
   getAuth,
   GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 import {
   get,
   onValue,
   ref,
-  update
+  update,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import {
   countStudents,
@@ -23,6 +23,7 @@ import {
   renderHtmlActivities,
   renderSlide
 } from "./session-shared.js?v=20260905g";
+import { signInWithGoogle } from "/js/sign-in.js?v=20260908a";
 
 const app = initializeApp(FIREBASE);
 const auth = getAuth(app);
@@ -303,7 +304,7 @@ async function endWorkshop() {
   if (!sessionId || !sessionData) return;
   if (!me) {
     try {
-      await signInWithPopup(auth, google);
+      await signInWithGoogle(auth, google);
     } catch {
       return;
     }
@@ -351,6 +352,16 @@ async function endWorkshop() {
       }
     }
     await update(ref(db), updates);
+    if (sessionData.lessonId) {
+      try {
+        await runTransaction(
+          ref(db, `curriculum/catalog/${sessionData.lessonId}/liveCount`),
+          (v) => (v || 0) + 1
+        );
+      } catch (err) {
+        console.warn(err);
+      }
+    }
     setLoadStatus("Class ended.");
     liveView.hidden = true;
     loadStatus.hidden = false;

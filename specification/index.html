@@ -127,7 +127,7 @@
         <tr><td>10</td><td>3.3 V power</td></tr>
         <tr><td>11, 17</td><td>Ground</td></tr>
         <tr><td>12</td><td>GPIO — also SWIO (using as GPIO disables SWD until reboot)</td></tr>
-        <tr><td>13</td><td>Button (<code>BUTTON</code>)</td></tr>
+        <tr><td>13</td><td>Button (<code>BUTTON</code>) — <strong>bootloader entry only</strong> (press to Upload via WebHID); not beginner user input</td></tr>
         <tr><td>16</td><td>Not connected</td></tr>
         <tr><td>18</td><td>+5 V / VBUS</td></tr>
         <tr><td>19</td><td>Onboard LED (<code>LED</code>)</td></tr>
@@ -143,6 +143,7 @@
     </figure>
     <ul>
       <li><a href="/docs/board.yaml"><code>board.yaml</code></a> — canonical pin map</li>
+      <li><a href="/docs/BUTTON.md"><code>BUTTON.md</code></a> — pin 13 is bootloader only (do not use in beginner firmware)</li>
       <li>ODC Port — RJ45 cable (see pinout)</li>
     </ul>
 
@@ -159,8 +160,10 @@ fn main() {
         delay(200);
     }
 }</code></pre>
-    <p>API: <code>pin_output</code>, <code>pin_input</code>, <code>pin_set</code>, <code>pin_clear</code>, <code>pin_read</code>, <code>delay</code>, <code>led_on</code>, <code>led_off</code>, <code>read_button</code>.
-      Constants: <code>LED</code> (19), <code>BUTTON</code> (13).</p>
+    <p>API: <code>pin_output</code>, <code>pin_input</code>, <code>pin_set</code>, <code>pin_clear</code>, <code>pin_read</code>, <code>delay</code>, <code>led_on</code>, <code>led_off</code>.
+      Constant: <code>LED</code> (19). Do <strong>not</strong> use pin 13 / <code>read_button()</code> in beginner firmware — the physical button is reserved for bootloader entry
+      (<a href="/docs/BUTTON.md"><code>BUTTON.md</code></a>).
+      Coding rules: <a href="/editor/AI_DOCS.txt"><code>AI_DOCS.txt</code></a>.</p>
     <ul>
       <li><a href="/editor/AI_DOCS.txt">Editor / AI protocol</a></li>
     </ul>

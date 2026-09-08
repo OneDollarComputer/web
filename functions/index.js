@@ -40,7 +40,7 @@ function hashToken(token) {
 function parsePath(url) {
   // Strip function name prefix if present (e.g. /curriculumAgent/pair/start)
   let path = url.pathname || "/";
-  const markers = ["/curriculumAgent", "/pair", "/lessons"];
+  const markers = ["/curriculumAgent", "/pair", "/lessons", "/projects", "/login"];
   for (const m of markers) {
     const i = path.indexOf(m);
     if (i > 0 && m === "/curriculumAgent") {
@@ -607,6 +607,407 @@ async function handleInviteClaim(req, res) {
   return json(res, 200, { ok: true, claimed });
 }
 
+const DEFAULT_PROJECT_CODE = `//! One Dollar Computer — LED
+
+use odc::*;
+
+fn main() {
+    pin_output(LED);
+    loop {
+        pin_set(LED);
+        delay(200);
+        pin_clear(LED);
+        delay(200);
+    }
+}
+`;
+
+function slugify(raw) {
+  const s = String(raw || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return s || "project";
+}
+
+function uniqueSlug(base, used) {
+  let slug = slugify(base);
+  if (!used[slug]) return slug;
+  let i = 2;
+  while (used[`${slug}-${i}`]) i += 1;
+  return `${slug}-${i}`;
+}
+
+function newProjectId() {
+  return `p${crypto.randomBytes(6).toString("hex")}`;
+}
+
+function projectUrls(username, slug, id) {
+  return {
+    siteUrl: username && slug ? `${SITE}/${encodeURIComponent(username)}/${encodeURIComponent(slug)}` : null,
+    editorUrl: `${SITE}/editor/?projectID=${encodeURIComponent(id)}`
+  };
+}
+
+async function agentUsername(uid) {
+  const snap = await db.ref(`users/${uid}/username`).get();
+  return snap.exists() ? String(snap.val() || "") : "";
+}
+
+async function usedSlugsForUser(uid, username) {
+  const used = {};
+  if (username) {
+    const pub = await db.ref(`profiles/${username}/projects`).get();
+    if (pub.exists()) {
+      for (const slug of Object.keys(pub.val() || {})) used[slug] = true;
+    }
+  }
+  const ids = await db.ref(`users/${uid}/projectIds`).get();
+  if (ids.exists()) {
+    for (const pid of Object.keys(ids.val() || {})) {
+      const slugSnap = await db.ref(`projects/${pid}/slug`).get();
+      if (slugSnap.exists() && slugSnap.val()) used[slugSnap.val()] = true;
+    }
+  }
+  return used;
+}
+
+function projectSummary(id, p) {
+  return {
+    id,
+    name: p.name || p.slug || "Project",
+    slug: p.slug || "",
+    username: p.username || "",
+    public: p.public === true,
+    updatedAt: p.updatedAt || "",
+    forkedFrom: p.forkedFrom || null,
+    ...projectUrls(p.username, p.slug, id)
+  };
+}
+
+async function recordFork(source, dest) {
+  await db.ref(`forks/${source.id || source.projectId}/${dest.id}`).set({
+    projectId: dest.id,
+    byUid: dest.ownerUid,
+    byUsername: dest.username,
+    fromUid: source.ownerUid || "",
+    fromUsername: source.username || "",
+    fromSlug: source.slug || "",
+    toUsername: dest.username,
+    toSlug: dest.slug,
+    createdAt: dest.createdAt
+  });
+}
+
+async function handleListProjects(req, res) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  const index = await db.ref(`users/${agent.uid}/projectIds`).get();
+  const ids = index.exists() ? Object.keys(index.val() || {}) : [];
+  const projects = [];
+  for (const id of ids) {
+    const snap = await db.ref(`projects/${id}`).get();
+    if (!snap.exists()) continue;
+    projects.push(projectSummary(id, snap.val()));
+  }
+  projects.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  return json(res, 200, { projects });
+}
+
+async function handleGetProject(req, res, pid) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  const snap = await db.ref(`projects/${pid}`).get();
+  if (!snap.exists()) return json(res, 404, { error: "Not found" });
+  const p = snap.val();
+  if (p.public !== true && p.ownerUid !== agent.uid) {
+    return json(res, 403, { error: "Not the owner of this project" });
+  }
+  return json(res, 200, {
+    ...projectSummary(pid, p),
+    ownerUid: p.ownerUid,
+    code: (p.code && p.code.content) || ""
+  });
+}
+
+async function handleCreateProject(req, res) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  const username = await agentUsername(agent.uid);
+  if (!username) {
+    return json(res, 403, { error: "Claim a username at /project/ first." });
+  }
+
+  const body = readBody(req);
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
+  if (!name) return json(res, 400, { error: "name required" });
+  const code = typeof body.code === "string" && body.code.trim()
+    ? body.code
+    : DEFAULT_PROJECT_CODE;
+
+  const used = await usedSlugsForUser(agent.uid, username);
+  const slug = uniqueSlug(name, used);
+  const id = newProjectId();
+  const createdAt = new Date().toISOString();
+  const row = {
+    ownerUid: agent.uid,
+    username,
+    slug,
+    name,
+    isMain: false,
+    public: false,
+    createdAt,
+    updatedAt: createdAt,
+    code: { content: code, language: "rust" }
+  };
+  const updates = {};
+  updates[`projects/${id}`] = row;
+  updates[`users/${agent.uid}/projectIds/${id}`] = true;
+  await db.ref().update(updates);
+  return json(res, 201, {
+    ok: true,
+    ...projectSummary(id, row),
+    code
+  });
+}
+
+async function handlePatchProject(req, res, pid) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  const snap = await db.ref(`projects/${pid}`).get();
+  if (!snap.exists()) return json(res, 404, { error: "Not found" });
+  const p = snap.val();
+  if (p.ownerUid !== agent.uid) {
+    return json(res, 403, { error: "Not the owner of this project" });
+  }
+
+  const body = readBody(req);
+  const updates = {};
+  const now = new Date().toISOString();
+  if (typeof body.name === "string") {
+    const name = body.name.trim().slice(0, 80);
+    if (!name) return json(res, 400, { error: "name cannot be empty" });
+    updates.name = name;
+  }
+  if (typeof body.code === "string") {
+    updates.code = { content: body.code, language: "rust" };
+  }
+  if (!Object.keys(updates).length) {
+    return json(res, 400, { error: "No fields to update (name, code)" });
+  }
+  updates.updatedAt = now;
+  await db.ref(`projects/${pid}`).update(updates);
+  if (p.public === true && p.username && p.slug && updates.name) {
+    await db.ref(`profiles/${p.username}/projects/${p.slug}`).update({
+      name: updates.name,
+      updatedAt: now
+    });
+  }
+  return json(res, 200, { ok: true, id: pid, updatedAt: now });
+}
+
+async function handlePublishProject(req, res, pid) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  const snap = await db.ref(`projects/${pid}`).get();
+  if (!snap.exists()) return json(res, 404, { error: "Not found" });
+  const p = snap.val();
+  if (p.ownerUid !== agent.uid) {
+    return json(res, 403, { error: "Not the owner of this project" });
+  }
+  if (p.public === true) {
+    return json(res, 200, {
+      ok: true,
+      alreadyPublic: true,
+      ...projectSummary(pid, p)
+    });
+  }
+
+  const now = new Date().toISOString();
+  const updates = {};
+  updates[`projects/${pid}/public`] = true;
+  updates[`projects/${pid}/publishedAt`] = now;
+  updates[`projects/${pid}/updatedAt`] = now;
+  updates[`profiles/${p.username}/projects/${p.slug}`] = {
+    id: pid,
+    name: p.name || p.slug,
+    isMain: !!p.isMain,
+    updatedAt: now
+  };
+  await db.ref().update(updates);
+  return json(res, 200, {
+    ok: true,
+    irreversible: true,
+    ...projectSummary(pid, { ...p, public: true, updatedAt: now })
+  });
+}
+
+async function handleForkProject(req, res, sourceId) {
+  const agent = await verifyAgentToken(req);
+  if (!agent) return json(res, 401, { error: "Agent token required" });
+
+  const username = await agentUsername(agent.uid);
+  if (!username) {
+    return json(res, 403, { error: "Claim a username at /project/ first." });
+  }
+
+  const srcSnap = await db.ref(`projects/${sourceId}`).get();
+  if (!srcSnap.exists()) return json(res, 404, { error: "Not found" });
+  const src = srcSnap.val();
+  if (src.public !== true && src.ownerUid !== agent.uid) {
+    return json(res, 403, { error: "Can only copy a public project" });
+  }
+  if (src.ownerUid === agent.uid) {
+    return json(res, 400, { error: "That project is already yours" });
+  }
+
+  const body = readBody(req);
+  const code = typeof body.code === "string"
+    ? body.code
+    : ((src.code && src.code.content) || DEFAULT_PROJECT_CODE);
+  const name = src.name || src.slug || "Project";
+  const used = await usedSlugsForUser(agent.uid, username);
+  const slug = uniqueSlug(name, used);
+  const id = newProjectId();
+  const createdAt = new Date().toISOString();
+  const row = {
+    ownerUid: agent.uid,
+    username,
+    slug,
+    name,
+    isMain: false,
+    public: false,
+    clonedFrom: sourceId,
+    forkedFrom: {
+      projectId: sourceId,
+      username: src.username || "",
+      slug: src.slug || "",
+      ownerUid: src.ownerUid || ""
+    },
+    createdAt,
+    updatedAt: createdAt,
+    code: { content: code, language: "rust" }
+  };
+  const updates = {};
+  updates[`projects/${id}`] = row;
+  updates[`users/${agent.uid}/projectIds/${id}`] = true;
+  await db.ref().update(updates);
+  await recordFork(
+    { id: sourceId, ownerUid: src.ownerUid, username: src.username, slug: src.slug },
+    { id, ownerUid: agent.uid, username, slug, createdAt }
+  );
+  return json(res, 201, {
+    ok: true,
+    ...projectSummary(id, row),
+    code
+  });
+}
+
+const LOGIN_TTL_MS = 10 * 60 * 1000;
+
+async function handleLoginStart(req, res) {
+  const body = readBody(req);
+  const verifierHash = String(body.verifierHash || "").trim().toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(verifierHash)) {
+    return json(res, 400, { error: "verifierHash required (sha256 hex)" });
+  }
+  const code = randomToken(18);
+  const now = Date.now();
+  const expiresAt = now + LOGIN_TTL_MS;
+  await db.ref(`loginHandoff/${code}`).set({
+    status: "pending",
+    verifierHash,
+    createdAt: now,
+    expiresAt
+  });
+  return json(res, 200, {
+    code,
+    // Use the Firebase Hosting default host (authorized for Auth). Custom api.* may not be.
+    url: `https://odc-files-api.web.app/login/browser?code=${encodeURIComponent(code)}`,
+    expiresAt
+  });
+}
+
+async function handleLoginStatus(req, res) {
+  const u = new URL(req.url, "http://localhost");
+  const code = String(u.searchParams.get("code") || "").trim();
+  const verifier = String(u.searchParams.get("verifier") || "").trim();
+  if (!code || !verifier) return json(res, 400, { error: "code and verifier required" });
+
+  const ref = db.ref(`loginHandoff/${code}`);
+  const snap = await ref.get();
+  if (!snap.exists()) return json(res, 404, { status: "unknown", error: "Unknown code" });
+  const row = snap.val();
+  if (row.expiresAt && Date.now() > row.expiresAt && row.status === "pending") {
+    await ref.update({ status: "expired" });
+    return json(res, 200, { status: "expired" });
+  }
+  if (hashToken(verifier) !== row.verifierHash) {
+    return json(res, 403, { error: "Invalid verifier" });
+  }
+  if ((row.status === "approved" || row.status === "connected") && row.tokenPending) {
+    const token = row.tokenPending;
+    await ref.update({ status: "connected", tokenPending: null, claimedAt: Date.now() });
+    return json(res, 200, { status: "approved", token });
+  }
+  // Approved but token already claimed / missing — tell the waiter clearly.
+  if (row.status === "approved" && !row.tokenPending) {
+    return json(res, 200, { status: "approved" });
+  }
+  return json(res, 200, { status: row.status || "pending" });
+}
+
+async function handleLoginApprove(req, res) {
+  const user = await verifyFirebaseUser(req);
+  if (!user) return json(res, 401, { error: "Sign in required" });
+
+  const body = readBody(req);
+  const code = String(body.code || "").trim();
+  if (!code) return json(res, 400, { error: "code required" });
+
+  const ref = db.ref(`loginHandoff/${code}`);
+  const snap = await ref.get();
+  if (!snap.exists()) return json(res, 404, { error: "Unknown code" });
+  const row = snap.val();
+  if (row.status === "approved" || row.status === "connected") {
+    // Re-issue token if the waiting app never claimed it (or user refreshed).
+    if (!row.tokenPending && row.status === "approved") {
+      const customToken = await admin.auth().createCustomToken(user.uid);
+      await ref.update({
+        tokenPending: customToken,
+        approvedAt: Date.now(),
+        uid: user.uid
+      });
+      return json(res, 200, { status: "approved", refreshed: true });
+    }
+    return json(res, 200, { status: "approved", already: true });
+  }
+  if (row.status !== "pending") {
+    return json(res, 409, { error: `Login is ${row.status}` });
+  }
+  if (row.expiresAt && Date.now() > row.expiresAt) {
+    await ref.update({ status: "expired" });
+    return json(res, 410, { error: "Code expired" });
+  }
+
+  const customToken = await admin.auth().createCustomToken(user.uid);
+  await ref.update({
+    status: "approved",
+    uid: user.uid,
+    tokenPending: customToken,
+    approvedAt: Date.now()
+  });
+  return json(res, 200, { status: "approved" });
+}
+
 exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, CORS);
@@ -617,6 +1018,15 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
   const parts = path.split("/").filter(Boolean);
 
   try {
+    if (req.method === "POST" && parts[0] === "login" && parts[1] === "start") {
+      return await handleLoginStart(req, res);
+    }
+    if (req.method === "GET" && parts[0] === "login" && parts[1] === "status") {
+      return await handleLoginStatus(req, res);
+    }
+    if (req.method === "POST" && parts[0] === "login" && parts[1] === "approve") {
+      return await handleLoginApprove(req, res);
+    }
     if (req.method === "POST" && parts[0] === "pair" && parts[1] === "start") {
       return await handlePairStart(req, res);
     }
@@ -651,6 +1061,24 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
     if (req.method === "PATCH" && parts[0] === "lessons" && parts[1]) {
       return await handlePatchLesson(req, res, parts[1]);
     }
+    if (req.method === "GET" && parts[0] === "projects" && !parts[1]) {
+      return await handleListProjects(req, res);
+    }
+    if (req.method === "POST" && parts[0] === "projects" && !parts[1]) {
+      return await handleCreateProject(req, res);
+    }
+    if (req.method === "GET" && parts[0] === "projects" && parts[1] && !parts[2]) {
+      return await handleGetProject(req, res, parts[1]);
+    }
+    if (req.method === "PATCH" && parts[0] === "projects" && parts[1] && !parts[2]) {
+      return await handlePatchProject(req, res, parts[1]);
+    }
+    if (req.method === "POST" && parts[0] === "projects" && parts[1] && parts[2] === "publish") {
+      return await handlePublishProject(req, res, parts[1]);
+    }
+    if (req.method === "POST" && parts[0] === "projects" && parts[1] && parts[2] === "fork") {
+      return await handleForkProject(req, res, parts[1]);
+    }
 
     return json(res, 404, {
       error: "Not found",
@@ -665,7 +1093,16 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
         "GET /lessons",
         "POST /lessons",
         "GET /lessons/:id",
-        "PATCH /lessons/:id"
+        "PATCH /lessons/:id",
+        "GET /projects",
+        "POST /projects",
+        "GET /projects/:id",
+        "PATCH /projects/:id",
+        "POST /projects/:id/publish",
+        "POST /projects/:id/fork",
+        "POST /login/start",
+        "GET /login/status?code=&verifier=",
+        "POST /login/approve"
       ]
     });
   } catch (err) {

@@ -29,6 +29,8 @@ Copies `wasm/`, `board.png`, `overlay.json`, and `sample.bin`. Commit those arti
 
 `OdcR2Emulator.run(n)` advances **n additional** cycles (not an absolute cycle ceiling). `loadBin` resets the machine.
 
+**Button (pin 13):** Space / on-screen control is the **bootloader** button (enter HID / reset path). Do **not** treat it as student input or generate `read_button()` firmware from emulator demos. See [`/docs/BUTTON.md`](../../docs/BUTTON.md).
+
 ## iframe API
 
 ```html

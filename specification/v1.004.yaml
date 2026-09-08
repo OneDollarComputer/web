@@ -33,7 +33,7 @@ pinout_pdf: /docs/OneDollarComputer.com.v1.004.r2.pinout.pdf
 
 aliases:
   LED: 19
-  BUTTON: 13
+  BUTTON: 13  # bootloader entry only — not beginner user input
   PIN_3V3: 10
   PIN_GND: 11
   PIN_NC: 16
@@ -41,6 +41,7 @@ aliases:
   PIN_5V: 18
 
 gpio_pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 14, 15, 19]
+# Pin 13 (BUTTON) is bootloader entry; omit from beginner GPIO lessons.
 
 software:
   language: rust
@@ -58,11 +59,17 @@ software:
     - delay
     - led_on
     - led_off
-    - read_button
+    # read_button exists in the toolchain but must not be used in beginner firmware —
+    # physical BUTTON is reserved for bootloader / WebHID Upload.
   editor_protocol: /editor/AI_DOCS.txt
+  agent_notes: |
+    Physical button (pin 13) = enter bootloader for Upload only.
+    Do not generate read_button() or pin_input(BUTTON) for students.
+    Misuse can break WebHID reflash — https://onedollarcomputer.com/docs/BUTTON.md
+    Browser ↔ board live HID messaging is not a validated lesson path yet.
 
 flash:
   transport: WebHID
   vendor_id: "0x1209"
   product_id_range: "0xB000-0xB00F"
-  bootloader_entry: physical ODC button (board pin 13)
+  bootloader_entry: physical ODC button (board pin 13) — exclusive role; not student I/O

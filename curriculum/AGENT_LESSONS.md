@@ -29,11 +29,26 @@ Platform: https://onedollarcomputer.com/specification/ (v1.004 **R2**)
 | Do | Don’t |
 |----|--------|
 | Pins **0..=19** only | MCU pads (`PD6`, `PC0`, …) |
-| `LED` = 19, `BUTTON` = 13 | Arduino `D13` / ESP32 GPIO numbers |
-| `pin_set` / `led_on` / `delay` / `read_button` | `#![no_std]`, `extern "C"`, HAL paths |
+| `LED` = 19; GPIO for I/O | Treat pin **13** / `BUTTON` as student input |
+| `pin_set` / `led_on` / `delay` | `read_button()`, `pin_input(BUTTON)` |
 | One complete `fn main()` | Partial snippets as the only firmware |
 
-GPIO-capable: `0–9`, `12–15`, `19`. Power/GND/NC are not GPIO.
+GPIO-capable for lessons: `0–9`, `12`, `14–15`, `19`. **Pin 13 is not for lessons.** Power/GND/NC are not GPIO.
+
+### Physical button & HID (read before inventing input lessons)
+
+**Canonical:** https://onedollarcomputer.com/docs/BUTTON.md
+
+| Fact | Implication for lessons |
+|------|-------------------------|
+| The **physical** ODC button only **enters the bootloader** so Upload (WebHID) works | Do **not** teach “press the board button → LED on” as firmware |
+| User firmware that touches pin **13** / `read_button()` can **break HID reflash** | Never emit that code in curriculum Rust |
+| A **virtual button in HTML** can teach if/else in the browser | That is pedagogy only — it does **not** drive the real computer |
+| Live browser ↔ board control via HID (page button → LED, or page reading the physical button) | **Not ready** — do not promise or build lessons that need it yet |
+
+**Safe next lesson after blink:** LED timing / blink codes (“Light Signals”) in HTML + matching Simple Rust on the board — no button, no HID messaging.
+
+**If the instructor wants input → decision → output:** simulate in HTML5, or use an **external** switch on a free GPIO (e.g. pin 0). Say clearly that the onboard button is for **bootloader / Upload**, not the exercise.
 
 ## How to put a lesson together (MCP)
 
@@ -104,3 +119,6 @@ Put this (or the lesson’s real firmware) in **steps** under **Firmware (Simple
 - Scrape the connect URL as a webpage for lesson content.
 - Send Blockly / JS / Python / asm **to** the cloud compiler as `language`.
 - Use chip pad names or invent pin numbers outside 0–19.
+- Use the **physical button** / `read_button()` / pin **13** as lesson input.
+- Promise browser ↔ board HID sync (not validated yet).
+- Confuse an HTML “virtual button” with the real ODC button.

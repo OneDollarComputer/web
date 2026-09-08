@@ -1,10 +1,10 @@
-# ODC curriculum MCP — active when this repo is a trusted Codex project.
+# ODC MCP (curriculum + firmware projects) — trusted Codex project.
 # Once: cd curriculum/mcp && npm install
 
-[mcp_servers.odc-curriculum]
+[mcp_servers.odc]
 command = "node"
 args = ["curriculum/mcp/bin.js"]
 startup_timeout_sec = 20
 
-[mcp_servers.odc-curriculum.env]
+[mcp_servers.odc.env]
 ODC_CURRICULUM_API = "https://api.onedollarcomputer.com"

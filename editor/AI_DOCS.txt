@@ -3,10 +3,18 @@
 Official editor: https://onedollarcomputer.com/editor/
 Official site: https://onedollarcomputer.com/
 Platform spec: https://onedollarcomputer.com/specification/ (v1.004 **R2**)
+**Button warning (read first):** https://onedollarcomputer.com/docs/BUTTON.md
 
 You are helping a beginner write firmware for the **One Dollar Computer**.
 This board is **not** Arduino, ESP32, Raspberry Pi Pico, or a generic CH32 demo board.
 Its I/O map is **different**. Follow this file exactly.
+
+## ⚠ CRITICAL — PHYSICAL BUTTON ≠ USER INPUT
+
+Pin **13** (`BUTTON`) is **bootloader entry only** (press → WebHID Upload).
+**Never** generate `read_button()`, `pin_input(BUTTON)`, or any use of pin **13** in beginner firmware.
+Doing so can **brick normal HID reflash** and leave the computer hard to recover.
+Details: `/docs/BUTTON.md`
 
 ---
 
@@ -26,8 +34,10 @@ fn main() {
 
 Rules:
 - Use board pin numbers **0..=19** only (silkscreen on the PCB).
-- LED = **19** (`LED`). Button = **13** (`BUTTON`).
-- API: `pin_output`, `pin_input`, `pin_set`, `pin_clear`, `pin_high`, `pin_low`, `pin_read`, `delay`, `led_on`, `led_off`, `read_button`.
+- LED = **19** (`LED`). Prefer LED + GPIO pins for beginner I/O.
+- Physical **BUTTON** (pin **13**) is **bootloader entry only** — press it to enter HID so the browser can Upload. It is **not** a student input for lessons.
+- **Do NOT** call `read_button()`, `pin_input(BUTTON)`, or otherwise use pin **13** in beginner/user firmware. Reclaiming that pin can break WebHID reflash and leave the computer hard to recover.
+- Safe API for beginners: `pin_output`, `pin_input`, `pin_set`, `pin_clear`, `pin_high`, `pin_low`, `pin_read`, `delay`, `led_on`, `led_off` on pins other than **13**.
 - **Do NOT** write `#![no_std]`, `#![no_main]`, `extern "C"`, `firmware::hal`, or `system_init` — the editor wraps bare-metal details.
 - **NEVER** use MCU pad names (`PD6`, `PC0`, `PA1`, …) or legacy helpers (`gpio_pd6_*`).
 - **NEVER** invent Arduino-style pins (`D13`, `A0`) or ESP32 GPIO numbers.
@@ -53,7 +63,7 @@ Why: the PCB silkscreen is numbered `0`–`19`. MCU revisions can remap pads. Ha
 | Constant | Pin | Role |
 |----------|-----|------|
 | `LED` | **19** | Onboard LED |
-| `BUTTON` | **13** | Boot / user button |
+| `BUTTON` | **13** | **Bootloader only** — enter HID for Upload. Do **not** use in user firmware |
 | `PIN_3V3` | 10 | 3.3V power (not GPIO) |
 | `PIN_GND` | 11 | Ground |
 | `PIN_NC` | 16 | Not connected |
@@ -69,14 +79,14 @@ Why: the PCB silkscreen is numbered `0`–`19`. MCU revisions can remap pads. Ha
 | 10 | Power | **3.3V** — do not drive as GPIO |
 | 11 | Ground | GND |
 | 12 | GPIO | Also **SWIO** — using as GPIO disables SWD until reboot |
-| 13 | Button | `BUTTON` — pull-up; `read_button()` |
+| 13 | Button | `BUTTON` — **bootloader entry only**; leave alone in user firmware |
 | 14–15 | GPIO | General purpose |
 | 16 | NC | Not connected |
 | 17 | Ground | GND |
 | 18 | Power | **+5V / VBUS** — do not drive as GPIO |
 | 19 | LED | `LED` — use `pin_set` / `pin_clear` for on/off |
 
-**GPIO-capable pins:** `0–9`, `12–15`, `19`.
+**GPIO-capable pins for beginner firmware:** `0–9`, `12`, `14–15`, `19`. **Skip pin 13.**
 
 Orientation when wiring:
 - Left header: pins **0–9**
@@ -88,18 +98,19 @@ Orientation when wiring:
 
 ```rust
 pin_output(pin);   // configure as output
-pin_input(pin);    // configure as input
+pin_input(pin);    // configure as input (not pin 13)
 pin_set(pin);      // logical high / LED on
 pin_clear(pin);    // logical low / LED off
 pin_high(pin);     // electrical high
 pin_low(pin);      // electrical low
-pin_read(pin);     // read pin
+pin_read(pin);     // read pin (not pin 13)
 delay(ms);         // millisecond delay
 led_on(); led_off();
-read_button();     // true when BUTTON (13) is pressed
 ```
 
-Constants: `LED` (19), `BUTTON` (13).
+Constant for beginners: `LED` (19).
+
+**Avoid:** `BUTTON` / `read_button()` — reserved for bootloader / HID. The editor and cloud compiler **reject** beginner code that uses them. Details: `/docs/BUTTON.md`.
 
 ---
 
@@ -140,25 +151,33 @@ fn main() {
 }
 ```
 
-### Button (13) controls LED (19)
+### Blink patterns (message with short / long flashes)
+
+Teach timing and sequences — **not** the physical button.
 
 ```rust
 use odc::*;
 
+fn flash(ms: u32) {
+    pin_set(LED);
+    delay(ms);
+    pin_clear(LED);
+    delay(200);
+}
+
 fn main() {
     pin_output(LED);
-    pin_input(BUTTON);
 
     loop {
-        if read_button() {
-            pin_set(LED);
-        } else {
-            pin_clear(LED);
-        }
-        delay(10);
+        flash(150); // short
+        flash(150);
+        flash(450); // long
+        delay(1000);
     }
 }
 ```
+
+**Input / decision lessons:** use a **browser HTML** simulation, or wire an **external** switch to a free GPIO (e.g. pin **0**)—never pin **13**. Do **not** design lessons that need live browser ↔ board HID messaging until that path is tested separately.
 
 ---
 
@@ -197,5 +216,6 @@ https://onedollarcomputer.com/editor/?projectID={PROJECT_ID}&aiToken={TOKEN}&cod
 - No MCU pad names. No Arduino/ESP pin numbers.
 - No `#![no_std]` / `extern "C"` in beginner output.
 - No web/editor code in the firmware or Magic Link payload.
+- No `read_button()` / no use of pin **13** in generated beginner firmware.
 
-**Final instruction:** act as an integrated assistant. Prefer one-click sync via Magic Link. Always use board pins **0..=19**.
+**Final instruction:** act as an integrated assistant. Prefer one-click sync via Magic Link. Always use board pins **0..=19**. Physical button = bootloader only.

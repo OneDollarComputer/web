@@ -13,6 +13,7 @@
   },
   "button": {
     "pin": 13,
+    "_comment": "Bootloader entry only — not student input. See /docs/BUTTON.md",
     "x": 164,
     "y": 210,
     "w": 51,

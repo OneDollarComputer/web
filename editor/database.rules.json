@@ -21,11 +21,29 @@
     "projects": {
       "$pid": {
         ".read": "data.child('public').val() === true || (auth != null && data.child('ownerUid').val() === auth.uid)",
-        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || data.child('ownerUid').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && data.child('ownerUid').val() === auth.uid && (newData.exists() || data.child('public').val() !== true)))",
+        "public": {
+          ".validate": "newData.isBoolean() && (!data.exists() || data.val() !== true || newData.val() === true)"
+        },
         "code": {
           ".read": true,
           ".write": true
         }
+      }
+    },
+    "forks": {
+      "$sourceId": {
+        ".read": true,
+        "$destId": {
+          ".write": "auth != null && !data.exists() && newData.child('byUid').val() === auth.uid && newData.child('projectId').val() === $destId",
+          ".validate": "newData.hasChildren(['byUid', 'byUsername', 'fromUsername', 'fromSlug', 'toUsername', 'toSlug', 'createdAt', 'projectId'])"
+        }
+      }
+    },
+    "loginHandoff": {
+      "$code": {
+        ".read": false,
+        ".write": false
       }
     },
     "compileQueue": {
@@ -52,6 +70,56 @@
       "pendingByEmail": {
         ".read": false,
         ".write": false
+      },
+      "catalog": {
+        "$lid": {
+          ".read": "auth != null",
+          ".write": "auth != null && !newData.exists() && data.child('ownerUid').val() === auth.uid",
+          "title": {
+            ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists() || (!data.exists() && (newData.parent().child('ownerUid').val() === auth.uid || newData.val() === root.child('curriculum/lessons').child($lid).child('title').val())))"
+          },
+          "ownerUid": {
+            ".write": "auth != null && ((!data.exists() && (newData.val() === auth.uid || newData.val() === root.child('curriculum/lessons').child($lid).child('ownerUid').val())) || data.val() === auth.uid)"
+          },
+          "ownerName": {
+            ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists() || (!data.exists() && (newData.parent().child('ownerUid').val() === auth.uid || newData.val() === root.child('curriculum/lessons').child($lid).child('ownerName').val())))"
+          },
+          "updatedAt": {
+            ".write": "auth != null"
+          },
+          "likeCount": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() === data.val() + 1 || newData.val() === data.val() - 1)"
+          },
+          "viewCount": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber() && newData.val() >= 1 && (!data.exists() && newData.val() === 1 || data.exists() && newData.val() === data.val() + 1)"
+          },
+          "liveCount": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber() && newData.val() >= 1 && (!data.exists() && newData.val() === 1 || data.exists() && newData.val() === data.val() + 1)"
+          }
+        }
+      },
+      "likes": {
+        "$lid": {
+          ".read": "auth != null",
+          ".write": "auth != null && !newData.exists() && root.child('curriculum/catalog').child($lid).child('ownerUid').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "!newData.exists() || newData.val() === true"
+          }
+        }
+      },
+      "viewedBy": {
+        "$lid": {
+          ".read": "auth != null",
+          ".write": "auth != null && !newData.exists() && root.child('curriculum/catalog').child($lid).child('ownerUid').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists()",
+            ".validate": "newData.isNumber()"
+          }
+        }
       },
       "byUser": {
         "$uid": {

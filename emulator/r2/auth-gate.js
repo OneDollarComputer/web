@@ -5,9 +5,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebas
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { signInWithGoogle } from "/js/sign-in.js?v=20260908a";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -70,7 +70,7 @@ export function ensureEmulatorAccess() {
       btnGoogle.addEventListener("click", async () => {
         if (gateError) gateError.hidden = true;
         try {
-          await signInWithPopup(authInstance, google);
+          await signInWithGoogle(authInstance, google);
         } catch (err) {
           if (gateError) {
             gateError.textContent = err?.message || "Sign-in failed";

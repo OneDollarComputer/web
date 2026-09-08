@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Approve sign-in — One Dollar Computer</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    :root { --bg:#07090F; --text:#E8EEF8; --sub:#A9B4C7; --accent:#48E1A7; --line:#1D2843; --card:#0D1220; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg); color: var(--text); padding: 1.25rem;
+    }
+    .card {
+      width: min(26rem, 100%); background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; padding: 1.25rem; line-height: 1.5;
+    }
+    h1 { font-size: 1.15rem; margin: 0 0 0.5rem; }
+    p { color: var(--sub); margin: 0 0 1rem; }
+    button {
+      font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 0.65rem 1rem;
+      background: #fff; color: #1f1f1f; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    button:disabled { opacity: 0.6; cursor: default; }
+    .ok { color: var(--accent); }
+    .err { color: #ff8a8a; }
+    .status { min-height: 1.3em; margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Approve sign-in</h1>
+    <p id="lede">Sign in with Google to approve the other app or window.</p>
+    <button type="button" id="btnGoogle">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.3 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.7-6.4 7.1l.1.1 6.3 5.2C38.4 38.3 44 32 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      Continue with Google
+    </button>
+    <p class="status" id="status"></p>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
+    const API = "https://api.onedollarcomputer.com";
+    const FIREBASE = {
+      apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
+      authDomain: "auth.onedollarcomputer.com",
+      databaseURL: "https://odc-files-default-rtdb.firebaseio.com",
+      projectId: "odc-files",
+      storageBucket: "odc-files.firebasestorage.app",
+      messagingSenderId: "1086912562723",
+      appId: "1:1086912562723:web:d158f4ce5c08d1ceb95396"
+    };
+
+    const code = new URLSearchParams(location.search).get("code") || "";
+    const btn = document.getElementById("btnGoogle");
+    const status = document.getElementById("status");
+    const lede = document.getElementById("lede");
+
+    if (!code) {
+      lede.textContent = "Missing sign-in code.";
+      btn.hidden = true;
+      throw new Error("missing code");
+    }
+
+    const app = initializeApp(FIREBASE);
+    const auth = getAuth(app);
+    const google = new GoogleAuthProvider();
+    google.setCustomParameters({ prompt: "select_account" });
+
+    let busy = false;
+
+    async function approve(user) {
+      if (busy) return;
+      busy = true;
+      btn.disabled = true;
+      status.className = "status";
+      status.textContent = "Approving…";
+      try {
+        const res = await fetch(`${API}/login/approve`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${await user.getIdToken()}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Approve failed");
+        status.className = "status ok";
+        status.textContent = "Approved. Return to the other app — you can close this tab.";
+        lede.textContent = "Sign-in approved.";
+        btn.hidden = true;
+      } catch (e) {
+        status.className = "status err";
+        status.textContent = e.message || "Could not approve.";
+        btn.disabled = false;
+        busy = false;
+      }
+    }
+
+    btn.addEventListener("click", async () => {
+      status.textContent = "";
+      try {
+        const cred = await signInWithPopup(auth, google);
+        await approve(cred.user);
+      } catch (e) {
+        if (e && e.code === "auth/popup-closed-by-user") return;
+        status.className = "status err";
+        status.textContent = (e && e.message) || "Sign-in failed.";
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) approve(user);
+    });
+  </script>
+</body>
+</html>

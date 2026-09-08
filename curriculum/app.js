@@ -10,7 +10,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebas
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
@@ -23,11 +22,13 @@ import {
   remove,
   onValue,
   onDisconnect,
-  push
+  push,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 import { CURRICULUM_API } from "./api-origin.js?v=20260905g";
 import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260907b";
 import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js?v=20260905g";
+import { signInWithGoogle } from "/js/sign-in.js?v=20260908a";
 
 const FIREBASE = {
   apiKey: "AIzaSyAmK0bGgKLvmHLP9dgK3mjX2CdGRwxzNmg",
@@ -62,6 +63,9 @@ const lessonList = document.getElementById("lessonList");
 const emptyList = document.getElementById("emptyList");
 const form = document.getElementById("lessonForm");
 const btnNew = document.getElementById("btnNew");
+const listMine = document.getElementById("listMine");
+const listPopular = document.getElementById("listPopular");
+const btnLike = document.getElementById("btnLike");
 const btnSave = document.getElementById("btnSave");
 const btnDelete = document.getElementById("btnDelete");
 const saveStatus = document.getElementById("saveStatus");
@@ -124,10 +128,13 @@ function field(id) {
 
 let me = null;
 let myUsername = null;
-let lessons = []; // { id, title, updatedAt }
+let lessons = []; // { id, title, updatedAt, likeCount?, viewCount?, liveCount?, ownerName?, mine? }
+let listMode = "mine"; // mine | popular
 let currentId = null;
 let currentMeta = null; // full lesson snapshot fields we care about
 let isAuthor = false;
+let likedByMe = false;
+let likeCount = 0;
 let editMode = "edit"; // edit | suggest
 let applyingRemote = false;
 let saveTimer = null;
@@ -137,6 +144,127 @@ let unsubSuggestions = null;
 let unsubLiveRoom = null;
 let activeLiveRoom = null;
 let presenceCleanup = null;
+
+function catalogScore(row) {
+  return (row.likeCount || 0) * 5 + (row.liveCount || 0) * 3 + (row.viewCount || 0);
+}
+
+function formatLessonStats(row) {
+  const likes = row.likeCount || 0;
+  const views = row.viewCount || 0;
+  const lives = row.liveCount || 0;
+  if (!likes && !views && !lives) return "";
+  const parts = [];
+  if (likes) parts.push(`${likes}♥`);
+  if (views) parts.push(`${views} views`);
+  if (lives) parts.push(`${lives} classes`);
+  return parts.join(" · ");
+}
+
+async function upsertCatalog(id, { title, ownerUid, ownerName, updatedAt }) {
+  if (!id) return;
+  const patch = {
+    title: title || "Untitled",
+    updatedAt: updatedAt || Date.now()
+  };
+  if (ownerUid) patch.ownerUid = ownerUid;
+  if (ownerName) patch.ownerName = ownerName;
+  try {
+    await update(ref(db, `curriculum/catalog/${id}`), patch);
+  } catch (err) {
+    console.warn(err);
+  }
+}
+
+function updateLikeButton() {
+  if (!btnLike) return;
+  if (!me || !currentId) {
+    btnLike.hidden = true;
+    return;
+  }
+  btnLike.hidden = false;
+  btnLike.classList.toggle("is-liked", likedByMe);
+  btnLike.textContent = likedByMe
+    ? (likeCount ? `Liked · ${likeCount}` : "Liked")
+    : (likeCount ? `Like · ${likeCount}` : "Like");
+}
+
+async function refreshLikeState(lessonId) {
+  likedByMe = false;
+  likeCount = 0;
+  if (!me || !lessonId) {
+    updateLikeButton();
+    return;
+  }
+  try {
+    const [likeSnap, catSnap] = await Promise.all([
+      get(ref(db, `curriculum/likes/${lessonId}/${me.uid}`)),
+      get(ref(db, `curriculum/catalog/${lessonId}`))
+    ]);
+    likedByMe = likeSnap.exists();
+    likeCount = Number(catSnap.val()?.likeCount || 0);
+  } catch (err) {
+    console.error(err);
+  }
+  updateLikeButton();
+}
+
+async function toggleLike() {
+  if (!me || !currentId) return;
+  btnLike.disabled = true;
+  const likeRef = ref(db, `curriculum/likes/${currentId}/${me.uid}`);
+  const countRef = ref(db, `curriculum/catalog/${currentId}/likeCount`);
+  try {
+    if (likedByMe) {
+      await remove(likeRef);
+      await runTransaction(countRef, (v) => Math.max(0, (v || 0) - 1));
+      likedByMe = false;
+      likeCount = Math.max(0, likeCount - 1);
+    } else {
+      await set(likeRef, true);
+      await runTransaction(countRef, (v) => (v || 0) + 1);
+      likedByMe = true;
+      likeCount += 1;
+      await upsertCatalog(currentId, {
+        title: currentMeta?.title || field("fTitle")?.value || "Untitled",
+        ownerUid: currentMeta?.ownerUid,
+        ownerName: currentMeta?.ownerName,
+        updatedAt: currentMeta?.updatedAt || Date.now()
+      });
+    }
+    updateLikeButton();
+    const row = lessons.find((l) => l.id === currentId);
+    if (row) {
+      row.likeCount = likeCount;
+      if (listMode === "popular") renderList();
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus("Could not update like.");
+  } finally {
+    btnLike.disabled = false;
+  }
+}
+
+async function recordView(lessonId) {
+  if (!me || !lessonId) return;
+  try {
+    const seen = await get(ref(db, `curriculum/viewedBy/${lessonId}/${me.uid}`));
+    if (seen.exists()) return;
+    if (currentMeta) {
+      await upsertCatalog(lessonId, {
+        title: currentMeta.title,
+        ownerUid: currentMeta.ownerUid,
+        ownerName: currentMeta.ownerName,
+        updatedAt: currentMeta.updatedAt
+      });
+    }
+    await set(ref(db, `curriculum/viewedBy/${lessonId}/${me.uid}`), Date.now());
+    await runTransaction(ref(db, `curriculum/catalog/${lessonId}/viewCount`), (v) => (v || 0) + 1);
+  } catch (err) {
+    console.warn(err);
+  }
+}
 
 function lessonQueryId() {
   return new URLSearchParams(location.search).get("lesson") || null;
@@ -870,22 +998,45 @@ function fillFormFromLesson(lesson) {
 function renderList() {
   lessonList.replaceChildren();
   emptyList.hidden = lessons.length > 0;
-  lessons
-    .slice()
-    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-    .forEach((lesson) => {
-      const li = document.createElement("li");
-      const btn = document.createElement("button");
-      btn.type = "button";
-      if (lesson.id === currentId) btn.classList.add("active");
-      const when = lesson.updatedAt
-        ? new Date(lesson.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-        : "";
-      btn.innerHTML = `${escapeHtml(lesson.title || "Untitled")}<span class="muted">${escapeHtml(when)}</span>`;
-      btn.addEventListener("click", () => openLesson(lesson.id));
-      li.appendChild(btn);
-      lessonList.appendChild(li);
-    });
+  emptyList.textContent = listMode === "popular"
+    ? "No popular lessons yet. Like a lesson to start the ranking."
+    : "No lessons yet.";
+  const sorted = lessons.slice().sort((a, b) => {
+    if (listMode === "popular") {
+      const diff = catalogScore(b) - catalogScore(a);
+      if (diff) return diff;
+    }
+    return (b.updatedAt || 0) - (a.updatedAt || 0);
+  });
+  sorted.forEach((lesson) => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    if (lesson.id === currentId) btn.classList.add("active");
+    const when = lesson.updatedAt
+      ? new Date(lesson.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+      : "";
+    const stats = formatLessonStats(lesson);
+    const who = listMode === "popular" && lesson.ownerName
+      ? escapeHtml(lesson.ownerName)
+      : "";
+    const muted = [who, when, stats].filter(Boolean).join(" · ");
+    btn.innerHTML = `${escapeHtml(lesson.title || "Untitled")}${
+      muted ? `<span class="muted">${muted}</span>` : ""
+    }`;
+    btn.addEventListener("click", () => openLesson(lesson.id));
+    li.appendChild(btn);
+    lessonList.appendChild(li);
+  });
+}
+
+function setListMode(mode) {
+  listMode = mode === "popular" ? "popular" : "mine";
+  listMine?.classList.toggle("active", listMode === "mine");
+  listPopular?.classList.toggle("active", listMode === "popular");
+  listMine?.setAttribute("aria-selected", listMode === "mine" ? "true" : "false");
+  listPopular?.setAttribute("aria-selected", listMode === "popular" ? "true" : "false");
+  refreshLessonIndex();
 }
 
 function setFormEditable(canEdit) {
@@ -932,9 +1083,11 @@ function updateCollabChrome() {
     collabBar.hidden = true;
     suggestPanel.hidden = true;
     closeMoreMenu();
+    updateLikeButton();
     return;
   }
   collabBar.hidden = false;
+  updateLikeButton();
   if (isAuthor) {
     authorTools.hidden = false;
     if (btnPreviewSolo) btnPreviewSolo.hidden = true;
@@ -1039,19 +1192,51 @@ function fillBlankNew() {
 
 async function refreshLessonIndex() {
   if (!me) return;
+  if (listMode === "popular") {
+    try {
+      const snap = await get(ref(db, "curriculum/catalog"));
+      const val = snap.val() || {};
+      lessons = Object.entries(val).map(([id, row]) => ({
+        id,
+        title: row?.title || "Untitled",
+        updatedAt: row?.updatedAt || 0,
+        ownerName: row?.ownerName || "",
+        ownerUid: row?.ownerUid || "",
+        likeCount: Number(row?.likeCount || 0),
+        viewCount: Number(row?.viewCount || 0),
+        liveCount: Number(row?.liveCount || 0)
+      }));
+    } catch (err) {
+      console.error(err);
+      lessons = [];
+    }
+    renderList();
+    return;
+  }
+
   const snap = await get(ref(db, `curriculum/byUser/${me.uid}`));
   const ids = snap.exists()
     ? Object.keys(snap.val()).filter((id) => id.startsWith("l_"))
     : [];
   const rows = await Promise.all(ids.map(async (id) => {
     try {
-      const [t, u] = await Promise.all([
+      const [t, u, cat] = await Promise.all([
         get(ref(db, `curriculum/lessons/${id}/title`)),
-        get(ref(db, `curriculum/lessons/${id}/updatedAt`))
+        get(ref(db, `curriculum/lessons/${id}/updatedAt`)),
+        get(ref(db, `curriculum/catalog/${id}`))
       ]);
-      return { id, title: t.val() || "Untitled", updatedAt: u.val() || 0 };
+      const c = cat.val() || {};
+      return {
+        id,
+        title: t.val() || "Untitled",
+        updatedAt: u.val() || 0,
+        likeCount: Number(c.likeCount || 0),
+        viewCount: Number(c.viewCount || 0),
+        liveCount: Number(c.liveCount || 0),
+        mine: true
+      };
     } catch {
-      return { id, title: "Untitled", updatedAt: 0 };
+      return { id, title: "Untitled", updatedAt: 0, mine: true };
     }
   }));
   lessons = rows;
@@ -1066,6 +1251,9 @@ function detachLesson() {
   if (typeof presenceCleanup === "function") presenceCleanup();
   unsubLesson = unsubPresence = unsubSuggestions = unsubLiveRoom = presenceCleanup = null;
   activeLiveRoom = null;
+  likedByMe = false;
+  likeCount = 0;
+  updateLikeButton();
   if (liveRoomChip) liveRoomChip.hidden = true;
   if (presenceBar) presenceBar.replaceChildren();
   document.querySelectorAll(".who").forEach((el) => {
@@ -1133,6 +1321,20 @@ async function openLesson(id) {
   attachSuggestions(id);
   attachLiveRoom(id);
   renderList();
+  refreshLikeState(id);
+  recordView(id);
+  // Backfill catalog when opening own lessons that predate the ranking system
+  setTimeout(async () => {
+    if (!currentMeta || currentMeta.ownerUid !== me?.uid) return;
+    const cat = await get(ref(db, `curriculum/catalog/${id}`));
+    if (cat.exists()) return;
+    upsertCatalog(id, {
+      title: currentMeta.title,
+      ownerUid: currentMeta.ownerUid,
+      ownerName: currentMeta.ownerName,
+      updatedAt: currentMeta.updatedAt
+    });
+  }, 400);
 }
 
 function updateLiveRoomChrome(room) {
@@ -1383,6 +1585,10 @@ async function saveCurrent() {
       };
       updates[`curriculum/lessons/${id}/body/games`] = null;
       updates[`curriculum/byUser/${me.uid}/${id}`] = true;
+      updates[`curriculum/catalog/${id}/title`] = data.title;
+      updates[`curriculum/catalog/${id}/ownerUid`] = me.uid;
+      updates[`curriculum/catalog/${id}/ownerName`] = ownerName;
+      updates[`curriculum/catalog/${id}/updatedAt`] = now;
       await update(ref(db), updates);
       currentId = id;
       setLessonQuery(id);
@@ -1412,6 +1618,14 @@ async function saveCurrent() {
       links: data.links
     };
     updates[`curriculum/lessons/${currentId}/body/games`] = null;
+    updates[`curriculum/catalog/${currentId}/title`] = data.title;
+    updates[`curriculum/catalog/${currentId}/updatedAt`] = now;
+    if (currentMeta?.ownerUid) {
+      updates[`curriculum/catalog/${currentId}/ownerUid`] = currentMeta.ownerUid;
+    }
+    if (currentMeta?.ownerName) {
+      updates[`curriculum/catalog/${currentId}/ownerName`] = currentMeta.ownerName;
+    }
     await update(ref(db), updates);
     // Refresh list title
     const row = lessons.find((l) => l.id === currentId);
@@ -1432,13 +1646,19 @@ async function deleteCurrent() {
   if (!confirm("Delete this lesson?")) return;
   const id = currentId;
   const authorUids = Object.keys(currentMeta?.authors || { [me.uid]: true });
-  const updates = {};
-  updates[`curriculum/lessons/${id}`] = null;
-  authorUids.forEach((uid) => {
-    updates[`curriculum/byUser/${uid}/${id}`] = null;
-  });
-  updates[`curriculum/byUser/${me.uid}/${id}`] = null;
   try {
+    // Clear engagement first while catalog.ownerUid still exists (rules)
+    await update(ref(db), {
+      [`curriculum/likes/${id}`]: null,
+      [`curriculum/viewedBy/${id}`]: null
+    });
+    const updates = {};
+    updates[`curriculum/lessons/${id}`] = null;
+    authorUids.forEach((uid) => {
+      updates[`curriculum/byUser/${uid}/${id}`] = null;
+    });
+    updates[`curriculum/byUser/${me.uid}/${id}`] = null;
+    updates[`curriculum/catalog/${id}`] = null;
     await update(ref(db), updates);
     detachLesson();
     await refreshLessonIndex();
@@ -1556,7 +1776,7 @@ btnGoogle?.addEventListener("click", async () => {
   showError("");
   btnGoogle.disabled = true;
   try {
-    await signInWithPopup(auth, google);
+    await signInWithGoogle(auth, google);
   } catch (err) {
     const code = err && err.code;
     if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
@@ -1571,6 +1791,10 @@ btnGoogle?.addEventListener("click", async () => {
 btnSignOut?.addEventListener("click", () => signOut(auth));
 
 btnNew?.addEventListener("click", () => fillBlankNew());
+
+listMine?.addEventListener("click", () => setListMode("mine"));
+listPopular?.addEventListener("click", () => setListMode("popular"));
+btnLike?.addEventListener("click", () => toggleLike());
 
 btnInvite?.addEventListener("click", () => inviteCoAuthor());
 inviteUser?.addEventListener("keydown", (e) => {

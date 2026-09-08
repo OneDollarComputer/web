@@ -54,6 +54,10 @@
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
+          "source": "/login/browser",
+          "destination": "/login-browser.html"
+        },
+        {
           "source": "/pair/**",
           "function": "curriculumAgent"
         },
@@ -71,6 +75,18 @@
         },
         {
           "source": "/invite/**",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/projects",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/projects/**",
+          "function": "curriculumAgent"
+        },
+        {
+          "source": "/login/**",
           "function": "curriculumAgent"
         }
       ]

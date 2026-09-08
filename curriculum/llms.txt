@@ -17,6 +17,8 @@ Use **`html`**, not `gameHtml`, not iframe in overview. Each block: `{ "title": 
 
 **Contrast:** on light backgrounds use dark text (`#0f172a`). Never pale titles on white. Dark panels may use light text.
 
+**Hardware lessons:** physical ODC button = **bootloader / Upload only** — never `read_button()` / pin 13 in student Rust (can break HID). Canonical: `/docs/BUTTON.md`. Full rules: `/curriculum/AGENT_LESSONS.md` and `/editor/AI_DOCS.txt`. No live browser↔board HID yet.
+
 Aliases accepted by API: `games`, `gameHtml`, `game_html` (mapped to `html`).
 
 ## Agent → Copy
