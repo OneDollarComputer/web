@@ -146,6 +146,9 @@
       display: inline-flex;
       margin-top: 0.2rem;
     }
+    .file-select-wrap[hidden] {
+      display: none !important;
+    }
     .file-select-wrap select {
       font: inherit;
       font-size: 0.8rem;
@@ -1215,15 +1218,20 @@
 
     async function loadActiveFileContent() {
       if (!database || !window.PROJECT_CODE) return null;
-      const snap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
-      if (!snap.exists()) return null;
-      const p = snap.val() || {};
-      const list = projectFileList(p);
-      let fileId = window.PROJECT_FILE || p.activeFile || 'main';
-      let row = list.find((f) => f.id === fileId) || list[0];
-      if (!row) return null;
-      window.PROJECT_FILE = row.id;
-      return { fileId: row.id, content: row.content, project: p };
+      try {
+        const snap = await get(ref(database, `projects/${window.PROJECT_CODE}`));
+        if (!snap.exists()) return null;
+        const p = snap.val() || {};
+        const list = projectFileList(p);
+        let fileId = window.PROJECT_FILE || p.activeFile || 'main';
+        let row = list.find((f) => f.id === fileId) || list[0];
+        if (!row) return null;
+        window.PROJECT_FILE = row.id;
+        return { fileId: row.id, content: row.content || '', project: p };
+      } catch (err) {
+        console.warn('Could not load project files (private or offline):', err);
+        return null;
+      }
     }
 
     function updateSimulateLink() {
@@ -1757,11 +1765,14 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     })();
 
     wireUserMenu();
+    // Bare /editor/ redirects to a project; stop this module if we navigated away.
     if (!(await resolveBareEditorUrl())) {
-      await new Promise(() => {});
+      return;
     }
-    await refreshProjectPublicLink();
-
+    // Do not block Monaco on Firebase — private projects / slow auth used to hang here.
+    refreshProjectPublicLink().catch((err) => {
+      console.warn('refreshProjectPublicLink failed', err);
+    });
     
     const btnUpload = document.getElementById('btnUpload');
     const status = document.getElementById('status');
@@ -3443,37 +3454,41 @@ fn main() {
         lastSavedContent = urlCode;
         console.log('🔗 Code loaded from URL parameter (?code=BASE64)');
       } else {
-        
+        // Prefer world-readable code.json so the editor always paints, then overlay file map.
         try {
-          const fileRow = await loadActiveFileContent();
-          if (fileRow && typeof fileRow.content === 'string' && fileRow.content.length) {
-            initialCode = fileRow.content;
-            lastSavedContent = initialCode;
-            initialData = fileRow.project && fileRow.project.code ? fileRow.project.code : null;
-            syncFileSelect(fileRow.project || {});
-            console.log('✅ Code loaded from project file', fileRow.fileId);
-          } else {
-            const response = await fetch(projectApiUrl());
-            if (response.ok) {
-              const data = await response.json();
-              initialData = data;
-              if (data && data.content) {
-                initialCode = data.content;
-                lastSavedContent = initialCode;
-                console.log(IS_LOCAL ? '✅ Code loaded from local JSON' : '✅ Code loaded from Firebase');
-
-                
-                if (data.compilationStatus === 'success' && data.binaryHash) {
-                  console.log('🔍 Compiled binaryHash found on page load');
-                  console.log('   - binaryHash:', data.binaryHash);
-                  console.log('   - binarySize:', data.binarySize);
-                }
+          const response = await fetch(projectApiUrl(), { cache: 'no-store' });
+          if (response.ok) {
+            const data = await response.json();
+            initialData = data;
+            if (data && data.content) {
+              initialCode = data.content;
+              lastSavedContent = initialCode;
+              console.log(IS_LOCAL ? '✅ Code loaded from local JSON' : '✅ Code loaded from Firebase');
+              if (data.compilationStatus === 'success' && data.binaryHash) {
+                console.log('🔍 Compiled binaryHash found on page load');
               }
             }
           }
         } catch (error) {
-          console.warn('⚠️ Error loading initial code:', error);
-          
+          console.warn('⚠️ Error loading code.json:', error);
+        }
+        try {
+          const fileRow = await loadActiveFileContent();
+          if (fileRow) {
+            syncFileSelect(fileRow.project || {});
+            const wantFile = window.PROJECT_FILE || 'main';
+            if (
+              fileRow.fileId === wantFile &&
+              typeof fileRow.content === 'string' &&
+              fileRow.content.length
+            ) {
+              initialCode = fileRow.content;
+              lastSavedContent = initialCode;
+              console.log('✅ Code loaded from project file', fileRow.fileId);
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ Error loading project files:', error);
         }
       }
 
