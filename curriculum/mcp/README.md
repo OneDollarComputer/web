@@ -4,7 +4,7 @@ Stdio MCP for One Dollar Computer — curriculum lessons **and** firmware projec
 
 See [../README.md](../README.md) for pair flow and Cursor/`mcp.json` setup.
 
-**Pair once:** Agent → **Copy** on `/project/` or `/curriculum/` → `curriculum_pair` with that link.
+**Pair once:** Agent → **Copy** on `/curriculum/` or `/project/` → `curriculum_pair` with that link (MCP server name: `odc-curriculum`).
 
 **Projects:** `project_brief` → `project_list` / `project_create` / `project_get` / `project_update` / `project_publish` / `project_fork`  
 **Lessons:** `curriculum_agent_brief` → `curriculum_create_lesson` / `curriculum_update_lesson` / …

@@ -560,23 +560,20 @@ function agentClipboardText(code) {
   const proj = currentProjectContext();
   const lines = [
     "Edit my One Dollar Computer firmware projects on the site (not local files).",
-    "REQUIRED: use MCP tool curriculum_pair with the Connect link below — do NOT fetch that URL as a webpage, do NOT scrape onedollarcomputer.com, do NOT write local .rs files.",
-    "After pairing call project_brief, then edit via project_get / project_update.",
+    "Read https://onedollarcomputer.com/editor/AI_DOCS.txt first.",
     "Rule: complete Simple Rust only (use odc::*; fn main). Never read_button() / pin 13.",
     ""
   ];
   if (proj) {
     lines.push(`Target project_id: ${proj.id}`);
-    lines.push(`Public URL (for humans only): https://onedollarcomputer.com/${proj.username}/${proj.slug}`);
     lines.push("");
   }
   lines.push(
-    "MCP (odc):",
-    "  1. curriculum_pair with this Connect link",
-    "  2. project_brief",
+    "If you have MCP (odc-curriculum): curriculum_pair with this link, then project_brief,",
     proj
-      ? "  3. project_get / project_update with the project_id above (then project_publish if asked)"
-      : "  3. project_list / project_create / project_update / project_publish",
+      ? "then project_get / project_update with the project_id above (project_publish if asked)."
+      : "then project_list / project_create / project_update / project_publish.",
+    "REQUIRED: call curriculum_pair — do NOT fetch the Connect URL as a webpage.",
     "Publishing is irreversible.",
     "",
     "Connect link:",
@@ -608,7 +605,12 @@ function agentClipboardText(code) {
       "CREATE a project:",
       "curl -sS -X POST -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
       "  -d '{\"name\":\"LED\",\"code\":\"use odc::*;\\nfn main() { led_on(); }\\n\"}' \\",
-      "  \"$API/projects\""
+      "  \"$API/projects\"",
+      "",
+      "PATCH an existing project:",
+      "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
+      "  -d '{\"code\":\"use odc::*;\\nfn main() { led_on(); }\\n\"}' \\",
+      "  \"$API/projects/PROJECT_ID\""
     );
   }
   return lines.join("\n");
@@ -1225,6 +1227,25 @@ $("btnCopyAgent")?.addEventListener("click", () => onCopyAgent());
 $("btnCopyAgentProject")?.addEventListener("click", () => onCopyAgent());
 
 $("btnAgentRevoke")?.addEventListener("click", () => revokeAllAgents());
+$("btnAgentRevokeProject")?.addEventListener("click", () => revokeAllAgents());
+
+$("btnAgentHelp")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const help = $("agentHelp");
+  const btn = $("btnAgentHelp");
+  if (!help || !btn) return;
+  const open = help.hidden;
+  help.hidden = !open;
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+});
+
+document.addEventListener("click", () => {
+  const help = $("agentHelp");
+  const btn = $("btnAgentHelp");
+  if (help) help.hidden = true;
+  if (btn) btn.setAttribute("aria-expanded", "false");
+});
+$("agentHelp")?.addEventListener("click", (e) => e.stopPropagation());
 
 window.addEventListener("popstate", () => {
   render().catch((e) => showError((e && e.message) || "Could not load page."));

@@ -119,8 +119,13 @@
           <div class="agent-row">
             <div class="row">
               <span>Agent</span>
+              <button type="button" class="ghost" id="btnAgentHelp" title="What is Agent?" aria-expanded="false" aria-controls="agentHelp">?</button>
               <button type="button" class="ghost" id="btnCopyAgent">Copy</button>
               <button type="button" class="ghost" id="btnAgentRevoke">Revoke</button>
+            </div>
+            <div id="agentHelp" class="meta" hidden>
+              <p><strong>Copy</strong> pastes a link into your AI agent (Cursor, Codex…) so it can create and edit your projects via MCP — same flow as curriculum.</p>
+              <p><strong>Revoke</strong> disconnects that agent.</p>
             </div>
             <p class="meta" id="agentStatus" hidden></p>
           </div>
@@ -140,6 +145,7 @@
           <div class="row">
             <span>Agent</span>
             <button type="button" class="ghost" id="btnCopyAgentProject">Copy</button>
+            <button type="button" class="ghost" id="btnAgentRevokeProject">Revoke</button>
           </div>
           <p class="meta" id="projectAgentStatus" hidden></p>
         </div>
@@ -164,6 +170,6 @@
       <button type="button" class="ghost" id="btnPublishCancel">Cancel</button>
     </div>
   </dialog>
-  <script type="module" src="/profile/app.js?v=20260908b"></script>
+  <script type="module" src="/profile/app.js?v=20260908c"></script>
 </body>
 </html>

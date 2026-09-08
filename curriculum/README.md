@@ -78,7 +78,7 @@ Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curric
 
 ### Cursor
 
-This repo ships [`.cursor/mcp.json`](../.cursor/mcp.json) (`odc` → `curriculum/mcp/bin.js`). Enable the MCP server in Cursor settings, then pair with Agent → Copy.
+This repo ships [`.cursor/mcp.json`](../.cursor/mcp.json) (`odc-curriculum` → `curriculum/mcp/bin.js`). Enable the MCP server in Cursor settings (same as curriculum), then pair with Agent → Copy from `/curriculum/` or `/project/`.
 
 Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair.
 

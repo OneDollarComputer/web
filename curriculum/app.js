@@ -342,7 +342,7 @@ function agentClipboardText(code) {
     "Read https://onedollarcomputer.com/curriculum/AGENT_LESSONS.md first.",
     "Rule: teaching HTML5 is free; any board firmware must be complete Simple Rust (use odc::*;).",
     "",
-    "If you have MCP (odc): curriculum_pair with this link, then curriculum_agent_brief,",
+    "If you have MCP (odc-curriculum): curriculum_pair with this link, then curriculum_agent_brief,",
     "then curriculum_create_lesson (new) or curriculum_list_lessons / curriculum_update_lesson.",
     "REQUIRED: call curriculum_pair — do NOT fetch the Connect URL as a webpage.",
     "",

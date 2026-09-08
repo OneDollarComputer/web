@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "odc": {
+    "odc-curriculum": {
       "command": "node",
-      "args": ["curriculum/mcp/bin.js"],
+      "args": ["/Users/claudio/github/web/curriculum/mcp/bin.js"],
       "env": {
         "ODC_CURRICULUM_API": "https://api.onedollarcomputer.com"
       }
