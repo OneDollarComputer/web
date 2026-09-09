@@ -617,7 +617,8 @@
       font-weight: 500;
     }
 
-    #btnEditGateSignIn {
+    #btnEditGateSignIn,
+    #btnEditGateFork {
       background: #238636;
       color: #fff;
     }
@@ -892,9 +893,10 @@
   <div id="editGate" aria-hidden="true">
     <div class="flash-gate-card" role="dialog" aria-labelledby="editGateTitle">
       <h2 id="editGateTitle">Sign in to edit</h2>
-      <p>This project is public, but only the owner can change the original. Sign in and we’ll copy it to your page.</p>
+      <p id="editGateBody">Only the owner can change the original. Sign in and we’ll copy it to your page.</p>
       <div class="flash-gate-actions">
         <button type="button" id="btnEditGateSignIn">Sign in with Google</button>
+        <button type="button" id="btnEditGateFork" hidden>Copy to my page</button>
         <button type="button" id="btnEditGateCancel">Cancel</button>
       </div>
     </div>
@@ -1278,6 +1280,24 @@
 
     function showEditGate() {
       const gate = document.getElementById('editGate');
+      const title = document.getElementById('editGateTitle');
+      const body = document.getElementById('editGateBody');
+      const btnSignIn = document.getElementById('btnEditGateSignIn');
+      const btnFork = document.getElementById('btnEditGateFork');
+      const signedIn = !!(auth && auth.currentUser);
+      if (title && body && btnSignIn && btnFork) {
+        if (signedIn) {
+          title.textContent = 'Copy to edit';
+          body.textContent = 'Only the owner can change the original. Copy it to your page to edit.';
+          btnSignIn.hidden = true;
+          btnFork.hidden = false;
+        } else {
+          title.textContent = 'Sign in to edit';
+          body.textContent = 'Only the owner can change the original. Sign in and we’ll copy it to your page.';
+          btnSignIn.hidden = false;
+          btnFork.hidden = true;
+        }
+      }
       if (gate) {
         gate.classList.add('visible');
         gate.setAttribute('aria-hidden', 'false');
@@ -1292,7 +1312,7 @@
       }
     }
 
-    function promptSignInToEdit() {
+    function promptEditAccess() {
       if (editGateWaiter) return editGateWaiter.promise;
       let resolve;
       const promise = new Promise((r) => { resolve = r; });
@@ -1391,17 +1411,21 @@
       if (forkInProgress) return false;
       forkInProgress = true;
       try {
-        if (!(auth && auth.currentUser)) {
-          const ok = await promptSignInToEdit();
-          if (!ok) {
-            if (typeof editor !== 'undefined' && editor) {
-              isLocalChange = true;
-              editor.setValue(lastSavedContent);
-              isLocalChange = false;
-            }
-            return false;
+        const ok = await promptEditAccess();
+        if (!ok) {
+          if (typeof editor !== 'undefined' && editor) {
+            isLocalChange = true;
+            editor.setValue(lastSavedContent);
+            isLocalChange = false;
           }
-          if (canEditOriginal()) return true;
+          return false;
+        }
+        if (canEditOriginal()) {
+          syncEditChrome();
+          return true;
+        }
+        if (!(auth && auth.currentUser)) {
+          return false;
         }
         updateStatus('Copying to your page…', '');
         const id = await cloneProjectForMe(content);
@@ -1570,6 +1594,9 @@
             finishEditGate(false);
           }
         }
+      });
+      document.getElementById('btnEditGateFork')?.addEventListener('click', () => {
+        finishEditGate(true);
       });
       document.getElementById('btnEditGateCancel')?.addEventListener('click', () => {
         finishEditGate(false);
@@ -3508,9 +3535,16 @@ fn main() {
         minimap: { enabled: true },
         scrollBeyondLastLine: false,
         wordWrap: 'on',
-        readOnly: !IS_LOCAL && projectAccess.loaded && !canEditOriginal()
+        readOnly: !IS_LOCAL && projectAccess.loaded && !canEditOriginal(),
+        // Gate handles the prompt; keep Monaco’s toast empty.
+        readOnlyMessage: { value: '' }
       });
       syncEditChrome();
+
+      editor.onDidAttemptReadOnlyEdit(() => {
+        if (IS_LOCAL || canEditOriginal()) return;
+        ensureCanSave(editor.getValue());
+      });
 
       
       
