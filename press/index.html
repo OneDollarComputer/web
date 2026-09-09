@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Material de imprensa — One Dollar Computer</title>
+  <meta name="description" content="Material de imprensa do One Dollar Computer: release, ficha técnica, citações e imagens." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://onedollarcomputer.com/press/" />
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <meta name="theme-color" content="#07090F" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script defer src="/js/analytics.js"></script>
+  <style>
+    :root {
+      --bg: #07090F;
+      --card: #0D1220;
+      --line: #1D2843;
+      --text: #E8EEF8;
+      --sub: #A9B4C7;
+      --accent: #48E1A7;
+      --sky: #8AB4FF;
+    }
+
+    * { box-sizing: border-box }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+      line-height: 1.65;
+    }
+
+    nav.top {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    nav.top .brand {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav.top .back {
+      margin-left: auto;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: .9rem;
+    }
+
+    main {
+      max-width: 48rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 6rem;
+    }
+
+    .page-head h1 {
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+      margin: 0 0 .5rem;
+      letter-spacing: -.01em;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .78rem;
+      color: var(--sub);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .3rem .75rem;
+    }
+
+    .status::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--sky);
+    }
+
+    section {
+      margin-top: 2.75rem;
+      border-top: 1px solid var(--line);
+      padding-top: 1.5rem;
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .sec-head h2 {
+      font-size: 1.05rem;
+      margin: 0;
+      color: var(--accent);
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      margin-left: auto;
+      flex: 0 0 auto;
+      font: inherit;
+      font-size: .78rem;
+      color: var(--sub);
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: .3rem .7rem;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .copy-btn[data-done="1"] {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .block {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.5rem 1.6rem;
+    }
+
+    .block h3 {
+      font-size: 1.35rem;
+      line-height: 1.3;
+      margin: 0 0 .75rem;
+    }
+
+    .block h4 {
+      font-size: 1rem;
+      margin: 1.75rem 0 .5rem;
+      color: var(--text);
+    }
+
+    .subhead {
+      color: var(--text);
+      font-weight: 500;
+      margin: 0 0 1.25rem;
+    }
+
+    .dateline {
+      font-size: .8rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--sub);
+      margin: 0 0 1.25rem;
+    }
+
+    p { color: var(--sub); margin: 0 0 1rem }
+
+    .block p:last-child { margin-bottom: 0 }
+
+    strong { color: var(--text); font-weight: 600 }
+
+    a { color: var(--accent) }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .92rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: .6rem .5rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th { color: var(--text); font-weight: 600 }
+
+    td:first-child { color: var(--text); white-space: nowrap; padding-right: 1.25rem }
+
+    td { color: var(--sub) }
+
+    tr:last-child td { border-bottom: 0 }
+
+    blockquote {
+      margin: 0 0 1.5rem;
+      padding-left: 1rem;
+      border-left: 2px solid var(--accent);
+    }
+
+    blockquote:last-child { margin-bottom: 0 }
+
+    blockquote p { color: var(--text); font-size: 1.05rem; margin-bottom: .4rem }
+
+    blockquote cite { color: var(--sub); font-size: .85rem; font-style: normal }
+
+    .qa { margin-bottom: 1.4rem }
+
+    .qa:last-child { margin-bottom: 0 }
+
+    .qa p:first-child { color: var(--text); font-weight: 600; margin-bottom: .35rem }
+
+    .qa p:last-child { margin-bottom: 0 }
+
+    ul { color: var(--sub); padding-left: 1.15rem; margin: 0 }
+
+    li { margin-bottom: .5rem }
+
+    li:last-child { margin-bottom: 0 }
+
+    footer {
+      max-width: 48rem;
+      margin: 0 auto;
+      padding: 0 1.25rem 4rem;
+      color: var(--sub);
+      font-size: .85rem;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="top">
+    <a class="brand" href="/">
+      <img src="/odc_logo_white.svg" width="28" height="28" alt="" />
+      One Dollar Computer
+    </a>
+    <a class="back" href="/">Voltar ao site</a>
+  </nav>
+
+  <main>
+    <div class="page-head">
+      <h1>Material de imprensa</h1>
+      <p class="status">Rascunho de trabalho · página não listada</p>
+    </div>
+
+    <section>
+      <div class="sec-head">
+        <h2>Release</h2>
+        <button type="button" class="copy-btn" data-copy="release">Copiar</button>
+      </div>
+      <div class="block" id="release">
+        <h3>Depois de doze anos de desenvolvimento, o One Dollar Computer entra em pré-venda por US$ 1</h3>
+        <p class="subhead">Computador educacional RISC-V aberto, projetado em Austin, Texas, usa a base RV32EC — o
+          degrau ratificado mais econômico da arquitetura — para colocar hardware programável nas mãos de estudantes
+          pelo preço de uma caneta. Primeiro lote previsto: 3.000 unidades.</p>
+        <p class="dateline">Austin, Texas — 8 de setembro de 2026</p>
+
+        <p>O <strong>One Dollar Computer</strong> abriu a pré-venda de seu computador educacional de arquitetura RISC-V
+          ao preço de <strong>US$ 1</strong> por unidade — o mesmo valor que o projeto estabeleceu, há mais de uma
+          década, como meta de custo de fabricação. Criado pelo engenheiro <strong>Claudio Olmedo</strong> e projetado
+          em Austin, Texas, o computador é aberto: os arquivos de design podem ser baixados, fabricados e melhorados por
+          qualquer pessoa.</p>
+
+        <p>A proposta não é vender um computador barato. É remover o custo como filtro de quem aprende engenharia.
+          “Talento existe em todo lugar; oportunidade, não”, diz Olmedo. “Um dólar deveria ser suficiente para
+          despertá-lo.”</p>
+
+        <h4>Como um computador custa um dólar</h4>
+        <p>Não é subsídio nem desconto promocional. O dólar é resultado de decisões de projeto acumuladas ao longo de
+          anos: montagem em face única da placa, lista de materiais mínima e a remoção de tudo que um estudante não
+          precisa. Cada componente teve de justificar sua presença. Tentativas anteriores fracassaram por causa do preço
+          dos microcontroladores; a chegada de silício RISC-V de baixíssimo custo e a evolução da fabricação de placas
+          tornaram a meta viável pela primeira vez. O site oficial publica um vídeo de 30 segundos em que os componentes
+          aparecem sobre a mesa, com o preço de cada peça dito em voz alta.</p>
+
+        <h4>Um dólar de entrada numa arquitetura que vai até o datacenter</h4>
+        <p>O detalhe que separa este projeto de outras placas educacionais está na escolha da arquitetura. Kits de
+          eletrônica para iniciantes costumam ensinar conjuntos de instruções proprietários que não levam a lugar
+          nenhum: o conhecimento morre quando o aluno passa para hardware sério.</p>
+        <p>O One Dollar Computer implementa <strong>RV32EC</strong>, a versão mais enxuta da família RISC-V — padrão
+          aberto mantido pela RISC-V International. A base “E”, de <em>embedded</em>, é uma especificação ratificada que
+          reduz os registradores de 32 para 16 e, com isso, cerca de um quarto da área do núcleo de silício. É essa
+          economia, definida em norma e não improvisada, que torna o preço de um dólar possível.</p>
+        <p>A consequência pedagógica é o ponto. A codificação das instruções do RV32E é idêntica à do RV32I, e as
+          extensões padrão da arquitetura continuam compatíveis. O estudante que escreve seu primeiro firmware aqui está
+          escrevendo RISC-V de verdade — e pode subir para o RV32I completo, para as extensões de multiplicação,
+          atômicas e de ponto flutuante, para o RV64, e daí para o perfil <strong>RVA23</strong>, ratificado em 2024,
+          que define os processadores de aplicação capazes de rodar Linux e serve de base para a ABI RISC-V do Android.
+          O Debian 13 já distribui <code>riscv64</code> como arquitetura oficial. O que muda entre um degrau e outro é o
+          tamanho, não o idioma.</p>
+
+        <h4>Programado pelo navegador, sem instalar nada</h4>
+        <p>O modelo atual — <strong>1.004, revisão R2</strong> — opera a até 48 MHz, com 16 KB de memória flash e 2 KB
+          de RAM, e expõe 20 pinos de entrada e saída numerados de 0 a 19, dois deles com conversor analógico-digital de
+          10 bits.</p>
+        <p>O diferencial prático está no fluxo de trabalho. O estudante escreve firmware em Rust simplificado dentro do
+          navegador, compila online e grava o binário no computador via <strong>WebHID</strong> — protocolo já presente
+          em Windows, macOS e Linux, o que elimina a instalação de drivers, uma das maiores fontes de frustração em
+          aulas de eletrônica. Basta um navegador baseado em Chromium e um cabo USB. Um emulador em WebAssembly permite
+          escrever e testar código antes mesmo de o hardware chegar, e há um ambiente de currículo colaborativo para
+          professores conduzirem aulas ao vivo.</p>
+
+        <h4>“The Computer of Things”</h4>
+        <p>A filosofia declarada do projeto inverte a lógica da Internet das Coisas: em vez de conectar objetos à rede,
+          colocar um computador dentro do objeto — conectado ou não. A um dólar, o computador pode permanecer
+          permanentemente dentro do brinquedo, do instrumento ou do projeto escolar que o aluno construiu, em vez de ser
+          desmontado para a próxima turma.</p>
+        <p>A aritmética é o argumento central para escolas: US$ 3.000 não compram uma máquina cara, compram três mil
+          computadores.</p>
+
+        <h4>Disponibilidade</h4>
+        <p>A pré-venda está aberta em <a href="https://shop.claudioolmedo.com/preorder">shop.claudioolmedo.com/preorder</a>
+          a US$ 1 por unidade, com frete calculado à parte. As unidades são enviadas após a conclusão do primeiro lote
+          de fabricação de 3.000 placas. Informações oficiais, especificação técnica completa e arquivos de design estão
+          em <a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Versão curta</h2>
+        <button type="button" class="copy-btn" data-copy="short">Copiar</button>
+      </div>
+      <div class="block" id="short">
+        <p>O <strong>One Dollar Computer</strong>, computador educacional RISC-V aberto projetado em Austin, Texas,
+          abriu pré-venda a <strong>US$ 1</strong> por unidade após doze anos de desenvolvimento. O modelo 1.004 R2 usa
+          a base RV32EC — o degrau ratificado mais econômico da arquitetura RISC-V — opera a até 48 MHz com 20 pinos de
+          entrada e saída, e é programado em Rust diretamente pelo navegador via WebHID, sem instalação de drivers. O
+          criador, Claudio Olmedo, busca completar um primeiro lote de 3.000 unidades. O objetivo declarado é remover o
+          custo como barreira ao ensino prático de engenharia. Pré-venda: shop.claudioolmedo.com/preorder · Site:
+          onedollarcomputer.com</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Ficha técnica</h2>
+        <button type="button" class="copy-btn" data-copy="specs">Copiar</button>
+      </div>
+      <div class="block" id="specs">
+        <table>
+          <tbody>
+            <tr><td>Produto</td><td>One Dollar Computer, modelo 1.004, revisão R2</td></tr>
+            <tr><td>Arquitetura</td><td>RISC-V, base RV32EC (32 bits, 16 registradores, instruções comprimidas)</td></tr>
+            <tr><td>Processamento</td><td>até 48 MHz · 16 KB de flash · 2 KB de RAM</td></tr>
+            <tr><td>Entrada e saída</td><td>pinos 0–19; ADC de 10 bits nos pinos 8 e 9; LED no pino 19</td></tr>
+            <tr><td>Elétrica</td><td>lógica 3,3 V · alimentação 5 V</td></tr>
+            <tr><td>Programação</td><td>Rust simplificado (<code>use odc::*;</code>), editor no navegador</td></tr>
+            <tr><td>Gravação</td><td>USB WebHID, navegador Chromium, sem instalação de drivers</td></tr>
+            <tr><td>Preço</td><td>US$ 1 na pré-venda; frete à parte</td></tr>
+            <tr><td>Licenciamento</td><td>hardware e software abertos</td></tr>
+            <tr><td>Origem</td><td>projetado em Austin, Texas, EUA</td></tr>
+            <tr><td>Estágio</td><td>pré-venda (6ª de 7 etapas; próxima: distribuição)</td></tr>
+            <tr><td>Especificação</td><td>onedollarcomputer.com/specification/</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>A escada RISC-V</h2>
+        <button type="button" class="copy-btn" data-copy="ladder">Copiar</button>
+      </div>
+      <div class="block" id="ladder">
+        <table>
+          <thead>
+            <tr><th>Degrau</th><th>ISA / perfil</th><th>Onde vive</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Onde o aluno começa</td><td>RV32EC</td><td>One Dollar Computer — 16 registradores, instruções comprimidas</td></tr>
+            <tr><td>Microcontrolador comum</td><td>RV32IMC</td><td>32 registradores, multiplicação e divisão em hardware</td></tr>
+            <tr><td>Embarcado avançado</td><td>RV32IMAC / RV32GC</td><td>instruções atômicas, ponto flutuante, sistemas de tempo real</td></tr>
+            <tr><td>Computador completo</td><td>RV64GC</td><td>Linux; Debian 13 traz <code>riscv64</code> como arquitetura oficial</td></tr>
+            <tr><td>Aplicação e datacenter</td><td>perfil RVA23</td><td>ratificado em outubro de 2024; base da ABI RISC-V do Android</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Citações</h2>
+        <button type="button" class="copy-btn" data-copy="quotes">Copiar</button>
+      </div>
+      <div class="block" id="quotes">
+        <blockquote>
+          <p>“O dólar não é um desconto. É uma decisão de projeto. Cada peça teve de justificar por que estava ali.”</p>
+          <cite>Claudio Olmedo, criador do One Dollar Computer</cite>
+        </blockquote>
+        <blockquote>
+          <p>“Um dólar não compra uma versão infantil da computação. Compra o primeiro degrau da mesma escada.”</p>
+          <cite>Claudio Olmedo</cite>
+        </blockquote>
+        <blockquote>
+          <p>“A base ‘E’ existe na norma justamente para caber em silício mínimo. Nós não inventamos um atalho — usamos
+            o degrau que a arquitetura já definiu para esse caso.”</p>
+          <cite>Claudio Olmedo</cite>
+        </blockquote>
+        <blockquote>
+          <p>“Comecei este projeto há doze anos querendo mudar o mundo com um computador que qualquer pessoa pudesse
+            pagar. Nunca parei, porque talento existe em todo lugar.”</p>
+          <cite>Claudio Olmedo</cite>
+        </blockquote>
+        <blockquote>
+          <p>“Três mil dólares não são uma máquina cara. São três mil computadores — três mil chances de um talento
+            despertar.”</p>
+          <cite>Claudio Olmedo</cite>
+        </blockquote>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Boilerplate</h2>
+        <button type="button" class="copy-btn" data-copy="boilerplate">Copiar</button>
+      </div>
+      <div class="block" id="boilerplate">
+        <p><strong>Sobre o One Dollar Computer</strong> — O One Dollar Computer é um computador educacional RISC-V
+          aberto, com meta de custo de fabricação de cerca de um dólar, criado para tornar a eletrônica tão acessível
+          quanto um lápis. Projetado em Austin, Texas, por Claudio Olmedo, é destinado a salas de aula, clubes,
+          makerspaces e iniciantes autodidatas. Arquivos de design, especificação e ferramentas são públicos. Site
+          oficial: https://onedollarcomputer.com/</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Perguntas frequentes</h2>
+        <button type="button" class="copy-btn" data-copy="faq">Copiar</button>
+      </div>
+      <div class="block" id="faq">
+        <div class="qa">
+          <p>É realmente um dólar, ou tem pegadinha?</p>
+          <p>É o preço da placa na pré-venda; o frete é cobrado à parte. A meta de custo de fabricação de cerca de um
+            dólar é o eixo do projeto há mais de uma década.</p>
+        </div>
+        <div class="qa">
+          <p>Isso é um Raspberry Pi de um dólar?</p>
+          <p>Não, e a comparação certa não é com o Raspberry Pi — é com a arquitetura. O One Dollar Computer implementa
+            RV32EC, o degrau mais econômico da família RISC-V: a base “E”, de <em>embedded</em>, ratificada pela RISC-V
+            International, com 16 registradores em vez de 32, mais a extensão “C” de instruções comprimidas. A
+            codificação das instruções é idêntica à do RV32I completo. Quem aprende a programar este computador está
+            aprendendo RISC-V de verdade, não um dialeto didático, e sobe pela mesma escada até os processadores de
+            aplicação que rodam Linux.</p>
+        </div>
+        <div class="qa">
+          <p>É aquele desafio de fazer um computador com um dólar?</p>
+          <p>Não. É um produto nomeado, com especificação publicada e pré-venda aberta — não um exercício de hobby nem
+            um gadget de loja de conveniência.</p>
+        </div>
+        <div class="qa">
+          <p>É ONG ou caridade?</p>
+          <p>Não. O modelo pretende ser autossustentável, não dependente de doações.</p>
+        </div>
+        <div class="qa">
+          <p>Quando chega?</p>
+          <p>Após a conclusão do primeiro lote de 3.000 unidades. Não há data de entrega comprometida publicamente.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Precisão técnica</h2>
+      </div>
+      <div class="block">
+        <ul>
+          <li>A revisão atual é a <strong>R2</strong>. Não cite a R1 nem o nome legado “One Dollar Board” como atuais.</li>
+          <li>É um microcontrolador RISC-V, não um computador de placa única: <strong>não roda Linux</strong>. A
+            continuidade com o RVA23 é de arquitetura e de aprendizado, não de compatibilidade binária nem de
+            desempenho.</li>
+          <li>O botão físico serve exclusivamente para entrar no bootloader antes da gravação. Não é entrada de usuário
+            e não deve ser apresentado como tal.</li>
+          <li>O mapeamento interno do chip não é público por decisão de projeto; a interface pública são os pinos 0 a 19
+            impressos na placa.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Imagens e vídeo</h2>
+      </div>
+      <div class="block">
+        <ul>
+          <li><a href="/one_dollar_computer_face.jpeg">Foto principal</a> — o computador em close</li>
+          <li><a href="/odc_front_web.png">Vista frontal da placa</a></li>
+          <li><a href="/odc_cost_video.mp4">Vídeo: o custo real, peça por peça</a> (30 s)</li>
+          <li><a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.svg">Diagrama de pinagem</a> (SVG) ·
+            <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.pdf">PDF</a></li>
+          <li><a href="/3d/viewer.html">Visualizador 3D interativo</a></li>
+          <li><a href="/odc_logo_white.svg">Logo</a> — <a href="/brand/">página de marca</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h2>Contato</h2>
+      </div>
+      <div class="block">
+        <p>Claudio Olmedo, criador — <a href="https://claudioolmedo.com/">claudioolmedo.com</a></p>
+        <p>Site oficial: <a href="https://onedollarcomputer.com/">onedollarcomputer.com</a> ·
+          Especificação: <a href="/specification/">onedollarcomputer.com/specification/</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Página de trabalho, não divulgada. Nenhuma outra página do site aponta para ela.
+  </footer>
+
+  <script>
+    document.querySelectorAll('.copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = document.getElementById(btn.dataset.copy);
+        if (!target) return;
+        navigator.clipboard.writeText(target.innerText.trim()).then(function () {
+          btn.textContent = 'Copiado';
+          btn.dataset.done = '1';
+          setTimeout(function () {
+            btn.textContent = 'Copiar';
+            delete btn.dataset.done;
+          }, 1800);
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

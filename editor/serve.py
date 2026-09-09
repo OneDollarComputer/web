@@ -556,6 +556,7 @@ PROFILE_RESERVED = frozenset(
         "curriculum",
         "specification",
         "emulator",
+        "press",
     }
 )
 
