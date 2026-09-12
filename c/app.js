@@ -25,7 +25,7 @@ import {
   push,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
-import { CURRICULUM_API } from "./api-origin.js?v=20260912a";
+import { CURRICULUM_API, CURRICULUM_API_FALLBACK } from "./api-origin.js?v=20260912c";
 import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260907b";
 import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js?v=20260912a";
 import { signInWithGoogle } from "/js/sign-in.js?v=20260908a";
@@ -336,37 +336,36 @@ function agentConnectUrl(code) {
   return `${SHORT_ORIGIN}/c/?connect=${encodeURIComponent(code)}`;
 }
 
-function agentClipboardText(code) {
+function agentClipboardText(code, token) {
+  const auth = token || "PASTE_TOKEN_FROM_PAIR_STATUS";
   return [
-    "Edit my One Dollar Computer curriculum on the site (not local files).",
-    "Read https://onedollarcomputer.com/c/AGENT_LESSONS.md first.",
+    "Edit my Learn Physical AI curriculum on the site (not local files).",
+    "Read https://onedollarcomputer.com/c/AGENT_LESSONS.md first (use web-fetch / browser, not shell).",
     "Rule: teaching HTML5 is free; any board firmware must be complete Simple Rust (use odc::*;).",
     "",
-    "If you have MCP (odc-curriculum): curriculum_pair with this link, then curriculum_agent_brief,",
+    "If you have MCP (odc-curriculum): curriculum_pair with the Connect link, then curriculum_agent_brief,",
     "then curriculum_create_lesson (new) or curriculum_list_lessons / curriculum_update_lesson.",
-    "REQUIRED: call curriculum_pair — do NOT fetch the Connect URL as a webpage.",
+    "Do NOT fetch the Connect URL as a webpage for lesson content.",
     "",
     "Connect link:",
     agentConnectUrl(code),
     "",
-    "Or run this entire block in ONE persistent shell (approve once):",
+    "Token (already approved — skip pairing):",
+    auth,
     "",
-    "set -e",
-    `API=${AGENT_API}`,
-    `CODE=${code}`,
-    "TOKEN=$(curl -sS \"$API/pair/status?code=$CODE\" | python3 -c \"import sys,json; d=json.load(sys.stdin); t=d.get('token',''); assert t, d; print(t)\")",
-    "export TOKEN",
-    "curl -sS -H \"Authorization: Bearer $TOKEN\" \"$API/lessons\"",
+    "If your shell blocks onedollarcomputer.com / api.onedollarcomputer.com / odc.rs",
+    "(403 host_not_allowed): do NOT use curl. Use your web-fetch or HTTP tool.",
+    "Try API hosts in this order:",
+    `  1. ${AGENT_API}`,
+    `  2. ${CURRICULUM_API_FALLBACK}`,
+    "Header: Authorization: Bearer <token above>",
     "",
-    "CREATE a lesson:",
-    "curl -sS -X POST -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
-    "  -d '{\"title\":\"My lesson\",\"overview\":\"…\",\"steps\":[\"Firmware (Simple Rust)\",\"```rust\\nuse odc::*;\\nfn main() { led_on(); }\\n```\"],\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html><body><h1>Hi</h1></body></html>\"}],\"links\":[{\"label\":\"Editor\",\"url\":\"https://onedollarcomputer.com/editor/\"},{\"label\":\"Virtual board\",\"url\":\"https://onedollarcomputer.com/emulator/r2/\"}]}' \\",
-    "  \"$API/lessons\"",
+    "GET  {API}/lessons",
+    "POST {API}/lessons   JSON: title, overview, steps[], html[], links[]",
+    "PATCH {API}/lessons/LESSON_ID",
     "",
-    "PATCH an existing lesson (fields: overview, materials[], steps[], photos[], videos[], links[], html[]):",
-    "curl -sS -X PATCH -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" \\",
-    "  -d '{\"html\":[{\"title\":\"Demo\",\"html\":\"<!doctype html><html>…</html>\"}]}' \\",
-    "  \"$API/lessons/LESSON_ID\""
+    "Example POST body:",
+    '{"title":"My lesson","overview":"…","steps":["Firmware (Simple Rust)","```rust\\nuse odc::*;\\nfn main() { led_on(); }\\n```"],"html":[{"title":"Demo","html":"<!doctype html><html><body><h1>Hi</h1></body></html>"}],"links":[{"label":"Editor","url":"https://onedollarcomputer.com/editor/"}]}'
   ].join("\n");
 }
 
@@ -376,7 +375,14 @@ let pendingAgentExpiresAt = 0;
 async function copyAgentPrompt() {
   if (!pendingAgentCode) await ensureAgentLink({ autoCopy: false });
   if (!pendingAgentCode) return Promise.reject(new Error("No agent code"));
-  const text = agentClipboardText(pendingAgentCode);
+  let token = "";
+  try {
+    const snap = await get(ref(db, `curriculum/agentPairing/${pendingAgentCode}`));
+    token = snap.val()?.tokenPending || "";
+  } catch {
+    /* still copy the prompt */
+  }
+  const text = agentClipboardText(pendingAgentCode, token);
   if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
   return Promise.reject(new Error("Clipboard unavailable"));
 }
