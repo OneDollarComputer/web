@@ -1,6 +1,6 @@
-# Curriculum (`/c/`)
+# Learn Physical AI (`/c/`)
 
-Workspace for **teachers and instructors** to build One Dollar Computer lessons.
+Workspace for **teachers and instructors** to create **Physical AI** curriculum on the One Dollar Computer.
 
 **Live:** https://onedollarcomputer.com/c/  
 **Repo:** [github.com/OneDollarComputer/c](https://github.com/OneDollarComputer/c)
@@ -22,11 +22,11 @@ Fallback page: `/c/join/?pin=XXXX`.
 
 ## How it differs from Projects
 
-| | Projects (`/project/`, `/{user}/`) | Curriculum (`/c/`) |
+| | Projects (`/project/`, `/{user}/`) | Learn Physical AI (`/c/`) |
 |---|---|---|
 | Who | Anyone | Teachers & instructors |
 | Access | Private until **Publish** (irreversible). Public pages at `/{user}/{slug}`; visitors **Edit** to copy | Sign-in required for content |
-| What | Personal firmware projects | Classroom lessons |
+| What | Personal firmware projects | Physical AI classroom curriculum |
 
 ## Share link
 

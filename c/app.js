@@ -1,5 +1,5 @@
 /**
- * Curriculum — collaborative lessons (RTDB)
+ * Learn Physical AI — collaborative curriculum (RTDB)
  *
  * Share: /c/?lesson={id}
  * - title/owner public (unauthenticated can read title only)
@@ -527,14 +527,14 @@ async function showGate() {
       gateTitle.textContent = meta.title;
       gateLede.textContent = meta.ownerName
         ? `Lesson by ${meta.ownerName}. Sign in with Google to view the full lesson.`
-        : "Sign in with Google to view the full lesson.";
+        : "Sign in with Google to view this Physical AI lesson.";
     } else {
-      gateTitle.textContent = "Curriculum";
-      gateLede.textContent = "This lesson link was not found. Sign in to open your lessons.";
+      gateTitle.textContent = "Learn Physical AI";
+      gateLede.textContent = "This lesson was not found. Sign in to open your Physical AI curriculum.";
     }
   } else {
-    gateTitle.textContent = "Curriculum";
-    gateLede.textContent = "Sign in with Google to view lessons and co-edit with other instructors.";
+    gateTitle.textContent = "Learn Physical AI";
+    gateLede.textContent = "Sign in with Google to write Physical AI lessons and co-edit with other instructors.";
   }
 }
 
@@ -1000,8 +1000,8 @@ function renderList() {
   lessonList.replaceChildren();
   emptyList.hidden = lessons.length > 0;
   emptyList.textContent = listMode === "popular"
-    ? "No popular lessons yet. Like a lesson to start the ranking."
-    : "No lessons yet.";
+    ? "No popular Physical AI lessons yet. Like a lesson to start the ranking."
+    : "No Physical AI lessons yet.";
   const sorted = lessons.slice().sort((a, b) => {
     if (listMode === "popular") {
       const diff = catalogScore(b) - catalogScore(a);

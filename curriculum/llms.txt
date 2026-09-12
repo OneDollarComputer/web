@@ -1,4 +1,4 @@
-# One Dollar Computer — Curriculum agent brief
+# One Dollar Computer — Learn Physical AI (curriculum agent brief)
 # https://onedollarcomputer.com/c/
 
 ## PATCH /lessons/:id — body fields

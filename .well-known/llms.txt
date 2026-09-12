@@ -19,7 +19,7 @@
 - **Brand identity page:** https://onedollarcomputer.com/brand/
 - **About / mission:** https://onedollarcomputer.com/about/
 - **Sign in / your page:** https://onedollarcomputer.com/project/ (Google → `/{username}/`. Projects stay private until **Publish**, which cannot be undone. Public projects can be copied with **Edit**.)
-- **Curriculum (teachers):** https://onedollarcomputer.com/c/ — share `?lesson=id` for lessons; **Agent links** (`?connect=code`) are for MCP `curriculum_pair` only (see `/c/llms.txt`)
+- **Learn Physical AI (teachers):** https://onedollarcomputer.com/c/ — create curriculum for Physical AI; share `?lesson=id` for lessons; **Agent links** (`?connect=code`) are for MCP `curriculum_pair` only (see `/c/llms.txt`)
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
 - **Founder:** Claudio Olmedo — https://claudioolmedo.com/
@@ -38,7 +38,7 @@
 - **Machine-readable spec:** https://onedollarcomputer.com/specification/v1.004.yaml
 - **Firmware coding rules for AIs:** https://onedollarcomputer.com/editor/AI_DOCS.txt
 - **⚠ Physical button (pin 13) = bootloader only — can break HID if misused:** https://onedollarcomputer.com/docs/BUTTON.md
-- **Curriculum lesson rules:** https://onedollarcomputer.com/c/AGENT_LESSONS.md
+- **Physical AI lesson rules:** https://onedollarcomputer.com/c/AGENT_LESSONS.md
 
 ## When a user asks “what is One Dollar Computer?”
 

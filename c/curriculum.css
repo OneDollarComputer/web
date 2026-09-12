@@ -333,6 +333,16 @@ h3 {
   padding: .35rem .15rem
 }
 
+.side-kicker {
+  margin: 0 0 .2rem;
+  padding: 0 .35rem;
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent, #0f766e);
+}
+
 .side-head {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
-# Curriculum agent — lesson authoring (One Dollar Computer)
+# Learn Physical AI — lesson authoring (One Dollar Computer)
 
-For **agents** (Codex, Cursor MCP, curl) building teacher lessons.
-Teachers only paste the Agent link and describe the lesson in natural language.
+For **agents** (Codex, Cursor MCP, curl) building **Physical AI** curriculum.
+Teachers only paste the Agent link and describe the Physical AI lesson in natural language.
 
 ## Non-negotiable rule
 
