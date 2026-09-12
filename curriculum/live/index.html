@@ -2,84 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Cache-Control" content="no-cache" />
-  <title>Live class — One Dollar Computer</title>
   <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="/curriculum/workshop.css?v=20260906a" />
+  <meta http-equiv="refresh" content="0; url=/c/live/" />
+  <link rel="canonical" href="https://onedollarcomputer.com/c/live/" />
+  <title>Live class — One Dollar Computer</title>
+  <script>
+    location.replace("/c/live/" + location.search + location.hash);
+  </script>
 </head>
 <body>
-  <header class="top">
-    <a class="brand" href="/">One Dollar Computer</a>
-    <button type="button" id="btnEnd" class="ghost-sm danger" hidden>End class</button>
-  </header>
-
-  <main class="live-main">
-    <p id="loadStatus" class="status">Loading…</p>
-
-    <div id="liveView" hidden>
-      <section class="panel live-hero">
-        <div class="live-meta">
-          <h1 id="liveTitle" class="live-title"></h1>
-          <div class="room-display">
-            <p class="room-label">Class link</p>
-            <p class="room-join"><a id="joinLink" class="room-join-link" href="#" target="_blank" rel="noopener"></a></p>
-            <button type="button" id="btnCopyJoin" class="ghost-sm room-copy">Copy</button>
-          </div>
-          <div class="stats-row">
-            <span class="stat" id="studentCount">0 joined</span>
-            <span class="stat" id="viewedCount">0 viewed</span>
-            <span class="stat" id="activeCount">0 active now</span>
-            <span class="stat stat-muted" id="timeLeft"></span>
-          </div>
-        </div>
-
-        <div class="student-tabs live-tabs" role="tablist" aria-label="Live views">
-          <button type="button" id="tabActivity" class="student-tab is-active" role="tab" aria-selected="true">Activity</button>
-          <button type="button" id="tabSlides" class="student-tab" role="tab" aria-selected="false">Slides</button>
-        </div>
-
-        <div id="viewActivity" class="student-view" role="tabpanel">
-          <p class="activity-lede">Same interactive HTML your students see. Switch to Slides to advance the class.</p>
-          <div id="activityBody"></div>
-          <p id="activityEmpty" class="empty-wall" hidden>
-            No HTML activity in this room. Open the lesson, add HTML, then tap <strong>Update room</strong>.
-          </p>
-        </div>
-
-        <div id="viewSlides" class="student-view" role="tabpanel" hidden>
-          <div class="slide-controls">
-            <button type="button" id="btnPrevSlide" class="ghost-sm" aria-label="Previous slide">←</button>
-            <span id="slideIndicator" class="slide-indicator">1 / 1</span>
-            <button type="button" id="btnNextSlide" class="ghost-sm" aria-label="Next slide">→</button>
-          </div>
-          <div id="lessonPreview" class="ws-lesson-preview"></div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Quiz responses</h2>
-        <div id="quizResults" class="quiz-results">
-          <p class="empty-wall">No quizzes in this lesson.</p>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Build photos</h2>
-        <div id="photoWall" class="photo-wall">
-          <p class="empty-wall">Photos appear when students share a photo.</p>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Past classes</h2>
-        <ul id="sessionHistory" class="session-history">
-          <li class="empty-wall">Past classes will appear here.</li>
-        </ul>
-      </section>
-    </div>
-  </main>
-
-  <script type="module" src="/curriculum/live.js?v=20260907d"></script>
+  <p><a href="/c/live/">Open live class</a></p>
 </body>
 </html>

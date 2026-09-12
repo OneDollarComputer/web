@@ -1,6 +1,6 @@
 # Physical button (pin 13) — bootloader only
 
-**Canonical warning for humans and agents.** Also: [`board.yaml`](board.yaml), [`/editor/AI_DOCS.txt`](../editor/AI_DOCS.txt), [`/curriculum/AGENT_LESSONS.md`](../curriculum/AGENT_LESSONS.md).
+**Canonical warning for humans and agents.** Also: [`board.yaml`](board.yaml), [`/editor/AI_DOCS.txt`](../editor/AI_DOCS.txt), [`/c/AGENT_LESSONS.md`](../c/AGENT_LESSONS.md).
 
 ## Rule
 

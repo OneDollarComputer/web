@@ -29,7 +29,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 - **Do** use board pin numbers and `odc` in user-facing firmware help.
 - **Don’t** name the MCU chip or pad names in beginner docs — chip mapping is internal (`docs/board.yaml` comment only).
 - **Don’t** invent specs; if unsure, link `/specification/`.
-- **Don’t** teach `read_button()` / pin **13** as beginner I/O — it can break HID Upload. **Canonical warning:** [`/docs/BUTTON.md`](docs/BUTTON.md). Curriculum: [`/curriculum/AGENT_LESSONS.md`](curriculum/AGENT_LESSONS.md).
+- **Don’t** teach `read_button()` / pin **13** as beginner I/O — it can break HID Upload. **Canonical warning:** [`/docs/BUTTON.md`](docs/BUTTON.md). Curriculum: [`/c/AGENT_LESSONS.md`](c/AGENT_LESSONS.md).
 - **Don’t** promise live browser ↔ board HID control in lessons until that path is validated.
 
 ## Repo layout (this site)
@@ -47,7 +47,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | `robots.txt` / `sitemap.xml` | Crawlers |
 | `editor/` | Firmware editor (not linked from homepage unless asked) |
 | `emulator/r2/` | Virtual board — RV32EC WASM (`/emulator/r2/`, `noindex`; `?projectID=` from editor **Lab → Simulate**; embed `?embed=1`) |
-| `curriculum/` | Teacher lessons (login for body; co-edit + suggest; agent MCP under `curriculum/mcp/`) |
+| `c/` | Teacher lessons at `/c/` (login for body; co-edit + suggest; agent MCP under `c/mcp/`). Old `/curriculum/` redirects here. |
 | `docs/` | Pinout, `board.yaml` |
 | `specification/` | Platform spec — RISC-V, pins 0–19, Simple Rust (`odc.rs/specification`) |
 | `docs/seo/` | Human playbook for SEO / Search Console / Analytics |
@@ -77,6 +77,7 @@ python3 serve.py
 # http://127.0.0.1:8080/cloud/           public user page (after you claim `cloud`)
 # http://127.0.0.1:8080/editor/?projectID=demo  Rust editor (local Cargo)
 # http://127.0.0.1:8080/emulator/r2/       virtual board (WASM, noindex)
+# http://127.0.0.1:8080/c/                 teacher curriculum
 ```
 
 ## Analytics

@@ -33,7 +33,7 @@
     var path = publicPath();
     var base = SHARE_ORIGIN + (path === '/' ? '/' : path);
     // Keep lesson / connect query on curriculum so Share copies the real target
-    if (/^\/curriculum\/?$/.test(path) && location.search) {
+    if (/^\/(c|curriculum)\/?$/.test(path) && location.search) {
       return base + location.search;
     }
     return base;
@@ -42,7 +42,7 @@
   function qrUrl() {
     var path = publicPath();
     var base = LIVE_ORIGIN + (path === '/' ? '/' : path);
-    if (/^\/curriculum\/?$/.test(path) && location.search) {
+    if (/^\/(c|curriculum)\/?$/.test(path) && location.search) {
       return base + location.search;
     }
     return base;

@@ -554,6 +554,7 @@ PROFILE_RESERVED = frozenset(
         "settings",
         "new",
         "curriculum",
+        "c",
         "specification",
         "emulator",
         "press",
@@ -713,7 +714,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
 
         if ROOM_CODE_RE.fullmatch(path):
-            self.path = "/curriculum/join/index.html"
+            self.path = "/c/join/index.html"
             super().do_GET()
             return
 

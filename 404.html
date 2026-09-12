@@ -9,7 +9,7 @@
     (function () {
       var m = location.pathname.match(/^\/(\d{4})\/?$/);
       if (m) {
-        location.replace("/curriculum/join/?pin=" + encodeURIComponent(m[1]));
+        location.replace("/c/join/?pin=" + encodeURIComponent(m[1]));
       }
     })();
   </script>
@@ -189,6 +189,6 @@
       <button type="button" class="ghost" id="btnPublishCancel">Cancel</button>
     </div>
   </dialog>
-  <script type="module" src="/profile/app.js?v=20260908e"></script>
+  <script type="module" src="/profile/app.js?v=20260912a"></script>
 </body>
 </html>

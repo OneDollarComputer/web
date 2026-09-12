@@ -97,11 +97,11 @@ async function handlePairStart(req, res) {
     expiresAt: now + PAIR_TTL_MS
   });
 
-  const connectUrl = `${SHORT}/curriculum/?connect=${encodeURIComponent(code)}`;
+  const connectUrl = `${SHORT}/c/?connect=${encodeURIComponent(code)}`;
   return json(res, 200, {
     code,
     connectUrl,
-    liveUrl: `${SITE}/curriculum/?connect=${encodeURIComponent(code)}`,
+    liveUrl: `${SITE}/c/?connect=${encodeURIComponent(code)}`,
     expiresAt: now + PAIR_TTL_MS
   });
 }
@@ -128,7 +128,7 @@ async function handlePairStatus(req, res, code) {
 
   return json(res, 200, {
     status: row.status || "pending",
-    ...(row.status === "connected" ? { message: "Token expired — copy Agent again on /curriculum/" } : {})
+    ...(row.status === "connected" ? { message: "Token expired — copy Agent again on /c/" } : {})
   });
 }
 
@@ -354,7 +354,7 @@ async function handleCreateLesson(req, res) {
     id,
     title,
     updatedAt: now,
-    siteUrl: `${SITE}/curriculum/?lesson=${encodeURIComponent(id)}`
+    siteUrl: `${SITE}/c/?lesson=${encodeURIComponent(id)}`
   });
 }
 

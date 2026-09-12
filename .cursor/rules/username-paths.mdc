@@ -13,4 +13,4 @@ Public usernames and future short links share path shape (`/name`). Keep namespa
 
 Do not weaken `isValidUsername` in `profile/app.js` without updating `editor/serve.py` SPA routing the same way.
 
-Keep product paths reserved in both lists (e.g. `curriculum`, `editor`, `docs`, `project`) so they cannot be claimed as usernames.
+Keep product paths reserved in both lists (e.g. `c`, `curriculum`, `editor`, `docs`, `project`) so they cannot be claimed as usernames.

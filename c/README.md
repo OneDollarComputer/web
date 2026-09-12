@@ -1,0 +1,158 @@
+# Curriculum (`/c/`)
+
+Workspace for **teachers and instructors** to build One Dollar Computer lessons.
+
+**Live:** https://onedollarcomputer.com/c/  
+**Repo:** [github.com/OneDollarComputer/c](https://github.com/OneDollarComputer/c)
+
+## Domains
+
+| Role | URL |
+|------|-----|
+| Site & curriculum | `onedollarcomputer.com` |
+| Short links (share, join, agent connect) | `odc.rs` + same path |
+| Agent API (MCP / curl) | `api.onedollarcomputer.com` |
+
+Workshop join link shown on the projector: **`odc.rs/XXXX`** (4-digit class code).  
+Fallback page: `/c/join/?pin=XXXX`.
+
+**Firmware practice:** Editor → Lab → Simulate (`/emulator/r2/?projectID=…`). Curriculum itself does not embed the virtual board.
+
+**Hardware constraint for agents:** the physical button (pin 13) is **bootloader / Upload only**. Never put `read_button()` in lesson firmware — see [`/docs/BUTTON.md`](../docs/BUTTON.md) and [`AGENT_LESSONS.md`](AGENT_LESSONS.md).
+
+## How it differs from Projects
+
+| | Projects (`/project/`, `/{user}/`) | Curriculum (`/c/`) |
+|---|---|---|
+| Who | Anyone | Teachers & instructors |
+| Access | Private until **Publish** (irreversible). Public pages at `/{user}/{slug}`; visitors **Edit** to copy | Sign-in required for content |
+| What | Personal firmware projects | Classroom lessons |
+
+## Share link
+
+`/c/?lesson={id}`
+
+- Logged out: see **title** only → Sign in
+- Logged in: full lesson
+- **Authors** edit live (Firebase RTDB)
+- **Everyone else** can **Suggest** changes; authors Accept / Reject
+- Presence chips show who else is in the lesson (and which field)
+- Signed-in teachers can **Like** a lesson; **Popular** ranks by likes, live classes, and views
+
+## Co-authors
+
+Owner invites by **username** or **email** (username must already be claimed on `/project/`).
+
+## Agent (MCP)
+
+1. Sign in on `/c/` → **Agent** → **Copy**  
+2. Paste into your agent → approve the terminal commands  
+3. Say what to change in your lessons  
+
+The link is ready as soon as you copy it (while signed in). **Revoke** on the site to disconnect.
+
+**API base URL:** `https://api.onedollarcomputer.com` (Firebase Hosting → `curriculumAgent`). Canonical value: `curriculum/api-origin.json`.
+
+Until DNS is connected, use `https://odc-files-api.web.app` as `ODC_CURRICULUM_API`.
+
+### Cursor MCP (`~/.cursor/mcp.json`)
+
+```json
+{
+  "mcpServers": {
+    "odc-curriculum": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/web/c/mcp/bin.js"],
+      "env": {
+        "ODC_CURRICULUM_API": "https://api.onedollarcomputer.com"
+      }
+    }
+  }
+}
+```
+
+Install MCP deps once: `cd c/mcp && npm install`
+
+Tools: `curriculum_pair`, `curriculum_status`, `curriculum_agent_brief`, `curriculum_create_lesson`, `curriculum_list_lessons`, `curriculum_get_lesson`, `curriculum_update_lesson`, `project_brief`, `project_list`, `project_create`, `project_get`, `project_update`, `project_publish`, `project_fork`
+
+**Authoring contract (agents):** [AGENT_LESSONS.md](./AGENT_LESSONS.md) — teaching HTML5 is free; board firmware must be Simple Rust (`use odc::*;`). Call `curriculum_agent_brief` after pairing. **Create** lessons with `curriculum_create_lesson` (API `POST /lessons`). Same token creates firmware projects: `project_brief` → `project_create` / `project_update` / `project_publish` (publish is irreversible). Agent → **Copy** also works from `/project/`.
+
+### Cursor
+
+This repo ships [`.cursor/mcp.json`](../.cursor/mcp.json) (`odc-curriculum` → `c/mcp/bin.js`). Enable the MCP server in Cursor settings, then pair with Agent → Copy from `/c/` or `/project/`.
+
+Token is stored at `~/.config/odc/curriculum-agent.json` after a successful pair.
+
+### Codex
+
+This repo includes `.codex/config.toml` (project MCP). In Codex:
+
+1. Open this repo as a **trusted** project (Settings → MCP — server may show there)
+2. `cd c/mcp && npm install`
+3. Start a new task, paste the Agent link from `/c/`
+
+Or add to `~/.codex/config.toml` (any machine):
+
+```toml
+[mcp_servers.odc-curriculum]
+command = "node"
+args = ["/ABSOLUTE/PATH/TO/web/c/mcp/bin.js"]
+
+[mcp_servers.odc-curriculum.env]
+ODC_CURRICULUM_API = "https://api.onedollarcomputer.com"
+```
+
+Docs: https://developers.openai.com/codex/mcp
+
+### No MCP (curl)
+
+Extract `connect=` from the Agent link, then:
+
+```bash
+API=https://api.onedollarcomputer.com
+CODE=YOUR_CONNECT_CODE
+TOKEN=$(curl -sS "$API/pair/status?code=$CODE" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+curl -sS -H "Authorization: Bearer $TOKEN" "$API/lessons"
+```
+
+### curl
+
+```bash
+API=https://api.onedollarcomputer.com
+
+# After copy (instructor signed in on /c/):
+curl "$API/pair/status?code=YOUR_CODE"
+
+# Then:
+curl -H "Authorization: Bearer odc_agent_…" "$API/lessons"
+curl -X POST -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
+  -d '{"title":"New lesson","overview":"…"}' "$API/lessons"
+curl -H "Authorization: Bearer odc_agent_…" "$API/lessons/LESSON_ID"
+curl -X PATCH -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
+  -d '{"overview":"Updated by agent"}' "$API/lessons/LESSON_ID"
+
+# Firmware projects (same token):
+curl -H "Authorization: Bearer odc_agent_…" "$API/projects"
+curl -X POST -H "Authorization: Bearer odc_agent_…" -H "Content-Type: application/json" \
+  -d '{"name":"LED","code":"use odc::*;\nfn main() { led_on(); }\n"}' "$API/projects"
+curl -X POST -H "Authorization: Bearer odc_agent_…" "$API/projects/PROJECT_ID/publish"
+```
+
+**Revoke:** on the site, **Revoke**.
+
+## Lesson materials
+
+- Title, overview, materials list, steps
+- Photo URLs, YouTube / Shorts, other links
+- **HTML** blocks (HTML5 markup, inline in the lesson) — any teaching metaphor the author wants
+- When the ODC board is part of the lesson: include **complete Simple Rust** in steps (see [AGENT_LESSONS.md](./AGENT_LESSONS.md)); practice in Editor → Lab → Simulate
+
+## Auth & data
+
+Same Google account / Firebase project as the site (`odc-files`).
+
+Rules: `editor/database.rules.json` under `curriculum/`. Agent pairing paths are Admin-only.
+
+```bash
+firebase deploy --only database,functions --project odc-files
+```
