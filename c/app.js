@@ -25,7 +25,7 @@ import {
   push,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
-import { CURRICULUM_API, CURRICULUM_API_FALLBACK } from "./api-origin.js?v=20260912c";
+import { CURRICULUM_API, CURRICULUM_API_SANDBOX, CURRICULUM_API_WEBAPP } from "./api-origin.js?v=20260912d";
 import { paintIframe, repaintHtmlPreviews, watchHtmlEmbed } from "./iframe-paint.js?v=20260907b";
 import { joinUrl, joinUrlAlt, lessonSlides, normalizeLessonBody, renderLessonBody } from "./session-shared.js?v=20260912a";
 import { signInWithGoogle } from "/js/sign-in.js?v=20260908a";
@@ -339,33 +339,38 @@ function agentConnectUrl(code) {
 function agentClipboardText(code, token) {
   const auth = token || "PASTE_TOKEN_FROM_PAIR_STATUS";
   return [
-    "Edit my Learn Physical AI curriculum on the site (not local files).",
-    "Read https://onedollarcomputer.com/c/AGENT_LESSONS.md first (use web-fetch / browser, not shell).",
-    "Rule: teaching HTML5 is free; any board firmware must be complete Simple Rust (use odc::*;).",
+    "TASK: Edit Learn Physical AI curriculum on One Dollar Computer (site lessons — not local files).",
     "",
-    "If you have MCP (odc-curriculum): curriculum_pair with the Connect link, then curriculum_agent_brief,",
-    "then curriculum_create_lesson (new) or curriculum_list_lessons / curriculum_update_lesson.",
-    "Do NOT fetch the Connect URL as a webpage for lesson content.",
+    "This paste is COMPLETE. Do NOT fetch onedollarcomputer.com, odc.rs, or AGENT_LESSONS.md.",
+    "Do NOT scrape the Connect link. Skip pairing — use the token below.",
     "",
-    "Connect link:",
-    agentConnectUrl(code),
+    "Rules (mandatory):",
+    "- Teaching UI = free HTML5 in html[] (full <!doctype html>… documents; dark text #0f172a on light bg).",
+    "- Board firmware = complete Simple Rust only: use odc::*; fn main() { … }; pins 0..=19; LED=19.",
+    "- NEVER read_button() / pin 13 / BUTTON as student input (bootloader / Upload only).",
+    "- No live browser↔board HID yet.",
     "",
-    "Token (already approved — skip pairing):",
+    "API (try in order until one works — prefer HTTP/web-fetch tools, not shell curl):",
+    `  1. ${CURRICULUM_API_SANDBOX}`,
+    `  2. ${CURRICULUM_API_WEBAPP}`,
+    `  3. ${AGENT_API}`,
+    "Header on every lesson call: Authorization: Bearer <token>",
+    "",
+    "Token:",
     auth,
     "",
-    "If your shell blocks onedollarcomputer.com / api.onedollarcomputer.com / odc.rs",
-    "(403 host_not_allowed): do NOT use curl. Use your web-fetch or HTTP tool.",
-    "Try API hosts in this order:",
-    `  1. ${AGENT_API}`,
-    `  2. ${CURRICULUM_API_FALLBACK}`,
-    "Header: Authorization: Bearer <token above>",
+    "Optional rules JSON (same host, no auth): GET {API}/brief",
+    "Then: GET {API}/lessons | POST {API}/lessons | PATCH {API}/lessons/LESSON_ID",
     "",
-    "GET  {API}/lessons",
-    "POST {API}/lessons   JSON: title, overview, steps[], html[], links[]",
-    "PATCH {API}/lessons/LESSON_ID",
+    "POST JSON fields: title, overview, materials[], steps[], html[{title,html}], links[{label,url}]",
+    "If the board is used, include steps with a section Firmware (Simple Rust) and a fenced rust block.",
     "",
-    "Example POST body:",
-    '{"title":"My lesson","overview":"…","steps":["Firmware (Simple Rust)","```rust\\nuse odc::*;\\nfn main() { led_on(); }\\n```"],"html":[{"title":"Demo","html":"<!doctype html><html><body><h1>Hi</h1></body></html>"}],"links":[{"label":"Editor","url":"https://onedollarcomputer.com/editor/"}]}'
+    "Example POST:",
+    '{"title":"My lesson","overview":"Physical AI …","steps":["Try the HTML.","Firmware (Simple Rust)","```rust\\nuse odc::*;\\nfn main() { loop { led_on(); delay(500); led_off(); delay(500); } }\\n```"],"html":[{"title":"Demo","html":"<!doctype html><html><head><meta charset=utf-8><style>body{color:#0f172a;font-family:system-ui;padding:1rem}</style></head><body><h1>Hi</h1></body></html>"}],"links":[{"label":"Editor","url":"https://onedollarcomputer.com/editor/"}]}',
+    "",
+    "If MCP odc-curriculum is connected: curriculum_pair with Connect link → curriculum_agent_brief → create/update.",
+    "Connect link (MCP only):",
+    agentConnectUrl(code)
   ].join("\n");
 }
 

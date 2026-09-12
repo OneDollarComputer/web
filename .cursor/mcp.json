@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["/Users/claudio/github/web/c/mcp/bin.js"],
       "env": {
-        "ODC_CURRICULUM_API": "https://api.onedollarcomputer.com"
+        "ODC_CURRICULUM_API": "https://curriculumagent-mhrupl2ima-uc.a.run.app"
       }
     }
   }

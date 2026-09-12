@@ -40,7 +40,7 @@ function hashToken(token) {
 function parsePath(url) {
   // Strip function name prefix if present (e.g. /curriculumAgent/pair/start)
   let path = url.pathname || "/";
-  const markers = ["/curriculumAgent", "/pair", "/lessons", "/projects", "/login"];
+  const markers = ["/curriculumAgent", "/pair", "/lessons", "/projects", "/login", "/brief"];
   for (const m of markers) {
     const i = path.indexOf(m);
     if (i > 0 && m === "/curriculumAgent") {
@@ -82,6 +82,59 @@ function isAuthor(lesson, uid) {
   if (!lesson || !uid) return false;
   if (lesson.ownerUid === uid) return true;
   return !!(lesson.authors && lesson.authors[uid]);
+}
+
+/** Public authoring contract — sandboxed agents use this instead of fetching the site. */
+function handleAgentBrief(_req, res) {
+  return json(res, 200, {
+    product: "One Dollar Computer",
+    surface: "Learn Physical AI curriculum",
+    sitePath: "/c/",
+    rules: {
+      teachingUi: "free HTML5 (any metaphor)",
+      boardFirmware: "complete Simple Rust only: use odc::*; fn main() { … }",
+      pins: "0..=19",
+      led: 19,
+      buttonPin13: "bootloader / Upload only — never read_button() or pin 13 as student input",
+      noLiveHid: true
+    },
+    do: [
+      "Create/update lessons via this API (POST/PATCH /lessons) — not local files",
+      "Put interactive teaching UI in html[] as full <!doctype html> documents",
+      "If the board is involved, put complete Simple Rust in steps under Firmware (Simple Rust)",
+      "Use dark text on light backgrounds (#0f172a)"
+    ],
+    dont: [
+      "Fetch the Connect URL as a webpage for lesson content",
+      "Use curl when the host is blocked — use HTTP/web-fetch tools",
+      "Teach onboard button / pin 13 / read_button() as lesson input",
+      "Invent a second board language (Blockly/Python as compiler input)"
+    ],
+    endpoints: {
+      brief: "GET /brief",
+      list: "GET /lessons",
+      create: "POST /lessons",
+      get: "GET /lessons/:id",
+      patch: "PATCH /lessons/:id",
+      projects: "GET|POST /projects ; GET|PATCH /projects/:id"
+    },
+    exampleCreate: {
+      title: "My Physical AI lesson",
+      overview: "What students learn…",
+      steps: [
+        "Try the HTML activity.",
+        "Firmware (Simple Rust)",
+        "```rust\nuse odc::*;\n\nfn main() {\n    loop {\n        led_on();\n        delay(500);\n        led_off();\n        delay(500);\n    }\n}\n```"
+      ],
+      html: [
+        {
+          title: "Demo",
+          html: "<!doctype html><html><head><meta charset=\"utf-8\"><title>Demo</title><style>body{font-family:system-ui;color:#0f172a;padding:1rem}h1{color:#0f172a}</style></head><body><h1>Hi</h1></body></html>"
+        }
+      ],
+      links: [{ label: "Editor", url: "https://onedollarcomputer.com/editor/" }]
+    }
+  });
 }
 
 async function handlePairStart(req, res) {
@@ -1083,6 +1136,9 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
   const parts = path.split("/").filter(Boolean);
 
   try {
+    if (req.method === "GET" && (parts[0] === "brief" || path === "/" || path === "")) {
+      return handleAgentBrief(req, res);
+    }
     if (req.method === "POST" && parts[0] === "login" && parts[1] === "start") {
       return await handleLoginStart(req, res);
     }
@@ -1148,6 +1204,7 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
     return json(res, 404, {
       error: "Not found",
       endpoints: [
+        "GET /brief",
         "POST /pair/start",
         "GET /pair/status?code=",
         "POST /pair/confirm",

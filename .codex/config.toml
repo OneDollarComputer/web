@@ -1,6 +1,7 @@
 # ODC curriculum MCP (lessons + firmware projects) — trusted Codex project.
 # Once: cd c/mcp && npm install
 # Same server name as Cursor: odc-curriculum
+# Default API is Cloud Run (sandbox-friendly). Branded api.onedollarcomputer.com is a fallback inside the MCP.
 
 [mcp_servers.odc-curriculum]
 command = "node"
@@ -8,4 +9,4 @@ args = ["c/mcp/bin.js"]
 startup_timeout_sec = 20
 
 [mcp_servers.odc-curriculum.env]
-ODC_CURRICULUM_API = "https://api.onedollarcomputer.com"
+ODC_CURRICULUM_API = "https://curriculumagent-mhrupl2ima-uc.a.run.app"

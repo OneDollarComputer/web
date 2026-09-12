@@ -45,22 +45,21 @@
       if (!el) return;
       el.hidden = false;
       el.textContent = [
-        "One Dollar Computer — agent connect (curriculum + projects)",
+        "One Dollar Computer — agent connect (Learn Physical AI + projects)",
         "",
-        "This URL is for MCP pairing, NOT a page to read or copy into local files.",
+        "Prefer the instructor Agent → Copy paste (includes token + rules).",
+        "This URL is for MCP curriculum_pair only — NOT a page to scrape.",
         "",
-        "Agents with MCP (odc-curriculum):",
-        "  1. curriculum_pair with this full URL",
-        "  2a. Lessons: curriculum_agent_brief → curriculum_create_lesson / update",
-        "  2b. Firmware projects: project_brief → project_list / project_get / project_update",
+        "No MCP? Use HTTP (not shell curl if hosts are blocked):",
+        "  API: https://curriculumagent-mhrupl2ima-uc.a.run.app",
+        "  GET /brief  (rules, no auth)",
+        "  GET|POST /lessons with Authorization: Bearer <token from Copy>",
+        "  Alt API: https://odc-files-api.web.app",
         "",
-        "Authoring rules: https://onedollarcomputer.com/c/AGENT_LESSONS.md",
-        "Firmware rules:  https://onedollarcomputer.com/editor/AI_DOCS.txt",
+        "Rules: HTML5 teaching UI free; board firmware = Simple Rust (use odc::*;).",
+        "Never read_button() / pin 13 as student input.",
         "",
-        "Do NOT: fetch this page for content, scrape the site, or write local lesson/project files.",
-        "",
-        "Connect code: " + c,
-        "API: https://api.onedollarcomputer.com/pair/status?code=" + c
+        "Connect code: " + c
       ].join("\n");
     })();
   </script>
@@ -286,6 +285,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="/c/app.js?v=20260912c"></script>
+  <script type="module" src="/c/app.js?v=20260912d"></script>
 </body>
 </html>

@@ -368,7 +368,9 @@ function isOwner(username) {
 let authReady = false;
 
 const AGENT_API = "https://api.onedollarcomputer.com";
-const AGENT_API_FALLBACK = "https://curriculumagent-mhrupl2ima-uc.a.run.app";
+const AGENT_API_SANDBOX = "https://curriculumagent-mhrupl2ima-uc.a.run.app";
+const AGENT_API_WEBAPP = "https://odc-files-api.web.app";
+const AGENT_API_FALLBACK = AGENT_API_SANDBOX;
 const SHORT_ORIGIN = "https://odc.rs";
 const PAIR_TTL_MS = 10 * 60 * 1000;
 const PUBLISH_WARN = "Once public, you cannot make it private again. Anyone can view and copy it.";
@@ -639,43 +641,40 @@ function agentClipboardText(code, token) {
   const proj = currentProjectContext();
   const auth = token || "PASTE_TOKEN_FROM_PAIR_STATUS";
   const lines = [
-    "Edit my One Dollar Computer firmware projects on the site (not local files).",
-    "Read https://onedollarcomputer.com/editor/AI_DOCS.txt first (use web-fetch / browser, not shell).",
-    "Rule: complete Simple Rust only (use odc::*; fn main). Never read_button() / pin 13.",
+    "TASK: Edit One Dollar Computer firmware projects on the site (not local files).",
+    "",
+    "This paste is COMPLETE. Do NOT fetch onedollarcomputer.com / odc.rs first.",
+    "Skip pairing — use the token. Do NOT scrape the Connect link.",
+    "",
+    "Rules: complete Simple Rust only (use odc::*; fn main). Pins 0..=19; LED=19.",
+    "NEVER read_button() / pin 13 / BUTTON as student input. Publish is irreversible.",
     ""
   ];
   if (proj) {
-    lines.push(`Target project_id: ${proj.id}`);
-    lines.push("");
+    lines.push(`Target project_id: ${proj.id}`, "");
   }
   lines.push(
-    "If you have MCP (odc-curriculum): curriculum_pair with the Connect link, then project_brief,",
-    proj
-      ? "then project_get / project_update with the project_id above (project_publish if asked)."
-      : "then project_list / project_create / project_update / project_publish.",
-    "Do NOT fetch the Connect URL as a webpage for project content.",
-    "Publishing is irreversible.",
+    "API (try in order — prefer HTTP/web-fetch, not shell curl):",
+    `  1. ${AGENT_API_SANDBOX}`,
+    `  2. ${AGENT_API_WEBAPP}`,
+    `  3. ${AGENT_API}`,
+    "Header: Authorization: Bearer <token>",
     "",
-    "Connect link:",
-    agentConnectUrl(code),
-    "",
-    "Token (already approved — skip pairing):",
+    "Token:",
     auth,
     "",
-    "If your shell blocks onedollarcomputer.com / api.onedollarcomputer.com / odc.rs",
-    "(403 host_not_allowed): do NOT use curl. Use your web-fetch or HTTP tool.",
-    "Try API hosts in this order:",
-    `  1. ${AGENT_API}`,
-    `  2. ${AGENT_API_FALLBACK}`,
-    "Header: Authorization: Bearer <token above>",
-    "",
-    "GET  {API}/projects",
-    "POST {API}/projects",
-    "PATCH {API}/projects/PROJECT_ID"
+    "Optional: GET {API}/brief",
+    "Then: GET|POST {API}/projects ; GET|PATCH {API}/projects/PROJECT_ID ; POST …/publish"
   );
   if (proj) {
     lines.push("", `This project: GET/PATCH {API}/projects/${proj.id}`);
   }
+  lines.push(
+    "",
+    "If MCP odc-curriculum is connected: curriculum_pair → project_brief → create/update.",
+    "Connect link (MCP only):",
+    agentConnectUrl(code)
+  );
   return lines.join("\n");
 }
 

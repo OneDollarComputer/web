@@ -58,6 +58,10 @@
           "destination": "/login-browser.html"
         },
         {
+          "source": "/brief",
+          "function": "curriculumAgent"
+        },
+        {
           "source": "/pair/**",
           "function": "curriculumAgent"
         },

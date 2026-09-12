@@ -19,7 +19,18 @@ const API_ORIGIN = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "api-origin.json"), "utf8")
 ).url;
 
-const DEFAULT_API = process.env.ODC_CURRICULUM_API || API_ORIGIN;
+const DEFAULT_API =
+  process.env.ODC_CURRICULUM_API ||
+  process.env.ODC_CURRICULUM_API_FALLBACK ||
+  "https://curriculumagent-mhrupl2ima-uc.a.run.app";
+
+const API_FALLBACKS = [
+  DEFAULT_API,
+  "https://curriculumagent-mhrupl2ima-uc.a.run.app",
+  "https://odc-files-api.web.app",
+  API_ORIGIN,
+  "https://api.onedollarcomputer.com"
+].filter((v, i, a) => v && a.indexOf(v) === i);
 
 const RTDB_URL =
   process.env.ODC_RTDB_URL ||
@@ -71,25 +82,40 @@ async function api(method, apiPath, { token, body, firebaseIdToken } = {}) {
   if (firebaseIdToken) headers.Authorization = `Bearer ${firebaseIdToken}`;
   else if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${DEFAULT_API}${apiPath}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
-  const text = await res.text();
-  let data;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
+  let lastErr = null;
+  for (const base of API_FALLBACKS) {
+    try {
+      const res = await fetch(`${base}${apiPath}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
+      if (!res.ok) {
+        const err = new Error(data.error || res.statusText || `HTTP ${res.status}`);
+        err.status = res.status;
+        err.data = data;
+        // Try next host on network-ish failures only; 4xx from API is final
+        if (res.status >= 500 || res.status === 404) {
+          lastErr = err;
+          continue;
+        }
+        throw err;
+      }
+      return data;
+    } catch (err) {
+      lastErr = err;
+      // fetch failed (DNS / blocked / network) → try next host
+      if (err && err.status && err.status < 500 && err.status !== 404) throw err;
+    }
   }
-  if (!res.ok) {
-    const err = new Error(data.error || res.statusText || `HTTP ${res.status}`);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-  return data;
+  throw lastErr || new Error("All curriculum API hosts failed");
 }
 
 function textResult(obj) {

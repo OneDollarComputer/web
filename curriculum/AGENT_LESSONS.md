@@ -108,23 +108,33 @@ Put this (or the lesson’s real firmware) in **steps** under **Firmware (Simple
 
 ## Do / don’t for agents
 
+## How agents work from the platform (all agents)
+
+Instructors use **Agent → Copy** on `/c/`. That paste is **complete**:
+
+- Bearer token (pairing already done)
+- Rules inline (no need to fetch this file or the site)
+- Sandbox-safe API hosts first (`*.run.app`, then `*.web.app`)
+
+Optional: `GET {API}/brief` on the same API host returns the contract as JSON (no auth).
+
+If MCP `odc-curriculum` is connected, use it. Otherwise HTTP tools against the API hosts in the Copy are enough.
+
 ### Sandbox / Codex (403 host_not_allowed)
 
-Some agent shells block `onedollarcomputer.com`, `api.onedollarcomputer.com`, and `odc.rs`.
-Do **not** use `curl` there. Use **web-fetch / HTTP tools** (same path that can read this file).
-
-The instructor **Copy** block already includes a Bearer token — skip pairing.
+Do **not** require fetching `onedollarcomputer.com` / `odc.rs`. Do **not** use blocked-host `curl`.
 
 API hosts (try in order):
 
-1. `https://api.onedollarcomputer.com`
-2. `https://curriculumagent-mhrupl2ima-uc.a.run.app` (Cloud Run; same API)
+1. `https://curriculumagent-mhrupl2ima-uc.a.run.app`
+2. `https://odc-files-api.web.app`
+3. `https://api.onedollarcomputer.com`
 
-Then `GET/POST /lessons` and `PATCH /lessons/:id` with `Authorization: Bearer …`.
+Then `GET /brief`, `GET/POST /lessons`, `PATCH /lessons/:id` with `Authorization: Bearer …`.
 
 **Do**
 
-- Pair with MCP when it is connected; otherwise use the Copy token + HTTP tool. Update lessons on the site (not local `outputs/*.html` files).
+- Prefer the platform Copy paste; update lessons on the site (not local `outputs/*.html` files).
 - Match the instructor’s preferred teaching style in HTML5.
 - Emit **valid ODC Rust** whenever hardware or the virtual board is part of the story.
 
