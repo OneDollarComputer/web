@@ -2,9 +2,9 @@
  * Learn Physical AI — collaborative curriculum (RTDB)
  *
  * Share: /c/?lesson={id}
- * - title/owner public (unauthenticated can read title only)
- * - body requires Google sign-in
- * - authors edit; others suggest
+ * - lessons + activities are public (anyone can open and use)
+ * - authors / co-authors edit; signed-in others can suggest
+ * - Agent MCP still uses signed-in pairing
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import {
@@ -521,31 +521,59 @@ async function revokeAllAgents() {
 }
 
 async function showGate() {
-  gate.hidden = false;
-  studio.hidden = true;
   me = null;
   detachLesson();
 
   const connectCode = connectQueryCode();
   const lid = lessonQueryId();
+
+  // Public activities: open lesson without sign-in
+  if (lid && !connectCode) {
+    await showPublicStudio(lid);
+    return;
+  }
+
+  gate.hidden = false;
+  studio.hidden = true;
+
   if (connectCode) {
     gateTitle.textContent = "Agent link";
     gateLede.textContent =
       "This link is for your agent (MCP curriculum_pair), not a lesson page. Sign in to open your studio.";
-  } else if (lid) {
-    const meta = await loadPublicTitle(lid);
-    if (meta) {
-      gateTitle.textContent = meta.title;
-      gateLede.textContent = meta.ownerName
-        ? `Lesson by ${meta.ownerName}. Sign in with Google to view the full lesson.`
-        : "Sign in with Google to view this Physical AI lesson.";
-    } else {
-      gateTitle.textContent = "Learn Physical AI";
-      gateLede.textContent = "This lesson was not found. Sign in to open your Physical AI curriculum.";
-    }
   } else {
-    gateTitle.textContent = "Learn Physical AI";
-    gateLede.textContent = "Sign in with Google to write Physical AI lessons and co-edit with other instructors.";
+    // Public home: browse Popular and use activities without signing in
+    await showPublicStudio(null);
+  }
+}
+
+/** Guest view: use public activities; editing requires sign-in. */
+async function showPublicStudio(lessonId) {
+  me = null;
+  isAuthor = false;
+  gate.hidden = true;
+  studio.hidden = false;
+  listMode = "popular";
+  listMine?.classList.remove("active");
+  listPopular?.classList.add("active");
+  listMine?.setAttribute("aria-selected", "false");
+  listPopular?.setAttribute("aria-selected", "true");
+  if (listMine) listMine.hidden = true;
+  if (btnNew) btnNew.hidden = true;
+  document.querySelector(".side-agent")?.setAttribute("hidden", "");
+  await refreshLessonIndex();
+  if (lessonId) await openLesson(lessonId);
+  else if (lessons.length) await openLesson(lessons[0].id);
+  else {
+    detachLesson();
+    currentId = null;
+    applyingRemote = true;
+    const titleEl = field("fTitle") || field("title");
+    if (titleEl) titleEl.value = "";
+    clearMedia();
+    applyingRemote = false;
+    setFormEditable(false);
+    collabBar.hidden = true;
+    setStatus("No public lessons yet. Sign in to create one.");
   }
 }
 
@@ -1043,6 +1071,7 @@ function renderList() {
 }
 
 function setListMode(mode) {
+  if (!me && mode === "mine") mode = "popular";
   listMode = mode === "popular" ? "popular" : "mine";
   listMine?.classList.toggle("active", listMode === "mine");
   listPopular?.classList.toggle("active", listMode === "popular");
@@ -1091,7 +1120,7 @@ function openMoreMenu() {
 }
 
 function updateCollabChrome() {
-  if (!currentId || !me) {
+  if (!currentId) {
     collabBar.hidden = true;
     suggestPanel.hidden = true;
     closeMoreMenu();
@@ -1100,6 +1129,19 @@ function updateCollabChrome() {
   }
   collabBar.hidden = false;
   updateLikeButton();
+  if (!me) {
+    authorTools.hidden = true;
+    if (btnPreviewSolo) btnPreviewSolo.hidden = false;
+    if (btnLike) btnLike.hidden = true;
+    closeMoreMenu();
+    roleHint.textContent = "Public activity — sign in to create or edit.";
+    modeEdit.hidden = true;
+    modeSuggest.hidden = true;
+    editMode = "suggest";
+    setFormEditable(false);
+    suggestPanel.hidden = true;
+    return;
+  }
   if (isAuthor) {
     authorTools.hidden = false;
     if (btnPreviewSolo) btnPreviewSolo.hidden = true;
@@ -1152,6 +1194,9 @@ async function showStudio(user) {
   me = user;
   gate.hidden = true;
   studio.hidden = false;
+  if (listMine) listMine.hidden = false;
+  if (btnNew) btnNew.hidden = false;
+  document.querySelector(".side-agent")?.removeAttribute("hidden");
 
   myUsername = await usernameFor(user.uid);
 
@@ -1203,8 +1248,7 @@ function fillBlankNew() {
 }
 
 async function refreshLessonIndex() {
-  if (!me) return;
-  if (listMode === "popular") {
+  if (listMode === "popular" || !me) {
     try {
       const snap = await get(ref(db, "curriculum/catalog"));
       const val = snap.val() || {};
@@ -1216,7 +1260,8 @@ async function refreshLessonIndex() {
         ownerUid: row?.ownerUid || "",
         likeCount: Number(row?.likeCount || 0),
         viewCount: Number(row?.viewCount || 0),
-        liveCount: Number(row?.liveCount || 0)
+        liveCount: Number(row?.liveCount || 0),
+        mine: !!(me && row?.ownerUid === me.uid)
       }));
     } catch (err) {
       console.error(err);
@@ -1274,7 +1319,7 @@ function detachLesson() {
 }
 
 async function openLesson(id) {
-  if (!me || !id) return;
+  if (!id) return;
   detachLesson();
   currentId = id;
   setLessonQuery(id);
@@ -1286,12 +1331,18 @@ async function openLesson(id) {
   unsubLesson = onValue(contentRef, (snap) => {
     if (!snap.exists()) {
       setStatus("Lesson not found.");
-      fillBlankNew();
+      if (me) fillBlankNew();
+      else {
+        gate.hidden = false;
+        studio.hidden = true;
+        gateTitle.textContent = "Learn Physical AI";
+        gateLede.textContent = "This lesson was not found.";
+      }
       return;
     }
     const data = snap.val();
     const authors = data.authors || {};
-    isAuthor = !!(authors[me.uid] || data.ownerUid === me.uid);
+    isAuthor = !!(me && (authors[me.uid] || data.ownerUid === me.uid));
     currentMeta = {
       title: data.title,
       ownerUid: data.ownerUid,
@@ -1307,7 +1358,7 @@ async function openLesson(id) {
       updateCollabChrome();
       return;
     }
-    if (saveTimer && data.updatedBy === me.uid) {
+    if (saveTimer && me && data.updatedBy === me.uid) {
       lastContentKey = contentKey;
       updateCollabChrome();
       return;
@@ -1319,7 +1370,13 @@ async function openLesson(id) {
         title: data.title || "",
         body
       });
-      setStatus(isAuthor ? "Synced." : "Viewing (suggest mode).");
+      setStatus(
+        isAuthor
+          ? "Synced."
+          : me
+            ? "Viewing (suggest mode)."
+            : "Public activity — sign in to edit."
+      );
     } catch (err) {
       console.error(err);
       setStatus("Could not render lesson.");
@@ -1329,15 +1386,17 @@ async function openLesson(id) {
     setStatus("Could not open lesson.");
   });
 
-  attachPresence(id);
-  attachSuggestions(id);
+  if (me) {
+    attachPresence(id);
+    attachSuggestions(id);
+    refreshLikeState(id);
+    recordView(id);
+  }
   attachLiveRoom(id);
   renderList();
-  refreshLikeState(id);
-  recordView(id);
   // Backfill catalog when opening own lessons that predate the ranking system
   setTimeout(async () => {
-    if (!currentMeta || currentMeta.ownerUid !== me?.uid) return;
+    if (!me || !currentMeta || currentMeta.ownerUid !== me.uid) return;
     const cat = await get(ref(db, `curriculum/catalog/${id}`));
     if (cat.exists()) return;
     upsertCatalog(id, {

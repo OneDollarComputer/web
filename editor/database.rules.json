@@ -80,8 +80,9 @@
         ".write": false
       },
       "catalog": {
+        ".read": true,
         "$lid": {
-          ".read": "auth != null",
+          ".read": true,
           ".write": "auth != null && !newData.exists() && data.child('ownerUid').val() === auth.uid",
           "title": {
             ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists() || (!data.exists() && (newData.parent().child('ownerUid').val() === auth.uid || newData.val() === root.child('curriculum/lessons').child($lid).child('title').val())))"
@@ -177,7 +178,7 @@
       },
       "lessons": {
         "$lid": {
-          ".read": "auth != null",
+          ".read": true,
           ".write": "auth != null && !newData.exists() && data.child('ownerUid').val() === auth.uid",
           "title": {
             ".read": true,
@@ -196,25 +197,25 @@
             ".write": "auth != null && (!data.exists() || data.parent().child('ownerUid').val() === auth.uid)"
           },
           "updatedAt": {
-            ".read": "auth != null",
+            ".read": true,
             ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
           },
           "updatedBy": {
-            ".read": "auth != null",
+            ".read": true,
             ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
           },
           "authors": {
-            ".read": "auth != null",
+            ".read": true,
             "$uid": {
               ".write": "auth != null && (auth.uid === $uid || newData.parent().parent().child('ownerUid').val() === auth.uid || data.parent().parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid)"
             }
           },
           "body": {
-            ".read": "auth != null",
+            ".read": true,
             ".write": "auth != null && (newData.parent().child('ownerUid').val() === auth.uid || data.parent().child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
           },
           "liveRoom": {
-            ".read": "auth != null",
+            ".read": true,
             ".write": "auth != null && (root.child('curriculum/lessons').child($lid).child('ownerUid').val() === auth.uid || root.child('curriculum/lessons').child($lid).child('authors').child(auth.uid).exists())"
           },
           "sessions": {

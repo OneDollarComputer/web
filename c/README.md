@@ -24,19 +24,18 @@ Fallback page: `/c/join/?pin=XXXX`.
 
 | | Projects (`/project/`, `/{user}/`) | Learn Physical AI (`/c/`) |
 |---|---|---|
-| Who | Anyone | Teachers & instructors |
-| Access | Private until **Publish** (irreversible). Public pages at `/{user}/{slug}`; visitors **Edit** to copy | Sign-in required for content |
+| Who | Anyone | Anyone can use; teachers create/edit |
+| Access | Private until **Publish** (irreversible). Public pages at `/{user}/{slug}`; visitors **Edit** to copy | **Public** activities at `/c/?lesson=…`. Sign-in required to **create/edit** |
 | What | Personal firmware projects | Physical AI classroom curriculum |
 
 ## Share link
 
 `/c/?lesson={id}`
 
-- Logged out: see **title** only → Sign in
-- Logged in: full lesson
+- Anyone (logged out): full lesson + HTML activities (read / use)
 - **Authors** edit live (Firebase RTDB)
-- **Everyone else** can **Suggest** changes; authors Accept / Reject
-- Presence chips show who else is in the lesson (and which field)
+- Signed-in non-authors can **Suggest** changes; authors Accept / Reject
+- Presence chips show who else is editing (signed-in)
 - Signed-in teachers can **Like** a lesson; **Popular** ranks by likes, live classes, and views
 
 ## Co-authors

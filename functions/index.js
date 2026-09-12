@@ -400,6 +400,13 @@ async function handleCreateLesson(req, res) {
   };
   updates[`curriculum/lessons/${id}/body`] = lessonBody;
   updates[`curriculum/byUser/${agent.uid}/${id}`] = true;
+  updates[`curriculum/catalog/${id}/title`] = title;
+  updates[`curriculum/catalog/${id}/ownerUid`] = agent.uid;
+  updates[`curriculum/catalog/${id}/ownerName`] = ownerName;
+  updates[`curriculum/catalog/${id}/updatedAt`] = now;
+  updates[`curriculum/catalog/${id}/likeCount`] = 0;
+  updates[`curriculum/catalog/${id}/viewCount`] = 0;
+  updates[`curriculum/catalog/${id}/liveCount`] = 0;
 
   await db.ref().update(updates);
   return json(res, 201, {
@@ -532,6 +539,16 @@ async function handlePatchLesson(req, res, lid) {
   updates.updatedBy = agent.uid;
 
   await db.ref(`curriculum/lessons/${lid}`).update(updates);
+
+  const catalogPatch = {
+    updatedAt: now,
+    ownerUid: lesson.ownerUid,
+    ownerName: lesson.ownerName || ""
+  };
+  if (updates.title !== undefined) catalogPatch.title = updates.title;
+  else if (lesson.title) catalogPatch.title = lesson.title;
+  await db.ref(`curriculum/catalog/${lid}`).update(catalogPatch);
+
   return json(res, 200, { ok: true, id: lid, updatedAt: now });
 }
 
