@@ -5,16 +5,107 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Press — One Dollar Computer</title>
-  <meta name="description" content="Press material for the One Dollar Computer: release, fact sheet, quotes, and images." />
+  <meta name="description" content="Press material for the One Dollar Computer: Physical AI education, RISC-V hardware, release, fact sheet, quotes, and images." />
+  <meta name="keywords" content="One Dollar Computer, Physical AI, Learn Physical AI, RISC-V, RV32EC, educational computer, open hardware, STEM, Computer of Things, Claudio Olmedo, Austin" />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="canonical" href="https://onedollarcomputer.com/press/" />
+  <link rel="alternate" type="text/plain" href="/press/llms.txt" title="Press LLM brief" />
   <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
   <meta name="theme-color" content="#07090F" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://onedollarcomputer.com/press/" />
+  <meta property="og:title" content="Press — One Dollar Computer" />
+  <meta property="og:description" content="Press material: Physical AI education on a $1 RISC-V computer." />
+  <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <script defer src="/js/analytics.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://onedollarcomputer.com/press/#webpage",
+    "url": "https://onedollarcomputer.com/press/",
+    "name": "Press — One Dollar Computer",
+    "description": "Press material for the One Dollar Computer, including Physical AI education, RISC-V hardware, release text, fact sheet, and quotes.",
+    "inLanguage": "en",
+    "isAccessibleForFree": true,
+    "keywords": [
+      "One Dollar Computer",
+      "Physical AI",
+      "Learn Physical AI",
+      "RISC-V",
+      "RV32EC",
+      "educational computer",
+      "open hardware",
+      "Computer of Things"
+    ],
+    "about": [
+      {
+        "@type": "Thing",
+        "name": "Physical AI",
+        "description": "AI and learning that sense, decide, and act in the physical world. On One Dollar Computer: Learn Physical AI curriculum plus a $1 RISC-V computer students can put inside real projects."
+      },
+      {
+        "@type": "Product",
+        "name": "One Dollar Computer",
+        "url": "https://onedollarcomputer.com/"
+      }
+    ],
+    "mainEntity": {
+      "@type": "NewsArticle",
+      "headline": "After twelve years of development, the One Dollar Computer opens pre-orders at $1",
+      "datePublished": "2026-09-08",
+      "author": {
+        "@type": "Person",
+        "name": "Claudio Olmedo",
+        "url": "https://claudioolmedo.com/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "One Dollar Computer Project",
+        "url": "https://onedollarcomputer.com/"
+      },
+      "keywords": ["Physical AI", "RISC-V", "RV32EC", "One Dollar Computer", "pre-order"]
+    }
+  }
+  </script>
+  <script type="application/json" id="press-topics">
+  {
+    "topics": [
+      {
+        "id": "physical-ai",
+        "label": "Physical AI",
+        "aliases": ["Physical AI", "Learn Physical AI", "physicalai", "Physical"],
+        "summary": "Physical AI education on the One Dollar Computer: sense, decide, and act in the physical world at about $1. Curriculum at /c/.",
+        "urls": [
+          "https://onedollarcomputer.com/c/",
+          "https://onedollarcomputer.com/c/AGENT_LESSONS.md"
+        ]
+      },
+      {
+        "id": "risc-v",
+        "label": "RISC-V",
+        "aliases": ["RISC-V", "RV32EC", "RVA23"],
+        "summary": "RV32EC educational computer — first rung of the open RISC-V ladder.",
+        "urls": ["https://onedollarcomputer.com/specification/"]
+      },
+      {
+        "id": "hardware",
+        "label": "Hardware",
+        "aliases": ["One Dollar Computer", "pre-order", "WebHID"],
+        "summary": "Model 1.004 R2, $1 pre-order, browser flash via WebHID.",
+        "urls": [
+          "https://onedollarcomputer.com/",
+          "https://shop.claudioolmedo.com/preorder"
+        ]
+      }
+    ],
+    "filter_hint": "Use ?topic=physical-ai or the page chips. Sections carry data-topics for client and agent filtering."
+  }
+  </script>
   <style>
     :root {
       --bg: #07090F;
@@ -91,11 +182,50 @@
       background: var(--sky);
     }
 
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-top: 1.25rem;
+    }
+
+    .filters [data-filter] {
+      font: inherit;
+      font-size: .8rem;
+      color: var(--sub);
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .35rem .85rem;
+      cursor: pointer;
+      transition: color .2s, border-color .2s, background .2s;
+    }
+
+    .filters [data-filter]:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .filters [data-filter][aria-pressed="true"] {
+      color: #07090F;
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .filter-hint {
+      margin: .75rem 0 0;
+      font-size: .78rem;
+      color: var(--sub);
+    }
+
     section {
       margin-top: 2.75rem;
       border-top: 1px solid var(--line);
       padding-top: 1.5rem;
     }
+
+    section[hidden] { display: none !important }
 
     .sec-head {
       display: flex;
@@ -110,6 +240,16 @@
       color: var(--accent);
       letter-spacing: .02em;
       text-transform: uppercase;
+    }
+
+    .topic-tag {
+      font-size: .7rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--sky);
+      border: 1px solid rgba(138, 180, 255, .35);
+      border-radius: 999px;
+      padding: .15rem .55rem;
     }
 
     .copy-btn {
@@ -247,18 +387,26 @@
     <div class="page-head">
       <h1>Press</h1>
       <p class="status">Working draft · unlisted page</p>
+      <div class="filters" role="group" aria-label="Filter by topic">
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-filter="physical-ai" aria-pressed="false">Physical AI</button>
+        <button type="button" data-filter="risc-v" aria-pressed="false">RISC-V</button>
+        <button type="button" data-filter="hardware" aria-pressed="false">Hardware</button>
+      </div>
+      <p class="filter-hint">Filter for journalists and agents: chips above, or <code>?topic=physical-ai</code>. Topics are also in JSON (<code>#press-topics</code>) and <a href="/press/llms.txt">/press/llms.txt</a>.</p>
     </div>
 
-    <section>
+    <section data-topics="physical-ai hardware risc-v">
       <div class="sec-head">
         <h2>Release</h2>
+        <span class="topic-tag">Physical AI</span>
         <button type="button" class="copy-btn" data-copy="release">Copy</button>
       </div>
       <div class="block" id="release">
         <h3>After twelve years of development, the One Dollar Computer opens pre-orders at $1</h3>
         <p class="subhead">An open RISC-V educational computer designed in Austin, Texas, built on RV32EC — the most
-          economical ratified rung of the architecture — to put programmable hardware in students’ hands for the price
-          of a pencil. First manufacturing run: 3,000 units.</p>
+          economical ratified rung of the architecture — so students can begin <strong>Physical AI</strong>: sense,
+          decide, and act in the physical world for the price of a pencil. First manufacturing run: 3,000 units.</p>
         <p class="dateline">Austin, Texas — September 8, 2026</p>
 
         <p>The <strong>One Dollar Computer</strong> has opened pre-orders for its RISC-V educational computer at
@@ -267,8 +415,21 @@
           is open: the design files can be downloaded, manufactured, and improved by anyone.</p>
 
         <p>The point is not to sell a cheap computer. It is to remove cost as the filter that decides who gets to learn
-          engineering. “Talent is everywhere; opportunity is not,” Olmedo says. “A dollar should be enough to wake it
-          up.”</p>
+          engineering — and who gets to put intelligence into real objects. “Talent is everywhere; opportunity is not,”
+          Olmedo says. “A dollar should be enough to wake it up.”</p>
+
+        <h4>Physical AI starts at one dollar</h4>
+        <p><strong>Physical AI</strong> is the shift from software that only writes text to systems that sense, decide,
+          and act in the physical world — sensors, motors, robots, toys, instruments, classroom inventions. The One
+          Dollar Computer is built as an educational entry to that wave: a real computer that can live inside the thing
+          a student builds, because it costs about one dollar.</p>
+        <p>Teachers and instructors use <strong>Learn Physical AI</strong> at
+          <a href="https://onedollarcomputer.com/c/">onedollarcomputer.com/c/</a> — public classroom activities anyone
+          can open, with curriculum authored and updated with help from AI agents. Students write Simple Rust that runs
+          on the real computer or in a browser emulator. The path is concrete: first hour, blink an LED; then sensors
+          and motors; then the computer disappears into the project — a line-following robot, a lamp that wakes with the
+          sun, a toy that reacts to touch.</p>
+        <p>That is Physical AI without waiting for a research lab: intelligence that has a body, even a small one.</p>
 
         <h4>How a computer costs a dollar</h4>
         <p>It is not a subsidy or a promotional discount. The dollar is the result of design decisions accumulated over
@@ -302,42 +463,73 @@
           compile online, and flash the binary to the computer over <strong>WebHID</strong> — a protocol already present
           in Windows, macOS, and Linux, which eliminates driver installation, one of the largest sources of friction in
           electronics classes. A Chromium-based browser and a USB cable are enough. A WebAssembly emulator lets students
-          write and test code before the hardware arrives, and a collaborative curriculum environment lets teachers run
-          live lessons.</p>
+          write and test code before the hardware arrives. Live Physical AI classes run from the same curriculum
+          workspace teachers already use to author lessons.</p>
 
         <h4>“The Computer of Things”</h4>
         <p>The project’s stated philosophy inverts the logic of the Internet of Things: instead of connecting objects to
-          the network, put a computer inside the object — connected or not. At a dollar, the computer can stay
-          permanently inside the toy, the instrument, or the school project a student built, instead of being stripped
-          out for the next class.</p>
+          the network first, put a computer inside the object — connected or not. Physical AI needs a place to live. At
+          a dollar, that place can be a classroom project, a club build, or an invention that stays assembled instead of
+          being stripped for the next class.</p>
         <p>The arithmetic is the central argument for schools: $3,000 does not buy one expensive machine. It buys three
-          thousand computers.</p>
+          thousand computers — three thousand Physical AI starting points.</p>
 
         <h4>Availability</h4>
         <p>Pre-orders are open at <a href="https://shop.claudioolmedo.com/preorder">shop.claudioolmedo.com/preorder</a>
           at $1 per unit, with shipping calculated separately. Units ship once the first manufacturing run of 3,000
-          completes. Official information, the full technical specification, and design files are at
-          <a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>.</p>
+          completes. Official information, the full technical specification, Learn Physical AI curriculum, and design
+          files are at <a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>.</p>
       </div>
     </section>
 
-    <section>
+    <section data-topics="physical-ai hardware">
       <div class="sec-head">
         <h2>Short version</h2>
+        <span class="topic-tag">Physical AI</span>
         <button type="button" class="copy-btn" data-copy="short">Copy</button>
       </div>
       <div class="block" id="short">
         <p>The <strong>One Dollar Computer</strong>, an open RISC-V educational computer designed in Austin, Texas, has
-          opened pre-orders at <strong>$1</strong> per unit after twelve years of development. The 1.004 R2 model is
-          built on RV32EC — the most economical ratified base of the RISC-V architecture — runs at up to 48 MHz with 20
-          input and output pins, and is programmed in Rust straight from the browser over WebHID, with no drivers to
-          install. Creator Claudio Olmedo is working toward a first run of 3,000 units. The stated goal is to remove
-          cost as a barrier to hands-on engineering education. Pre-order: shop.claudioolmedo.com/preorder · Site:
-          onedollarcomputer.com</p>
+          opened pre-orders at <strong>$1</strong> per unit after twelve years of development. Built on RV32EC — the most
+          economical ratified base of the RISC-V architecture — it is meant as an entry to <strong>Physical AI</strong>:
+          students sense, decide, and act in the physical world with a computer that can stay inside the project they
+          build. Teachers use <strong>Learn Physical AI</strong> at onedollarcomputer.com/c/; firmware is Simple Rust from
+          the browser over WebHID, with no drivers. Creator Claudio Olmedo is working toward a first run of 3,000 units.
+          Pre-order: shop.claudioolmedo.com/preorder · Site: onedollarcomputer.com</p>
       </div>
     </section>
 
-    <section>
+    <section data-topics="physical-ai">
+      <div class="sec-head">
+        <h2>Physical AI</h2>
+        <span class="topic-tag">Physical AI</span>
+        <button type="button" class="copy-btn" data-copy="physical-ai">Copy</button>
+      </div>
+      <div class="block" id="physical-ai">
+        <h3>What Physical AI means here</h3>
+        <p><strong>Physical AI</strong> names systems that do not only generate text or images — they perceive the
+          physical world, reason about it, and act: sensors, actuators, robots, toys, tools, and classroom inventions.
+          The One Dollar Computer is educational infrastructure for that idea at about <strong>$1</strong>.</p>
+        <p><strong>Learn Physical AI</strong> (<a href="https://onedollarcomputer.com/c/">onedollarcomputer.com/c/</a>)
+          is the public curriculum workspace: anyone can use activities; teachers and instructors create and co-edit
+          lessons; AI agents can author curriculum through Agent pairing (MCP). Lessons combine interactive HTML teaching
+          with <strong>complete Simple Rust</strong> when the One Dollar Computer is part of the story.</p>
+        <table>
+          <tbody>
+            <tr><td>Topic tag</td><td>Physical AI · Learn Physical AI · physicalai</td></tr>
+            <tr><td>Curriculum</td><td>https://onedollarcomputer.com/c/</td></tr>
+            <tr><td>Agent rules</td><td>https://onedollarcomputer.com/c/AGENT_LESSONS.md</td></tr>
+            <tr><td>Hardware role</td><td>$1 RISC-V computer that can stay inside the student’s object</td></tr>
+            <tr><td>First hour</td><td>Blink LED → sensors / motors → invent</td></tr>
+            <tr><td>Related philosophy</td><td>Computer of Things — put a computer in the thing</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:1rem">Filter key for agents and journalists: <code>physical-ai</code>. Prefer this name over
+          vague “STEM kit” when describing the education product.</p>
+      </div>
+    </section>
+
+    <section data-topics="hardware risc-v physical-ai">
       <div class="sec-head">
         <h2>Fact sheet</h2>
         <button type="button" class="copy-btn" data-copy="specs">Copy</button>
@@ -346,6 +538,8 @@
         <table>
           <tbody>
             <tr><td>Product</td><td>One Dollar Computer, model 1.004, revision R2</td></tr>
+            <tr><td>Education product</td><td>Learn Physical AI — onedollarcomputer.com/c/</td></tr>
+            <tr><td>Topics</td><td>Physical AI · RISC-V · open educational hardware</td></tr>
             <tr><td>Architecture</td><td>RISC-V, RV32EC base (32-bit, 16 registers, compressed instructions)</td></tr>
             <tr><td>Processing</td><td>up to 48 MHz · 16 KB flash · 2 KB RAM</td></tr>
             <tr><td>Input / output</td><td>pins 0–19; 10-bit ADC on pins 8 and 9; LED on pin 19</td></tr>
@@ -362,7 +556,7 @@
       </div>
     </section>
 
-    <section>
+    <section data-topics="risc-v">
       <div class="sec-head">
         <h2>The RISC-V ladder</h2>
         <button type="button" class="copy-btn" data-copy="ladder">Copy</button>
@@ -383,64 +577,82 @@
       </div>
     </section>
 
-    <section>
+    <section data-topics="physical-ai hardware risc-v">
       <div class="sec-head">
         <h2>Quotes</h2>
         <button type="button" class="copy-btn" data-copy="quotes">Copy</button>
       </div>
       <div class="block" id="quotes">
-        <blockquote>
+        <blockquote data-topics="hardware">
           <p>“The dollar is not a discount. It is a design decision. Every part had to justify why it was there.”</p>
           <cite>Claudio Olmedo, creator of the One Dollar Computer</cite>
         </blockquote>
-        <blockquote>
+        <blockquote data-topics="physical-ai">
+          <p>“Physical AI needs a place to live. At one dollar, that place can be a classroom project — not a research
+            lab.”</p>
+          <cite>Claudio Olmedo</cite>
+        </blockquote>
+        <blockquote data-topics="risc-v">
           <p>“A dollar does not buy a toy version of computing. It buys the first rung of the same ladder.”</p>
           <cite>Claudio Olmedo</cite>
         </blockquote>
-        <blockquote>
+        <blockquote data-topics="risc-v">
           <p>“The ‘E’ base exists in the standard precisely to fit in minimal silicon. We did not invent a shortcut — we
             used the rung the architecture already defined for this case.”</p>
           <cite>Claudio Olmedo</cite>
         </blockquote>
-        <blockquote>
+        <blockquote data-topics="hardware">
           <p>“I started this project twelve years ago, wanting to change the world with a computer anyone could afford.
             I never stopped, because talent is everywhere.”</p>
           <cite>Claudio Olmedo</cite>
         </blockquote>
-        <blockquote>
+        <blockquote data-topics="physical-ai hardware">
           <p>“Three thousand dollars is not one expensive machine. It is three thousand computers — three thousand
-            chances for talent to wake up.”</p>
+            Physical AI starting points.”</p>
           <cite>Claudio Olmedo</cite>
         </blockquote>
       </div>
     </section>
 
-    <section>
+    <section data-topics="physical-ai hardware">
       <div class="sec-head">
         <h2>Boilerplate</h2>
         <button type="button" class="copy-btn" data-copy="boilerplate">Copy</button>
       </div>
       <div class="block" id="boilerplate">
         <p><strong>About the One Dollar Computer</strong> — The One Dollar Computer is an open RISC-V educational
-          computer with a manufacturing cost target of about one dollar, created to make electronics as reachable as a
-          pencil. Designed in Austin, Texas by Claudio Olmedo, it is meant for classrooms, clubs, makerspaces, and
-          self-taught beginners. Design files, specification, and tools are public. Official site:
+          computer with a manufacturing cost target of about one dollar, created so anyone can begin Physical AI:
+          sensing, deciding, and acting in the physical world. Designed in Austin, Texas by Claudio Olmedo. Teachers use
+          Learn Physical AI at onedollarcomputer.com/c/. Design files, specification, and tools are public. Official site:
           https://onedollarcomputer.com/</p>
       </div>
     </section>
 
-    <section>
+    <section data-topics="physical-ai hardware risc-v">
       <div class="sec-head">
         <h2>Frequently asked</h2>
         <button type="button" class="copy-btn" data-copy="faq">Copy</button>
       </div>
       <div class="block" id="faq">
-        <div class="qa">
+        <div class="qa" data-topics="physical-ai">
+          <p>What is Physical AI on One Dollar Computer?</p>
+          <p>Physical AI here means learning and building systems that sense, decide, and act in the physical world —
+            not only chat or generate text. The hardware is a ~$1 RISC-V computer that can stay inside a student project.
+            The education product is <strong>Learn Physical AI</strong> at onedollarcomputer.com/c/, including AI-assisted
+            curriculum authoring for teachers.</p>
+        </div>
+        <div class="qa" data-topics="physical-ai">
+          <p>Is this the same as industrial Physical AI / robotics research stacks?</p>
+          <p>No claim of partnership with any industrial Physical AI platform. One Dollar Computer is the accessible
+            educational entry: real pins, real firmware, real objects — at about one dollar — so talent can start before
+            a lab budget exists.</p>
+        </div>
+        <div class="qa" data-topics="hardware">
           <p>Is it really one dollar, or is there a catch?</p>
           <p>That is the price of the computer in pre-order; shipping is charged separately. The manufacturing cost
             target of about one dollar has been the axis of the project for more than a decade.</p>
         </div>
-        <div class="qa">
+        <div class="qa" data-topics="risc-v">
           <p>Is this a one-dollar Raspberry Pi?</p>
           <p>No, and the right comparison is not with the Raspberry Pi — it is with the architecture. The One Dollar
             Computer implements RV32EC, the most economical rung of the RISC-V family: the “E” base, for
@@ -449,23 +661,23 @@
             program this computer is learning real RISC-V, not a teaching dialect, and climbs the same ladder all the
             way to the application processors that run Linux.</p>
         </div>
-        <div class="qa">
+        <div class="qa" data-topics="hardware">
           <p>Is this that hobbyist “build a computer for a dollar” challenge?</p>
           <p>No. This is a named product with a published specification and open pre-orders — not a hobby exercise and
             not an unrelated dollar-store gadget.</p>
         </div>
-        <div class="qa">
+        <div class="qa" data-topics="hardware">
           <p>Is this a charity or an NGO?</p>
           <p>No. The model is meant to be self-sustaining rather than dependent on donations.</p>
         </div>
-        <div class="qa">
+        <div class="qa" data-topics="hardware">
           <p>When does it ship?</p>
           <p>Once the first manufacturing run of 3,000 units completes. No delivery date has been committed publicly.</p>
         </div>
       </div>
     </section>
 
-    <section>
+    <section data-topics="hardware physical-ai">
       <div class="sec-head">
         <h2>Accuracy notes</h2>
       </div>
@@ -479,11 +691,13 @@
             should not be presented as such.</li>
           <li>The internal chip mapping is not public by design; the public interface is pins 0 to 19 as printed on the
             board.</li>
+          <li>Prefer the topic label <strong>Physical AI</strong> / <strong>Learn Physical AI</strong> for the education
+            product. Do not invent industrial partnerships under that name.</li>
         </ul>
       </div>
     </section>
 
-    <section>
+    <section data-topics="hardware">
       <div class="sec-head">
         <h2>Images and video</h2>
       </div>
@@ -496,41 +710,80 @@
             <a href="/docs/OneDollarComputer.com.v1.004.r2.pinout.pdf">PDF</a></li>
           <li><a href="/3d/viewer.html">Interactive 3D viewer</a></li>
           <li><a href="/odc_logo_white.svg">Logo</a> — <a href="/brand/">brand page</a></li>
+          <li><a href="/c/">Learn Physical AI</a> — curriculum product</li>
         </ul>
       </div>
     </section>
 
-    <section>
+    <section data-topics="hardware physical-ai">
       <div class="sec-head">
         <h2>Contact</h2>
       </div>
       <div class="block">
         <p>Claudio Olmedo, creator — <a href="https://claudioolmedo.com/">claudioolmedo.com</a></p>
         <p>Official site: <a href="https://onedollarcomputer.com/">onedollarcomputer.com</a> ·
+          Learn Physical AI: <a href="/c/">onedollarcomputer.com/c/</a> ·
           Specification: <a href="/specification/">onedollarcomputer.com/specification/</a></p>
       </div>
     </section>
   </main>
 
   <footer>
-    Working page, not announced. No other page on the site links here.
+    Working page, not announced. No other page on the site links here. Topic filter: Physical AI · RISC-V · Hardware.
   </footer>
 
   <script>
-    document.querySelectorAll('.copy-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var target = document.getElementById(btn.dataset.copy);
-        if (!target) return;
-        navigator.clipboard.writeText(target.innerText.trim()).then(function () {
-          btn.textContent = 'Copied';
-          btn.dataset.done = '1';
-          setTimeout(function () {
-            btn.textContent = 'Copy';
-            delete btn.dataset.done;
-          }, 1800);
+    (function () {
+      var buttons = document.querySelectorAll('.filters [data-filter]');
+      var sections = document.querySelectorAll('main > section[data-topics]');
+
+      function applyFilter(topic) {
+        buttons.forEach(function (btn) {
+          btn.setAttribute('aria-pressed', btn.getAttribute('data-filter') === topic ? 'true' : 'false');
+        });
+        sections.forEach(function (sec) {
+          var topics = (sec.getAttribute('data-topics') || '').split(/\s+/);
+          var show = topic === 'all' || topics.indexOf(topic) !== -1;
+          sec.hidden = !show;
+        });
+        try {
+          var url = new URL(window.location.href);
+          if (topic === 'all') url.searchParams.delete('topic');
+          else url.searchParams.set('topic', topic);
+          history.replaceState(null, '', url.pathname + url.search + url.hash);
+        } catch (e) {}
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          applyFilter(btn.getAttribute('data-filter'));
         });
       });
-    });
+
+      var initial = 'all';
+      try {
+        var q = new URLSearchParams(window.location.search).get('topic');
+        if (q === 'physical-ai' || q === 'physical' || q === 'physicalai') initial = 'physical-ai';
+        else if (q === 'risc-v' || q === 'riscv') initial = 'risc-v';
+        else if (q === 'hardware' || q === 'product') initial = 'hardware';
+      } catch (e) {}
+      applyFilter(initial);
+
+      document.querySelectorAll('.copy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var target = document.getElementById(btn.dataset.copy);
+          if (!target) return;
+          navigator.clipboard.writeText(target.innerText.trim()).then(function () {
+            btn.textContent = 'Copied';
+            btn.dataset.done = '1';
+            setTimeout(function () {
+              btn.textContent = 'Copy';
+              delete btn.dataset.done;
+            }, 1800);
+          });
+        });
+      });
+    })();
   </script>
 </body>
 

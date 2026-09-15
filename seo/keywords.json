@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-08-30",
-  "notes": "Add new target queries here; regenerate sitemap and brand copy as needed. See seo/README.md.",
+  "updated": "2026-09-15",
+  "notes": "Add new target queries here; regenerate sitemap and brand copy as needed. See seo/README.md. Topic filter id for Physical AI: physical-ai.",
   "primary": [
     {
       "query": "one dollar computer",
@@ -26,6 +26,13 @@
       "intent": "navigational",
       "landing": "https://onedollarcomputer.com/",
       "priority": 1
+    },
+    {
+      "query": "Learn Physical AI",
+      "intent": "education product",
+      "landing": "https://onedollarcomputer.com/c/",
+      "priority": 1,
+      "topic": "physical-ai"
     }
   ],
   "secondary": [
@@ -46,6 +53,27 @@
       "intent": "product + tech",
       "landing": "https://onedollarcomputer.com/specification/",
       "priority": 2
+    },
+    {
+      "query": "Physical AI",
+      "intent": "topic / discovery",
+      "landing": "https://onedollarcomputer.com/c/",
+      "priority": 2,
+      "topic": "physical-ai"
+    },
+    {
+      "query": "one dollar computer Physical AI",
+      "intent": "brand + topic",
+      "landing": "https://onedollarcomputer.com/c/",
+      "priority": 2,
+      "topic": "physical-ai"
+    },
+    {
+      "query": "Physical AI curriculum",
+      "intent": "education",
+      "landing": "https://onedollarcomputer.com/c/",
+      "priority": 2,
+      "topic": "physical-ai"
     },
     {
       "query": "cheap educational computer STEM",

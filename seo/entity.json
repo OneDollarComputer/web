@@ -1,7 +1,7 @@
 {
   "$schema": "./entity.schema.json",
   "version": 1,
-  "updated": "2026-08-30",
+  "updated": "2026-09-15",
   "canonical_url": "https://onedollarcomputer.com/",
   "preferred_name": "One Dollar Computer",
   "alternate_names": [
@@ -9,13 +9,35 @@
     "ODC",
     "$1 Computer",
     "One Dollar Computer V1.004",
-    "onedollarcomputer.com"
+    "onedollarcomputer.com",
+    "Learn Physical AI"
   ],
   "tagline": "Awakening New Inventors",
-  "one_sentence": "One Dollar Computer is an ultra-affordable open educational RISC-V computer designed to awaken inventors worldwide; the official website is https://onedollarcomputer.com/.",
-  "description": "The One Dollar Computer is a ~$1 RISC-V educational computer and open hardware project. It is designed for classrooms, clubs, makers, and curious beginners. Official site: https://onedollarcomputer.com/. Designed in Austin, Texas — meant for the world.",
+  "one_sentence": "One Dollar Computer is an ultra-affordable open educational RISC-V computer for Physical AI — sensing, deciding, and acting in the physical world; the official website is https://onedollarcomputer.com/.",
+  "description": "The One Dollar Computer is a ~$1 RISC-V educational computer and open hardware project for Physical AI education. Teachers use Learn Physical AI at /c/. Designed for classrooms, clubs, makers, and curious beginners. Official site: https://onedollarcomputer.com/. Designed in Austin, Texas — meant for the world.",
+  "topics": [
+    {
+      "id": "physical-ai",
+      "label": "Physical AI",
+      "aliases": ["Physical AI", "Learn Physical AI", "physicalai", "Physical"],
+      "url": "https://onedollarcomputer.com/c/",
+      "summary": "Educational Physical AI: sense, decide, and act in the physical world using a ~$1 RISC-V computer and public curriculum at /c/."
+    },
+    {
+      "id": "risc-v",
+      "label": "RISC-V",
+      "aliases": ["RISC-V", "RV32EC"],
+      "url": "https://onedollarcomputer.com/specification/"
+    },
+    {
+      "id": "computer-of-things",
+      "label": "Computer of Things",
+      "url": "https://onedollarcomputer.com/#philosophy"
+    }
+  ],
   "category": [
     "Educational technology",
+    "Physical AI",
     "Open hardware",
     "RISC-V microcontroller",
     "STEM education",
@@ -49,6 +71,8 @@
     "about": "https://onedollarcomputer.com/about/",
     "brand": "https://onedollarcomputer.com/brand/",
     "project": "https://onedollarcomputer.com/project/",
+    "learn_physical_ai": "https://onedollarcomputer.com/c/",
+    "physical_ai_lessons": "https://onedollarcomputer.com/c/AGENT_LESSONS.md",
     "specification": "https://onedollarcomputer.com/specification/",
     "specification_short": "https://odc.rs/specification",
     "docs_ai": "https://onedollarcomputer.com/llms.txt",
@@ -63,7 +87,10 @@
     "onedollarcomputer",
     "onedollarcomputer.com",
     "$1 computer",
-    "one dollar computer austin"
+    "one dollar computer austin",
+    "Physical AI",
+    "Learn Physical AI",
+    "one dollar computer Physical AI"
   ],
   "same_as": [
     "https://github.com/OneDollarComputer/web",
