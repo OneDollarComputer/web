@@ -1,0 +1,53 @@
+<mujoco model="odc_drop">
+  <!--
+    Marco 0: One Dollar Computer as a free rigid body above a floor.
+    Collider is a box sized roughly like the computer.
+    MuJoCo geom size for box is half-extents (meters).
+
+    Contact tuning (bounce via soft constraints — no Three.js fake rebound):
+      - Real gravity (−9.81). Fall from 1.4 m is ~0.5 s — still readable in Play.
+      - solref timeconst/dampratio under-damped (dampratio ≪ 1) → restitution-like bounce.
+      - Modest friction so tangential dissipation does not kill the rebound.
+      - PCB-ish mass (~45 g) + thin-box inertia; slight tip so impact is not perfectly flat.
+  -->
+  <compiler angle="radian" coordinate="local"/>
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="implicitfast" iterations="50"/>
+
+  <visual>
+    <rgba haze="0.12 0.16 0.22 1"/>
+    <quality shadowsize="2048"/>
+  </visual>
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.22 0.26 0.30" rgb2="0.16 0.19 0.22" width="512" height="512"/>
+    <material name="floor" texture="grid" texrepeat="8 8" reflectance="0.1"/>
+    <material name="odc" rgba="0.95 0.72 0.12 1" specular="0.4" shininess="0.6"/>
+  </asset>
+
+  <default>
+    <!-- Sliding friction modest; spinning/rolling tiny (default MuJoCo triad). -->
+    <geom friction="0.4 0.005 0.0001" condim="3"/>
+  </default>
+
+  <worldbody>
+    <light name="key" directional="true" diffuse="0.7 0.7 0.65" specular="0.25 0.25 0.2" pos="1 1 4" dir="-0.3 -0.3 -1"/>
+    <light name="fill" directional="true" diffuse="0.25 0.28 0.32" pos="-2 1 3" dir="0.4 -0.2 -1" castshadow="false"/>
+
+    <!-- Large plane floor (MuJoCo treats plane size 0 as infinite extent). -->
+    <geom name="floor" type="plane" size="0 0 0.05" material="floor" pos="0 0 0"
+          solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2" priority="0"/>
+
+    <!--
+      Suspended above the floor so it is not intersecting on load.
+      Half-extents ≈ 60 × 40 × 10 mm — credit-card-ish PCB slab.
+      Small euler tip → first impact is slightly edge-biased (more natural rebound).
+    -->
+    <body name="odc" pos="0 0 1.4" euler="0.035 0.02 0">
+      <freejoint name="odc_free"/>
+      <!-- ~45 g PCB; diaginertia for a thin rectangular plate about COM. -->
+      <inertial pos="0 0 0" mass="0.045" diaginertia="1.2e-5 2.4e-5 3.2e-5"/>
+      <geom name="odc_box" type="box" size="0.06 0.04 0.01" material="odc" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+  </worldbody>
+</mujoco>

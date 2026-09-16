@@ -25,12 +25,12 @@ const FIREBASE = {
 
 const RESERVED = new Set([
   "about", "brand", "project", "projects", "editor", "docs", "seo", "3d",
-  "electronics", "download", "js", "guides", "api", "physicalai", "profile",
-  "login", "signup", "users", "user", "u", "admin", "www", "static", "assets",
-  "css", "img", "images", "favicon", "robots", "sitemap", "llms", "humans",
-  "ai", "index", "well-known", "agents", "blog", "shop", "store", "support",
-  "help", "legal", "privacy", "account", "settings", "new", "curriculum", "c",
-  "specification", "emulator", "press"
+  "physical", "electronics", "download", "js", "guides", "api", "physicalai",
+  "profile", "login", "signup", "users", "user", "u", "admin", "www", "static",
+  "assets", "css", "img", "images", "favicon", "robots", "sitemap", "llms",
+  "humans", "ai", "index", "well-known", "agents", "blog", "shop", "store",
+  "support", "help", "legal", "privacy", "account", "settings", "new",
+  "curriculum", "c", "specification", "emulator", "press"
 ]);
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";

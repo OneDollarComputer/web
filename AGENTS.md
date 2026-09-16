@@ -47,6 +47,8 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | `robots.txt` / `sitemap.xml` | Crawlers |
 | `editor/` | Firmware editor (not linked from homepage unless asked) |
 | `emulator/r2/` | Virtual board — RV32EC WASM (`/emulator/r2/`, `noindex`; `?projectID=` from editor **Lab → Simulate**; embed `?embed=1`) |
+| `physical/` | Physical Lab MuJoCo drop (`/physical/`) — published shell from sibling `physical/mujoco-drop`; **not** `3d/` |
+| `3d/` | Three.js GLB viewer (`/3d/viewer.html`) — separate from `/physical/` |
 | `c/` | Learn Physical AI — public activities at `/c/`; authors edit; agent MCP under `c/mcp/`. Old `/curriculum/` redirects here. |
 | `docs/` | Pinout, `board.yaml` |
 | `specification/` | Platform spec — RISC-V, pins 0–19, Simple Rust (`odc.rs/specification`) |
@@ -77,6 +79,7 @@ python3 serve.py
 # http://127.0.0.1:8080/cloud/           public user page (after you claim `cloud`)
 # http://127.0.0.1:8080/editor/?projectID=demo  Rust editor (local Cargo)
 # http://127.0.0.1:8080/emulator/r2/       virtual board (WASM, noindex)
+# http://127.0.0.1:8080/physical/          Physical Lab MuJoCo drop (not 3d/)
 # http://127.0.0.1:8080/c/                 Learn Physical AI (teacher curriculum)
 ```
 
