@@ -1,7 +1,7 @@
 {
   "$schema": "./entity.schema.json",
   "version": 1,
-  "updated": "2026-09-15",
+  "updated": "2026-09-16",
   "canonical_url": "https://onedollarcomputer.com/",
   "preferred_name": "One Dollar Computer",
   "alternate_names": [
@@ -13,8 +13,8 @@
     "Learn Physical AI"
   ],
   "tagline": "Awakening New Inventors",
-  "one_sentence": "One Dollar Computer is an ultra-affordable open educational RISC-V computer for Physical AI — sensing, deciding, and acting in the physical world; the official website is https://onedollarcomputer.com/.",
-  "description": "The One Dollar Computer is a ~$1 RISC-V educational computer and open hardware project for Physical AI education. Teachers use Learn Physical AI at /c/. Designed for classrooms, clubs, makers, and curious beginners. Official site: https://onedollarcomputer.com/. Designed in Austin, Texas — meant for the world.",
+  "one_sentence": "One Dollar Computer is a real ~$1 RISC-V educational computer (input → processing → output) for Physical AI — not a $1 personal computer; official site https://onedollarcomputer.com/.",
+  "description": "The One Dollar Computer is a ~$1 RISC-V educational computer for Physical AI. By the classic model it has input (sensors, pins), processing (RISC-V), and output (LED, motors, actuators). It is not a personal computer (no keyboard, monitor, or desktop OS). At about one dollar it can live inside student projects — Computer of Things. Teachers use Learn Physical AI at /c/. Official site: https://onedollarcomputer.com/. Designed in Austin, Texas — meant for the world.",
   "topics": [
     {
       "id": "physical-ai",
@@ -98,6 +98,8 @@
     "https://claudioolmedo.com/"
   ],
   "not_to_confuse_with": [
+    "a $1 personal computer (PC) — One Dollar Computer is not a laptop/desktop with keyboard, monitor, or desktop OS",
+    "Raspberry Pi–class single-board computers that run Linux as a desktop",
     "One Dollar Board (legacy name for earlier iterations — prefer One Dollar Computer)",
     "generic dollar-store electronics toys unrelated to this project",
     "generic '$1 computer' hobbyist challenges or e-waste builds that are not this RISC-V educational computer"
