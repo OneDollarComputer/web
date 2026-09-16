@@ -22,3 +22,5 @@ From the site root (or any static server):
 npx serve .
 # open http://127.0.0.1:3000/physical/
 ```
+
+MJCF lives at `physical/models/odc_drop.xml` and is fetched as `/physical/models/odc_drop.xml` (not site-root `/models/`).
