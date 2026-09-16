@@ -1,9 +1,9 @@
 # `/physical/` — Physical Lab (Marco 0)
 
-Published **static shell** of the MuJoCo drop demo from the sibling repo `physical/mujoco-drop` (Vite build with `base: '/physical/'`).
+Published **static shell** of the MuJoCo drop demo (Marco 0) from the sibling repo **physical** (`mujoco-drop/`). Core lives there; this folder is hosting glue only — same pattern as `emulator/r2/`.
 
 - Live: https://onedollarcomputer.com/physical/
-- Source of truth for the app: sibling **physical** repo (`mujoco-drop`), not this folder’s hand-edited JS
+- Hub contract: `web/3d/` = static GLB viewer (never overwrite); Physical Lab shell = `web/physical/`; core = `physical/mujoco-drop/` → publish as `web/physical/index.html`
 
 ## Do not confuse with `3d/`
 
@@ -16,11 +16,21 @@ Do **not** merge, symlink, or rebuild one into the other. Updates here are drop-
 
 ## Local preview
 
-From the site root (or any static server):
-
 ```bash
-npx serve .
-# open http://127.0.0.1:3000/physical/
+python3 serve.py --mode firebase
+# http://127.0.0.1:8080/physical/
 ```
 
-MJCF lives at `physical/models/odc_drop.xml` and is fetched as `/physical/models/odc_drop.xml` (not site-root `/models/`).
+## Refresh from `mujoco-drop`
+
+In the **physical** sibling, on the spike/app branch:
+
+```bash
+cd mujoco-drop
+# vite.config must use base: '/physical/'
+npm ci && npm run build
+rm -rf /path/to/web/physical/assets /path/to/web/physical/models
+cp -a dist/. /path/to/web/physical/
+```
+
+Then confirm `index.html` and hashed assets reference `/physical/...` (including MJCF `fetch("/physical/models/odc_drop.xml")`). Commit the new artifacts in **web**.
