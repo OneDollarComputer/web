@@ -515,6 +515,7 @@ PROFILE_RESERVED = frozenset(
         "docs",
         "seo",
         "3d",
+        "physical",
         "electronics",
         "download",
         "js",

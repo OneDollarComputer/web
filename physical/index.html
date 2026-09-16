@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Physical Lab — MuJoCo drop (Marco 0)</title>
+    <script type="module" crossorigin src="/physical/assets/index-BUZhtSIC.js"></script>
+    <link rel="stylesheet" crossorigin href="/physical/assets/index-C4_Piv8i.css">
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar">
+        <div class="brand">
+          <span class="mark">$</span>
+          <div>
+            <strong>One Dollar Computer</strong>
+            <small>Physical Lab · Marco 0 drop</small>
+          </div>
+        </div>
+        <div id="controls" class="controls" aria-label="Simulation controls">
+          <button id="btn-play" type="button">Play</button>
+          <button id="btn-pause" type="button" disabled>Pause</button>
+          <button id="btn-reset" type="button">Reset</button>
+          <button id="btn-pose" type="button" aria-pressed="true" title="Toggle pose HUD">Pose</button>
+          <button
+            id="btn-record"
+            type="button"
+            aria-pressed="false"
+            title="Record the WebGL canvas (WebM)"
+          >
+            Record
+          </button>
+        </div>
+        <p id="status" role="status">Loading MuJoCo…</p>
+      </header>
+      <div id="record-bar" class="record-bar" hidden>
+        <span id="record-live" class="record-live" hidden aria-live="polite">
+          <span class="record-dot" aria-hidden="true"></span>
+          Recording…
+        </span>
+        <a id="btn-download" class="download-link" href="#" download hidden
+          >Download video</a
+        >
+        <span class="record-tip">Chrome/Edge: WebM · Safari may differ · local only</span>
+      </div>
+      <aside id="pose-hud" aria-label="ODC pose readout">
+        <header>
+          <strong>Pose</strong>
+          <span class="frame-tag">MuJoCo Z-up · body odc</span>
+        </header>
+        <dl>
+          <div>
+            <dt>pos m</dt>
+            <dd id="pose-pos">—</dd>
+          </div>
+          <div>
+            <dt>quat wxyz</dt>
+            <dd id="pose-quat">—</dd>
+          </div>
+          <div>
+            <dt>euler XYZ °</dt>
+            <dd id="pose-euler">—</dd>
+          </div>
+          <div>
+            <dt>vel m/s</dt>
+            <dd id="pose-vel">—</dd>
+          </div>
+        </dl>
+        <p class="pose-hint">Also <code>window.__odcPose</code> each frame</p>
+      </aside>
+      <canvas id="c"></canvas>
+    </div>
+  </body>
+</html>
