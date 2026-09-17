@@ -76,6 +76,18 @@
       "topic": "physical-ai"
     },
     {
+      "query": "why Rust One Dollar Computer",
+      "intent": "community / education",
+      "landing": "https://onedollarcomputer.com/rust/",
+      "priority": 2
+    },
+    {
+      "query": "embedded Rust educational computer",
+      "intent": "discovery",
+      "landing": "https://onedollarcomputer.com/rust/",
+      "priority": 2
+    },
+    {
       "query": "cheap educational computer STEM",
       "intent": "discovery",
       "landing": "https://onedollarcomputer.com/",

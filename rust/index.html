@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Why Rust — One Dollar Computer</title>
+  <meta name="description" content="Why the One Dollar Computer is programmed in Rust — and why the Rust community is the difference between a niche language and the first language a generation invents with. Official: onedollarcomputer.com/rust/" />
+  <link rel="canonical" href="https://onedollarcomputer.com/rust/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="One Dollar Computer" />
+  <meta name="keywords" content="Rust, embedded Rust, One Dollar Computer, RISC-V, RV32EC, Physical AI, memory safety, educational Rust, WebHID, why Rust" />
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <link rel="alternate" type="text/plain" href="https://onedollarcomputer.com/llms.txt" title="LLM brief" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://onedollarcomputer.com/rust/" />
+  <meta property="og:title" content="Why Rust — One Dollar Computer" />
+  <meta property="og:description" content="Rust is not a fashion choice on a $1 computer. It is how the next inventors learn systems thinking — if the Rust community shows up." />
+  <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
+  <meta property="og:site_name" content="One Dollar Computer" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#07090F" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "https://onedollarcomputer.com/rust/#webpage",
+        "url": "https://onedollarcomputer.com/rust/",
+        "name": "Why Rust — One Dollar Computer",
+        "description": "Why One Dollar Computer firmware is Simple Rust, and why the Rust community’s support matters for Physical AI education.",
+        "isPartOf": { "@id": "https://onedollarcomputer.com/#website" },
+        "about": [
+          { "@type": "Thing", "name": "Rust" },
+          { "@type": "Thing", "name": "Embedded systems" },
+          { "@id": "https://onedollarcomputer.com/#product" }
+        ],
+        "keywords": ["Rust", "embedded Rust", "One Dollar Computer", "RISC-V", "Physical AI", "memory safety"]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://onedollarcomputer.com/rust/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why does the One Dollar Computer use Rust instead of C or Arduino-style C++?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because the first language a student flashes to hardware becomes muscle memory. Rust teaches systems thinking with memory safety by construction, on a ~$1 RISC-V computer, from a browser over WebHID — without asking beginners to fight undefined behavior before they blink an LED."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is One Dollar Computer firmware the same as no_std embedded Rust?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Beginners write Simple Rust: use odc::*; and fn main(). The editor wraps bare-metal details so the first hour is invention, not linker scripts. The language is real Rust on RISC-V; the ladder to full embedded Rust remains open."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How can the Rust community help?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Teach with it, improve examples and docs, share the project, help classrooms pre-order, and keep the board path as Rust — not a second beginner dialect. Official site: https://onedollarcomputer.com/rust/"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+  <script defer src="/js/analytics.js"></script>
+  <script defer src="/js/share.js"></script>
+  <link rel="stylesheet" href="/js/auth-nav.css" />
+  <script type="module" src="/js/auth-nav.js"></script>
+  <style>
+    :root {
+      --bg: #07090F;
+      --text: #E8EEF8;
+      --sub: #A9B4C7;
+      --accent: #48E1A7;
+      --line: #1D2843;
+      --card: #0D1220;
+      --rust: #DEA584;
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    nav.top {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    nav.top a { color: var(--accent); text-decoration: none; }
+    nav.top button[data-odc-share] {
+      color: var(--accent); background: transparent; border: 0; padding: 0;
+      font: inherit; cursor: pointer;
+    }
+    nav.top .brand {
+      display: flex; align-items: center; gap: 0.75rem;
+      color: var(--text); font-weight: 600; text-decoration: none;
+    }
+    .preorder-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px; background: #ffea00; color: #111 !important;
+      font-weight: 700; font-size: 12px; letter-spacing: 1.2px;
+      text-transform: uppercase; text-decoration: none; border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.28); margin-left: auto;
+    }
+    .preorder-btn:hover { background: #fff36a; }
+    .preorder-btn__price { background: #111; color: #ffea00; padding: 2px 6px; border-radius: 3px; }
+    main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+    .kicker {
+      font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--rust); margin: 0 0 0.75rem; font-weight: 600;
+    }
+    h1 {
+      font-size: clamp(1.85rem, 4.5vw, 2.45rem);
+      line-height: 1.15; margin: 0 0 1rem; letter-spacing: -0.02em;
+    }
+    .lede {
+      font-size: 1.15rem; color: var(--text); font-weight: 500;
+      margin: 0 0 2rem; line-height: 1.5;
+    }
+    h2 {
+      font-size: 1.15rem; margin: 2.5rem 0 0.75rem; color: var(--accent);
+    }
+    p, li { color: var(--sub); }
+    strong { color: var(--text); }
+    a { color: var(--accent); }
+    hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+    .code {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem 1.15rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: #d7e0ef;
+      margin: 1.25rem 0 1.5rem;
+    }
+    .code .kw { color: var(--rust); }
+    .code .fn { color: var(--accent); }
+    .pull {
+      margin: 2rem 0;
+      padding: 1.25rem 1.35rem;
+      border-left: 3px solid var(--rust);
+      background: rgba(222, 165, 132, 0.06);
+      border-radius: 0 10px 10px 0;
+    }
+    .pull p {
+      margin: 0;
+      color: var(--text);
+      font-size: 1.12rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .help {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0;
+    }
+    .help li {
+      margin: 0 0 0.85rem;
+      padding-left: 1.1rem;
+      position: relative;
+    }
+    .help li::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0.55em;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .cta-row {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      margin-top: 1.5rem; align-items: center;
+    }
+    .cta-secondary {
+      color: var(--accent); font-weight: 600; text-decoration: none;
+    }
+    footer.note {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="top" aria-label="Primary">
+    <a class="brand" href="/">
+      <img src="/odc_logo_white.svg" width="28" height="28" alt="" />
+      One Dollar Computer
+    </a>
+    <a href="/about/">About</a>
+    <a href="/c/">Physical AI</a>
+    <button type="button" data-odc-share>Share</button>
+    <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder">Pre-Order <span class="preorder-btn__price">$1</span></a>
+    <span class="odc-auth-slot"><a href="/project/" data-odc-signin>Sign in</a></span>
+  </nav>
+
+  <main>
+    <p class="kicker">Rust · RISC-V · Physical AI</p>
+    <h1>Why Rust — and why the Rust community is the difference</h1>
+    <p class="lede">The One Dollar Computer is programmed in Rust on purpose. Not as a trend. As a bet on who gets to invent the physical world next — and in what language.</p>
+
+    <p>If you write Rust, you already know the strange thing about this language: it does not spread only because it is clever. It spreads because people who care about correctness show up for each other — crates, docs, Embedded WG, Matrix rooms, conference workshops, late-night PRs. That community is everywhere. For a project that lives or dies on whether the next generation can flash real firmware for a dollar, that is not a nice-to-have. It is infrastructure.</p>
+
+    <div class="pull">
+      <p>Whoever owns the first computer a student trusts owns the muscle memory of invention.</p>
+    </div>
+
+    <h2>The first language is the lasting one</h2>
+    <p>Most people who “learned electronics” learned a dialect that ended at the kit. Proprietary pin maps. Toolchains that punish beginners. Undefined behavior treated as a rite of passage. By the time someone is ready for serious systems work, the habits are already set — and switching costs feel like starting over.</p>
+    <p>We refused that funnel. The <strong>One Dollar Computer</strong> is a ~$1 open <strong>RISC-V</strong> educational computer (model 1.004, revision <strong>R2</strong>, ISA <strong>RV32EC</strong>). Firmware is <strong>Simple Rust</strong>: real Rust, compiled for the board, flashed from a Chromium browser over <strong>WebHID</strong> — no driver install. The first hour is not “install a toolchain.” It is light on, light off, something physical answering your code.</p>
+    <p>That is the whole strategy: make the honest language also the easy first language.</p>
+
+    <h2>Why not C “because embedded always was”</h2>
+    <p>C still runs the world. It also taught generations that memory errors are weather — something you endure. Industry and government analyses have repeated the same pattern for years: on the order of <strong>~70%</strong> of high-severity security vulnerabilities in major codebases have been memory-safety issues (widely cited from Microsoft and Google/Chromium reporting; echoed in CISA and White House ONCD guidance urging memory-safe languages for new systems). Embedded is not exempt. Studies of real-time and embedded stacks keep finding memory-corruption bugs as a dominant class of serious defects.</p>
+    <p>Rust’s answer is not a sermon. It is a compiler that refuses whole categories of bugs <em>before</em> the binary exists — without a garbage collector, and with <code>no_std</code> paths that fit bare metal. For education, that matters twice: students learn systems thinking, and they do not learn to romanticize undefined behavior as toughness.</p>
+    <p>We are not asking classrooms to wait until they are “ready for Rust.” We are putting Rust on a computer cheap enough to leave inside the project.</p>
+
+    <h2>The missing rung in embedded Rust</h2>
+    <p>The embedded Rust ecosystem is real and growing — Discovery books, Espressif trainings, <code>embedded-hal</code>, Embassy, probe-rs, awesome-embedded-rust, RISC-V targets. The hard part is rarely “is Rust good for MCUs?” The hard part is the <strong>first mile</strong>: buy a board, pick a HAL, install targets, wire a probe, survive the linker, then blink.</p>
+    <p>That first mile filters for people who already know they want embedded Rust. It does not recruit the student who only has curiosity and a dollar.</p>
+    <p>ODC is that missing rung. Same language family. Same architecture ladder (RV32EC today → fuller RISC-V profiles tomorrow). Browser editor. Physical button only to enter the bootloader for Upload. Curriculum under <a href="/c/">Learn Physical AI</a> so teachers can run the loop at classroom scale. The point is not to replace the Embedded WG’s depth. The point is to feed it a generation that already thinks in Rust when the LED turns on.</p>
+
+<pre class="code" aria-label="Simple Rust blink example"><span class="kw">use</span> odc::*;
+
+<span class="kw">fn</span> <span class="fn">main</span>() {
+    <span class="kw">loop</span> {
+        <span class="fn">led_on</span>();
+        <span class="fn">delay</span>(500);
+        <span class="fn">led_off</span>();
+        <span class="fn">delay</span>(500);
+    }
+}</pre>
+
+    <p>Beginners write that shape. The editor wraps bare-metal entry so the first lesson is invention, not <code>#![no_std]</code> ceremony. Teaching HTML can be any metaphor; <strong>the board path is always Rust</strong> — never a second beginner dialect pretending to be firmware.</p>
+
+    <h2>Physical AI needs a body — and a safe language inside it</h2>
+    <p><strong>Physical AI</strong> is the shift from software that only writes text to systems that sense, decide, and act in the physical world. Robots, instruments, toys, classroom inventions. That future will be written in something. If it is written in the same memory-unsafe habits we already struggle to secure at planetary scale, we will scale the problem with the ambition.</p>
+    <p>A dollar computer that speaks Rust is how you put a safe systems language into a million small bodies — without waiting for a research budget. That is why this is not a side project for us. It is the education layer under Physical AI.</p>
+
+    <div class="pull">
+      <p>If the next inventors never meet Rust, embedded Rust stays a brilliant niche. If they meet it at one dollar, Rust becomes the default language of making.</p>
+    </div>
+
+    <h2>Why Rust people would help — the honest case</h2>
+    <p>Not charity. Alignment.</p>
+    <ul>
+      <li><strong>You expand the funnel.</strong> Every workshop that still starts in C++ for “simplicity” trains the ecosystem you are trying to grow out of. ODC lets “simple” and “Rust” be the same sentence.</li>
+      <li><strong>You defend the brand of the language where it matters most.</strong> Kids and teachers do not read RFCs. They remember what worked when the light blinked. Make that memory Rust.</li>
+      <li><strong>You connect RISC-V and Rust at the bottom of the ladder.</strong> Application profiles and datacenter cores are winning headlines. Educational RV32EC is how a student enters the same open ISA without a lab fee.</li>
+      <li><strong>You keep firmware honest.</strong> The project’s rule is strict: pedagogy can invent HTML experiences; the computer runs Simple Rust. Community pressure that keeps that true is survival — a beginner DSL would be easier marketing and a slower death.</li>
+      <li><strong>You are already distributed.</strong> Rustaceans are in universities, companies, Discord and Matrix channels, local meetups, governments adopting memory-safe roadmaps. ODC needs that graph more than it needs a louder homepage.</li>
+    </ul>
+
+    <h2>What we need from you</h2>
+    <p>Concrete help beats applause.</p>
+    <ul class="help">
+      <li><strong>Teach with it.</strong> One club night. One guest lecture. One Physical AI lesson that ends in Upload.</li>
+      <li><strong>Sharpen the path.</strong> Examples, docs, error messages, beginner traps — the difference between “almost” and “I did it.”</li>
+      <li><strong>Keep the board path Rust.</strong> Resist the temptation of a fake-simple language. HTML for teaching; Rust for the silicon.</li>
+      <li><strong>Put hardware in rooms that lack it.</strong> Pre-order for a classroom. Three thousand dollars is three thousand starting points.</li>
+      <li><strong>Say the quiet part in public.</strong> Share why a $1 RISC-V computer speaking Rust is an ecosystem move, not a gadget review.</li>
+    </ul>
+
+    <div class="cta-row">
+      <a class="preorder-btn" href="https://shop.claudioolmedo.com/preorder" style="margin-left:0">Pre-Order <span class="preorder-btn__price">$1</span></a>
+      <a class="cta-secondary" href="/editor/">Open the editor</a>
+      <a class="cta-secondary" href="https://github.com/OneDollarComputer">GitHub</a>
+    </div>
+
+    <hr />
+
+    <h2>Facts, short</h2>
+    <ul>
+      <li>Product: One Dollar Computer · model <strong>1.004</strong> · revision <strong>R2</strong></li>
+      <li>Architecture: RISC-V <strong>RV32EC</strong> · up to 48 MHz · 16 KB flash · 2 KB RAM · pins 0–19</li>
+      <li>Language: Simple Rust (<code>use odc::*;</code>) · flash via WebHID in Chromium</li>
+      <li>Education: <a href="/c/">Learn Physical AI</a> · rules for agents: <a href="/c/AGENT_LESSONS.md">AGENT_LESSONS.md</a></li>
+      <li>Spec: <a href="/specification/">onedollarcomputer.com/specification/</a></li>
+    </ul>
+
+    <p class="footer note">Designed in Austin, Texas — meant for the world. Official site: <a href="https://onedollarcomputer.com/">onedollarcomputer.com</a>. This page: <a href="https://onedollarcomputer.com/rust/">onedollarcomputer.com/rust/</a>.</p>
+  </main>
+</body>
+</html>

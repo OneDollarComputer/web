@@ -30,7 +30,7 @@ const RESERVED = new Set([
   "assets", "css", "img", "images", "favicon", "robots", "sitemap", "llms",
   "humans", "ai", "index", "well-known", "agents", "blog", "shop", "store",
   "support", "help", "legal", "privacy", "account", "settings", "new",
-  "curriculum", "c", "specification", "emulator", "press"
+  "curriculum", "c", "specification", "emulator", "press", "rust"
 ]);
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";

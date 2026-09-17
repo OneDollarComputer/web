@@ -559,6 +559,7 @@ PROFILE_RESERVED = frozenset(
         "specification",
         "emulator",
         "press",
+        "rust",
     }
 )
 
