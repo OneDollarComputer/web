@@ -11,10 +11,10 @@ Published **static shell** of the MuJoCo drop lab from sibling repo `physical/mu
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `84c8d3ecfddccc5870156506b08c7cc6f6319651` |
-| Built | 2026-09-18T12:20Z (`vite build --base=/physical/`) |
+| Commit | `428f150656680ffbcdbf3bbd3ad31b8fff1ae38a` |
+| Built | 2026-09-18T16:12Z (`vite build --base=/physical/`) |
 
-Cyan selection outline/glow, plus mobile UI, SG90 motor, Fusion STEP parts, Attach/Detach welds, and motor orient.
+SG90 lab contact `solref` now `0.012 0.25` (peer ODC bounce); mass remains datasheet **0.009 kg**. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
 
 ## Do not confuse with `3d/`
 
