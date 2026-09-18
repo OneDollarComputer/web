@@ -1,0 +1,33 @@
+<mujoco model="ut_longhorn">
+  <!--
+    UT Longhorn — free rigid body for Physical Lab.
+
+    Provenance: user Fusion STEP export — cad/utLonghorn.step — see cad/SOURCE.md.
+    Product name from STEP: "UT Longhorn".
+
+    Physics: free body only — NO joints, actuators, or animation.
+    Collider: axis-aligned box from STEP AABB (half-extents in meters).
+    Mass: ASSUMPTION — ~55 g plastic decorative part; not weighed.
+  -->
+  <compiler angle="radian" coordinate="local"/>
+
+  <asset>
+    <material name="ut_longhorn" rgba="0.72 0.42 0.12 1" specular="0.35" shininess="0.4"/>
+  </asset>
+
+  <worldbody>
+    <!--
+      Air spawn near ODC (origin), battery holder (−X), and SG90 (+X).
+      Half-extents from ALIGN.txt: 0.042034 × 0.017542 × 0.006350 m
+      → full ≈ 84.07 × 35.08 × 12.70 mm.
+    -->
+    <body name="ut_longhorn" pos="0.08 0.30 1.48" euler="0.04 0.015 -0.06">
+      <freejoint name="ut_longhorn_free"/>
+      <!-- ASSUMPTION mass 0.055 kg; diaginertia = solid-box about COM from AABB. -->
+      <inertial pos="0 0 0" mass="0.055" diaginertia="6.380812e-6 3.313163e-5 3.803395e-5"/>
+      <geom name="ut_longhorn_box" type="box" size="0.042034 0.017542 0.00635"
+            material="ut_longhorn" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+  </worldbody>
+</mujoco>

@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-CytiJxht.js"></script>
+    <title>Physical Lab — SG90 servo bench</title>
+    <script type="module" crossorigin src="/physical/assets/sg90-D203UsMk.js"></script>
     <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-DPVzgJlF.js">
     <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-Do9ngzWO.css">
   </head>
@@ -15,113 +15,18 @@
           <span class="mark">$</span>
           <div>
             <strong>One Dollar Computer</strong>
-            <small>Physical Lab · Marco 0 drop + Fusion parts + SG90</small>
+            <small>Physical Lab · SG90 bench</small>
           </div>
         </div>
         <div id="controls" class="controls" aria-label="Simulation controls">
           <button id="btn-play" type="button">Play</button>
           <button id="btn-pause" type="button" disabled>Pause</button>
           <button id="btn-reset" type="button">Reset</button>
-          <button id="btn-pose" type="button" aria-pressed="true" title="Toggle pose HUD">Pose</button>
           <button id="btn-camera" type="button" aria-pressed="true" title="Toggle camera angle HUD">Camera</button>
-          <button
-            id="btn-record"
-            type="button"
-            aria-pressed="false"
-            title="Record the WebGL canvas (WebM)"
-          >
-            Record
-          </button>
-          <a class="nav-link" href="./sg90.html">SG90 bench</a>
+          <a class="nav-link" href="./">ODC drop</a>
         </div>
         <p id="status" role="status">Loading MuJoCo…</p>
       </header>
-      <div id="record-bar" class="record-bar" hidden>
-        <span id="record-live" class="record-live" hidden aria-live="polite">
-          <span class="record-dot" aria-hidden="true"></span>
-          Recording…
-        </span>
-        <a id="btn-download" class="download-link" href="#" download hidden
-          >Download video</a
-        >
-        <span class="record-tip">Chrome/Edge: WebM · Safari may differ · local only</span>
-      </div>
-
-      <aside id="selection-panel" class="selection-panel" aria-label="Selected object" hidden>
-        <header>
-          <strong>Selection</strong>
-          <span class="frame-tag">click · Shift+click partner</span>
-        </header>
-        <dl>
-          <div>
-            <dt>name</dt>
-            <dd id="sel-name">—</dd>
-          </div>
-          <div>
-            <dt>type</dt>
-            <dd id="sel-type">—</dd>
-          </div>
-          <div>
-            <dt>id</dt>
-            <dd id="sel-id">—</dd>
-          </div>
-          <div>
-            <dt>pose</dt>
-            <dd id="sel-pose">—</dd>
-          </div>
-          <div>
-            <dt>extra</dt>
-            <dd id="sel-extra">—</dd>
-          </div>
-          <div>
-            <dt>partner</dt>
-            <dd id="sel-partner">— (Shift+click)</dd>
-          </div>
-          <div>
-            <dt>group</dt>
-            <dd id="sel-group">—</dd>
-          </div>
-        </dl>
-        <div class="sel-attach" role="group" aria-label="Glue / weld">
-          <button id="btn-attach" type="button" disabled title="Weld selected + partner at current relative pose">
-            Attach
-          </button>
-          <button id="btn-detach" type="button" disabled title="Remove weld involving selection">
-            Detach
-          </button>
-        </div>
-        <p id="sel-hint" class="sel-hint" hidden>Drag to reorient</p>
-        <p class="pose-hint">
-          Glue = MuJoCo <code>weld</code> at attach pose ·
-          <code>window.__labWelds</code>
-        </p>
-      </aside>
-
-      <aside id="pose-hud" aria-label="ODC pose readout">
-        <header>
-          <strong>Pose</strong>
-          <span class="frame-tag">MuJoCo Z-up · body odc</span>
-        </header>
-        <dl>
-          <div>
-            <dt>pos m</dt>
-            <dd id="pose-pos">—</dd>
-          </div>
-          <div>
-            <dt>quat wxyz</dt>
-            <dd id="pose-quat">—</dd>
-          </div>
-          <div>
-            <dt>euler XYZ °</dt>
-            <dd id="pose-euler">—</dd>
-          </div>
-          <div>
-            <dt>vel m/s</dt>
-            <dd id="pose-vel">—</dd>
-          </div>
-        </dl>
-        <p class="pose-hint">Also <code>window.__odcPose</code> · camera <code>window.__cameraPose</code></p>
-      </aside>
 
       <aside id="sg90-panel" aria-label="SG90 position commands">
         <header>
@@ -175,8 +80,8 @@
           </div>
         </fieldset>
         <p id="motor-orient-note" class="spline-note">
-          Whole housing + horn. Lab: edit while paused / applied on Reset (does not fight freejoint mid-flight). Independent of shaft target and horn mount.
-          Click any free body to select, then drag to reorient. Shift+click a second body, then Attach to weld (demo: SG90 onto battery holder).
+          Whole housing + horn as one rigid body (yaw Z / pitch Y / roll X). Independent of shaft target and horn mount.
+          Click the housing to select, then drag to reorient (sliders stay in sync).
         </p>
         <div class="angle-presets" role="group" aria-label="Angle presets">
           <button type="button" data-angle="-90" disabled>−90°</button>
@@ -229,8 +134,40 @@
           </div>
         </dl>
         <p class="pose-hint">
-          Same world as ODC — see <code>models/sg90/PARAMS.md</code>
+          Approx. digital twin for feasibility — see
+          <code>models/sg90/PARAMS.md</code> · camera <code>window.__cameraPose</code>
         </p>
+      </aside>
+
+      <aside id="selection-panel" class="selection-panel" aria-label="Selected object" hidden>
+        <header>
+          <strong>Selection</strong>
+          <span class="frame-tag">click housing</span>
+        </header>
+        <dl>
+          <div>
+            <dt>name</dt>
+            <dd id="sel-name">—</dd>
+          </div>
+          <div>
+            <dt>type</dt>
+            <dd id="sel-type">—</dd>
+          </div>
+          <div>
+            <dt>id</dt>
+            <dd id="sel-id">—</dd>
+          </div>
+          <div>
+            <dt>pose</dt>
+            <dd id="sel-pose">—</dd>
+          </div>
+          <div>
+            <dt>extra</dt>
+            <dd id="sel-extra">—</dd>
+          </div>
+        </dl>
+        <p id="sel-hint" class="sel-hint" hidden>Drag to reorient motor</p>
+        <p class="pose-hint">Also <code>window.__labSelection</code></p>
       </aside>
 
       <canvas id="c"></canvas>

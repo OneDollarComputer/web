@@ -1,0 +1,33 @@
+<mujoco model="hat">
+  <!--
+    Hat — free rigid body for Physical Lab.
+
+    Provenance: user Fusion STEP export — cad/hat.step — see cad/SOURCE.md.
+    Product name from STEP: "Hat".
+
+    Physics: free body only — NO joints, actuators, or animation.
+    Collider: axis-aligned box from STEP AABB (half-extents in meters).
+    Mass: ASSUMPTION — 0.0117 kg ≈ plastic density 1.20 g/cm³ × mesh vol ~9.75 cm³.
+  -->
+  <compiler angle="radian" coordinate="local"/>
+
+  <asset>
+    <material name="hat" rgba="0.55 0.22 0.28 1" specular="0.3" shininess="0.35"/>
+  </asset>
+
+  <worldbody>
+    <!--
+      Air spawn near other free bodies.
+      Half-extents from ALIGN.txt: 0.014618 × 0.0085 × 0.014628 m
+      → full ≈ 29.24 × 17.00 × 29.26 mm.
+    -->
+    <body name="hat" pos="0.22 0.18 1.52" euler="0.05 -0.03 0.1">
+      <freejoint name="hat_free"/>
+      <!-- ASSUMPTION mass 0.0117 kg; diaginertia = solid-box about COM from AABB. -->
+      <inertial pos="0 0 0" mass="0.0117" diaginertia="1.116448e-6 1.668154e-6 1.115335e-6"/>
+      <geom name="hat_box" type="box" size="0.014618 0.0085 0.014628"
+            material="hat" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,44 @@
+<mujoco model="sg90_bench">
+  <!--
+    Demo bench for the reusable SG90 component (servo only by default).
+    Includes sg90.xml (or sg90_loaded.xml from the UI for absurd-load saturation).
+    Browser loads via MjVFS — see src/loadMjcf.js / src/sg90Main.js.
+
+    Physics-oriented digital-twin approximation for mechanism feasibility, not a CAD twin.
+    Parameter provenance: PARAMS.md in this folder.
+  -->
+  <compiler angle="radian" coordinate="local" autolimits="true"/>
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="implicitfast" iterations="50"/>
+
+  <include file="sg90.xml"/>
+
+  <visual>
+    <rgba haze="0.12 0.16 0.22 1"/>
+    <quality shadowsize="2048"/>
+  </visual>
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.22 0.26 0.30" rgb2="0.16 0.19 0.22"
+             width="512" height="512"/>
+    <material name="floor" texture="grid" texrepeat="8 8" reflectance="0.1"/>
+    <material name="bench_mount" rgba="0.28 0.30 0.34 1" specular="0.2" shininess="0.25"/>
+  </asset>
+
+  <default>
+    <geom friction="0.5 0.005 0.0001" condim="3"/>
+  </default>
+
+  <worldbody>
+    <light name="key" directional="true" diffuse="0.75 0.75 0.7" specular="0.25 0.25 0.2"
+           pos="0.4 0.3 0.8" dir="-0.3 -0.25 -1"/>
+    <light name="fill" directional="true" diffuse="0.28 0.32 0.36" pos="-0.5 0.2 0.5"
+           dir="0.4 -0.15 -1" castshadow="false"/>
+
+    <geom name="floor" type="plane" size="0 0 0.05" material="floor" pos="0 0 0"
+          solref="0.02 1" solimp="0.9 0.95 0.001 0.5 2"/>
+
+    <!-- Visual pedestal under the side-mounted SG90 housing. -->
+    <geom name="bench_pedestal" type="box" size="0.03 0.025 0.02" pos="0 0 0.02"
+          material="bench_mount" contype="0" conaffinity="0"/>
+  </worldbody>
+</mujoco>

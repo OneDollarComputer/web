@@ -1,0 +1,10 @@
+# AABB from Fusion UT Longhorn.step (mm in STEP; meters below)
+# origin: user Fusion export — see cad/SOURCE.md
+extents_mm: 84.0672 35.0847 12.7000
+extents_m: 0.084067 0.035085 0.012700
+half_extents_m: 0.042034 0.017542 0.006350
+aabb_min_mm: -42.0398 -2.6964 0.0000
+aabb_max_mm: 42.0273 32.3883 12.7000
+center_mm: -0.0062 14.8459 6.3500
+note: visual centers AABB on body origin; collider half-extents match this box
+units: mm verified (≈84×35×12.7 mm — real badge-scale part, not meters)

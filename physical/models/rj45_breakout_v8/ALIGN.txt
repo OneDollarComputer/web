@@ -1,0 +1,13 @@
+# AABB from Fusion RJ45_breakout v8.step (mm in STEP; meters below)
+# origin: user Fusion export — see cad/SOURCE.md
+extents_mm: 34.0000 19.9500 28.0000
+extents_m: 0.034000 0.019950 0.028000
+half_extents_m: 0.017000 0.009975 0.014000
+aabb_min_mm: -17.0327 -16.0354 -13.5074
+aabb_max_mm: 16.9673 3.9146 14.4926
+center_mm: -0.0327 -6.0604 0.4926
+mesh_vol_mm3: 4801.2
+density_g_cm3: 1.50
+mass_kg: 0.0072
+note: visual centers AABB on body origin; collider half-extents match this box
+units: mm verified (≈34×20×28 mm — RJ45 breakout board scale)

@@ -1,0 +1,8 @@
+source=GrabCAD https://grabcad.com/library/sg90-5
+shaft_tip_z_m=0.03
+mount_face_z_m=0.0269
+shaft_z_m=0.0269
+body_extents_m=[0.032200000000000006, 0.012300000000000002, 0.03]
+horn_extents_m=[0.019612732, 0.019383969, 0.004000000000000001]
+horn_origin=cross_hub
+note=body rotated so height~Z; horn cross in XY, thickness Z; rotor seats on boss (mount_face), not spline tip (~3.1 mm stub)
