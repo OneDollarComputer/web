@@ -47,7 +47,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | `robots.txt` / `sitemap.xml` | Crawlers |
 | `editor/` | Firmware editor (not linked from homepage unless asked) |
 | `emulator/r2/` | Virtual board — RV32EC WASM (`/emulator/r2/`, `noindex`; `?projectID=` from editor **Lab → Simulate**; embed `?embed=1`) |
-| `physical/` | Physical Lab MuJoCo drop (`/physical/`) — published shell from sibling `physical/mujoco-drop`; **not** `3d/` |
+| `physical/` | Physical Lab MuJoCo drop (`/physical/`) — published shell from sibling `physical/mujoco-drop`; **not** `3d/` · pose JSON cloud: `/physical/cloud/` → RTDB `users/{uid}/physicalPoses/{id}` |
 | `3d/` | Three.js GLB viewer (`/3d/viewer.html`) — separate from `/physical/` |
 | `c/` | Learn Physical AI — public activities at `/c/`; authors edit; agent MCP under `c/mcp/`. Old `/curriculum/` redirects here. |
 | `docs/` | Pinout, `board.yaml` |

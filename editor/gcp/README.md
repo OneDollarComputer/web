@@ -7,6 +7,7 @@ Firebase project: **`odc-files`** (replaced the legacy One Dollar Board project,
 | Firebase project | **`odc-files`** |
 | RTDB | `odc-files-default-rtdb` |
 | Path | `/projects/{id}/code` |
+| Physical poses | `/users/{uid}/physicalPoses/{id}` (owner-only assembly pose JSON) |
 | Cache | `/cache/{sha1}` |
 | Compile | **Rust** via `wrap_odc` + Cargo |
 

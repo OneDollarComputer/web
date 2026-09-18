@@ -31,6 +31,7 @@ Aliases for Physical AI: `Physical AI`, `Learn Physical AI`, `physicalai`, `Phys
 - **About / mission:** https://onedollarcomputer.com/about/
 - **Why Rust (community):** https://onedollarcomputer.com/rust/ — why firmware is Simple Rust; call for Rust community support
 - **Sign in / your page:** https://onedollarcomputer.com/project/ (Google → `/{username}/`. Projects stay private until **Publish**, which cannot be undone. Public projects can be copied with **Edit**.)
+- **Physical Lab pose projects:** https://onedollarcomputer.com/physical/cloud/ — Google sign-in; assembly pose JSON at RTDB `users/{uid}/physicalPoses/{id}` (owner-only; see `/physical/README.md`)
 - **Learn Physical AI (teachers):** https://onedollarcomputer.com/c/ — public Physical AI activities; authors create curriculum; share `?lesson=id`; **Agent links** (`?connect=code`) are for MCP `curriculum_pair` only (see `/c/llms.txt`)
 - **Physical AI lesson rules:** https://onedollarcomputer.com/c/AGENT_LESSONS.md
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
