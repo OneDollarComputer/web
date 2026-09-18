@@ -11,10 +11,10 @@ Published **static shell** of the MuJoCo drop lab from sibling repo `physical/mu
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `05f04f0841814831833d84b64a917fdb43cdf08e` |
-| Built | 2026-09-18T08:09Z (`vite build --base=/physical/`) |
+| Commit | `84c8d3ecfddccc5870156506b08c7cc6f6319651` |
+| Built | 2026-09-18T12:20Z (`vite build --base=/physical/`) |
 
-Mobile UI (Controls drawer on phone) plus SG90 motor, Fusion STEP parts, Attach/Detach welds, and motor orient.
+Cyan selection outline/glow, plus mobile UI, SG90 motor, Fusion STEP parts, Attach/Detach welds, and motor orient.
 
 ## Do not confuse with `3d/`
 
