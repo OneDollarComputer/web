@@ -81,10 +81,10 @@ firebase deploy --only database --project odc-files
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `428f150656680ffbcdbf3bbd3ad31b8fff1ae38a` |
-| Built | 2026-09-18T16:12Z (`vite build --base=/physical/`) |
+| Commit | `9a41797f5c1910011a91490bbef3bbace9182f7f` |
+| Built | 2026-09-18T22:38Z (`vite build --base=/physical/`) |
 
-SG90 lab contact `solref` now `0.012 0.25` (peer ODC bounce); mass remains datasheet **0.009 kg**. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
+Numeric **Pose data** panel on selected free bodies: editable X/Y/Z (m) plus euler XYZ° / quat wxyz; Apply on Enter or blur. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
 
 ## Do not confuse with `3d/`
 

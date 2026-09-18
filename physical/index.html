@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-yKAIbd5e.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-JEWQgQAe.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-K0s2-Jcl.css">
+    <script type="module" crossorigin src="/physical/assets/main-CpdNEv3m.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-ANXnnOFY.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-DFAvMjLC.css">
     <script type="module" src="/physical/js/pose-bridge.js"></script>
   </head>
   <body>
@@ -53,6 +53,19 @@
           <strong>Selection</strong>
           <span class="frame-tag">click · Shift+click partner</span>
         </header>
+        <div class="pointer-mode" role="group" aria-label="Pointer mode">
+          <button id="btn-mode-orbit" type="button" aria-pressed="true" title="Left-drag orbits the camera">
+            Orbit
+          </button>
+          <button
+            id="btn-mode-place"
+            type="button"
+            aria-pressed="false"
+            title="Left-drag moves the selected free body (pause first)"
+          >
+            Place
+          </button>
+        </div>
         <dl>
           <div>
             <dt>name</dt>
@@ -83,6 +96,177 @@
             <dd id="sel-group">—</dd>
           </div>
         </dl>
+        <section
+          id="pose-data-panel"
+          class="pose-data-panel"
+          aria-label="Pose data"
+          hidden
+        >
+          <header>
+            <strong>Pose data</strong>
+            <span class="frame-tag">meters · degrees · Enter/Apply</span>
+          </header>
+          <dl class="pose-data-meta">
+            <div>
+              <dt>body</dt>
+              <dd id="pose-data-body">—</dd>
+            </div>
+            <div>
+              <dt>weld</dt>
+              <dd id="pose-data-weld">—</dd>
+            </div>
+          </dl>
+          <fieldset class="pose-data-fields" aria-label="Position meters">
+            <legend>Position (m)</legend>
+            <label>
+              <span>X</span>
+              <input
+                id="pose-data-x"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="pos"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>Y</span>
+              <input
+                id="pose-data-y"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="pos"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>Z</span>
+              <input
+                id="pose-data-z"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="pos"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+          </fieldset>
+          <fieldset class="pose-data-fields" aria-label="Euler XYZ degrees">
+            <legend>Euler XYZ (°)</legend>
+            <label>
+              <span>X</span>
+              <input
+                id="pose-data-ex"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="euler"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>Y</span>
+              <input
+                id="pose-data-ey"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="euler"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>Z</span>
+              <input
+                id="pose-data-ez"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="euler"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+          </fieldset>
+          <fieldset class="pose-data-fields pose-data-quat" aria-label="Quaternion wxyz">
+            <legend>Quat wxyz</legend>
+            <label>
+              <span>W</span>
+              <input
+                id="pose-data-qw"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="quat"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>X</span>
+              <input
+                id="pose-data-qx"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="quat"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>Y</span>
+              <input
+                id="pose-data-qy"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="quat"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+            <label>
+              <span>Z</span>
+              <input
+                id="pose-data-qz"
+                type="text"
+                inputmode="decimal"
+                data-pose-group="quat"
+                autocomplete="off"
+                spellcheck="false"
+                disabled
+              />
+            </label>
+          </fieldset>
+          <button
+            id="btn-pose-apply"
+            type="button"
+            disabled
+            title="Apply typed pose to the freejoint (pause first if running)"
+          >
+            Apply pose
+          </button>
+          <p class="pose-data-hint">
+            Click a field and type · Enter or blur updates the sim (Pause) ·
+            Place drag still works · fields sync after drag / selection change
+          </p>
+        </section>
+        <div class="place-nudge" role="group" aria-label="Nudge position">
+          <span class="place-nudge-label">Nudge 5&nbsp;mm</span>
+          <button type="button" data-nudge="-0.005,0,0" title="−X">−X</button>
+          <button type="button" data-nudge="0.005,0,0" title="+X">+X</button>
+          <button type="button" data-nudge="0,-0.005,0" title="−Y">−Y</button>
+          <button type="button" data-nudge="0,0.005,0" title="+Y">+Y</button>
+          <button type="button" data-nudge="0,0,-0.005" title="−Z">−Z</button>
+          <button type="button" data-nudge="0,0,0.005" title="+Z">+Z</button>
+        </div>
         <div class="sel-attach" role="group" aria-label="Glue / weld">
           <button id="btn-attach" type="button" disabled title="Weld selected + partner at current relative pose">
             Attach
@@ -91,9 +275,24 @@
             Detach
           </button>
         </div>
+        <div class="sel-attach" role="group" aria-label="Save / copy pose">
+          <button id="btn-copy-pose" type="button" disabled title="Copy selected body pose as recipe JSON">
+            Copy pose
+          </button>
+          <button
+            id="btn-save-poses"
+            type="button"
+            disabled
+            title="Download recipe-compatible JSON (part ids + pos/euler + welds)"
+          >
+            Save poses (JSON)
+          </button>
+        </div>
         <p id="sel-hint" class="sel-hint" hidden>Drag to reorient</p>
         <p class="pose-hint">
-          Glue = MuJoCo <code>weld</code> at attach pose ·
+          Place = translate (Pause) · <strong>Pose data</strong> = type XYZ / euler ·
+          Orbit = camera · Attach welds at current relpose ·
+          <strong>Save</strong> downloads recipe JSON ·
           <code>window.__labWelds</code>
         </p>
       </aside>
@@ -231,6 +430,45 @@
         </dl>
         <p class="pose-hint">
           Same world as ODC — see <code>models/sg90/PARAMS.md</code>
+        </p>
+      </aside>
+
+      
+      <aside id="assemblies-panel" class="assemblies-panel" aria-label="Assemblies">
+        <header>
+          <strong>Assemblies</strong>
+          <span class="frame-tag">recipes · multi-instance</span>
+        </header>
+        <p class="pose-hint">
+          Spawn a JSON recipe (parts + poses + welds). First demo:
+          <strong>Cowboy Walker</strong> — hat→ODC→RJ45→battery on 4× SG90 legs (horns down).
+        </p>
+        <p class="pose-hint place-howto">
+          <strong>Place + Save:</strong> Pause → Selection → <em>Place</em> → select a part →
+          drag or nudge XYZ → rotate via sliders / Reorient (Orbit mode) →
+          <em>Save poses (JSON)</em> downloads
+          <code>&lt;id&gt;_poses.json</code> (part ids +
+          <code>pos</code>/<code>euler_xyz_deg</code> + welds) · Shift+click partner →
+          <em>Attach</em> welds at the current relative pose.
+        </p>
+        <ul id="assembly-list" class="assembly-list"></ul>
+        <pre id="assembly-meta" class="assembly-meta">(no assembly spawned)</pre>
+        <div class="sel-attach" role="group" aria-label="Assembly actions">
+          <button
+            id="btn-assembly-save"
+            type="button"
+            disabled
+            title="Download recipe-compatible JSON with current poses + welds"
+          >
+            Save poses (JSON)
+          </button>
+          <button id="btn-assembly-clear" type="button" disabled title="Remove the active assembly recipe">
+            Clear assembly
+          </button>
+        </div>
+        <p class="pose-hint">
+          Authoring: <code>docs/ASSEMBLIES.md</code> ·
+          <code>window.__labAssemblies</code>
         </p>
       </aside>
 

@@ -1,0 +1,264 @@
+{
+  "id": "cowboy_walker",
+  "title": "Cowboy Walker",
+  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45+Hat, UT Longhorn at hat, orange front bumper box_proxy, Ball free ahead.",
+  "origin": [
+    0.15,
+    0,
+    0
+  ],
+  "parts": [
+    {
+      "id": "chassis",
+      "fusionName": "AA Battery Holder v11",
+      "kind": "battery_holder_4aa",
+      "pos": [
+        0,
+        0,
+        0.028
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        0
+      ],
+      "reuseLabBody": true
+    },
+    {
+      "id": "rj45",
+      "fusionName": "RJ45_breakout v8:1",
+      "kind": "rj45_breakout_v8",
+      "pos": [
+        0,
+        0,
+        0.052
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        0
+      ],
+      "reuseLabBody": true
+    },
+    {
+      "id": "odc",
+      "fusionName": "OneDollarComputer (ODC)",
+      "kind": "odc",
+      "pos": [
+        0,
+        0,
+        0.078
+      ],
+      "euler_xyz_deg": [
+        90,
+        0,
+        90
+      ],
+      "reuseLabBody": true
+    },
+    {
+      "id": "hat",
+      "fusionName": "Hat:1",
+      "kind": "hat",
+      "pos": [
+        0,
+        0,
+        0.112
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        -15
+      ],
+      "reuseLabBody": true
+    },
+    {
+      "id": "longhorn",
+      "fusionName": "UT Longhorn:1",
+      "kind": "ut_longhorn",
+      "pos": [
+        -0.008,
+        0,
+        0.118
+      ],
+      "euler_xyz_deg": [
+        0,
+        15,
+        90
+      ],
+      "reuseLabBody": true
+    },
+    {
+      "id": "sg90_4",
+      "fusionName": "SG90:4 + SG90_5_holes_arm:1",
+      "kind": "sg90",
+      "pos": [
+        0.018,
+        0.042,
+        0.028
+      ],
+      "euler_xyz_deg": [
+        90,
+        0,
+        0
+      ],
+      "hingeDeg": -90,
+      "hornMount": 0,
+      "motor": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      }
+    },
+    {
+      "id": "sg90_5",
+      "fusionName": "SG90:5 + SG90_5_holes_arm:2",
+      "kind": "sg90",
+      "pos": [
+        0.018,
+        -0.042,
+        0.028
+      ],
+      "euler_xyz_deg": [
+        -90,
+        0,
+        0
+      ],
+      "hingeDeg": -90,
+      "hornMount": 0,
+      "motor": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      }
+    },
+    {
+      "id": "sg90_6",
+      "fusionName": "SG90:6 + SG90_5_holes_arm:3",
+      "kind": "sg90",
+      "pos": [
+        -0.018,
+        0.042,
+        0.028
+      ],
+      "euler_xyz_deg": [
+        90,
+        0,
+        0
+      ],
+      "hingeDeg": -90,
+      "hornMount": 0,
+      "motor": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      }
+    },
+    {
+      "id": "sg90_7",
+      "fusionName": "SG90:7 + SG90_5_holes_arm:4",
+      "kind": "sg90",
+      "pos": [
+        -0.018,
+        -0.042,
+        0.028
+      ],
+      "euler_xyz_deg": [
+        -90,
+        0,
+        0
+      ],
+      "hingeDeg": -90,
+      "hornMount": 0,
+      "motor": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      }
+    },
+    {
+      "id": "bumper",
+      "fusionName": "orange U/C plow (Fusion front bumper)",
+      "kind": "box_proxy",
+      "pos": [
+        0.045,
+        0,
+        0.022
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        0
+      ],
+      "box": {
+        "size": [
+          0.01,
+          0.036,
+          0.012
+        ],
+        "rgba": [
+          1,
+          0.45,
+          0.08,
+          1
+        ],
+        "mass": 0.008
+      }
+    },
+    {
+      "id": "ball",
+      "fusionName": "Ball:1",
+      "kind": "ping_pong_ball",
+      "pos": [
+        0.1,
+        0,
+        0.015
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        0
+      ],
+      "reuseLabBody": true
+    }
+  ],
+  "welds": [
+    {
+      "parent": "chassis",
+      "child": "rj45"
+    },
+    {
+      "parent": "rj45",
+      "child": "odc"
+    },
+    {
+      "parent": "odc",
+      "child": "hat"
+    },
+    {
+      "parent": "hat",
+      "child": "longhorn"
+    },
+    {
+      "parent": "chassis",
+      "child": "sg90_4"
+    },
+    {
+      "parent": "chassis",
+      "child": "sg90_5"
+    },
+    {
+      "parent": "chassis",
+      "child": "sg90_6"
+    },
+    {
+      "parent": "chassis",
+      "child": "sg90_7"
+    },
+    {
+      "parent": "chassis",
+      "child": "bumper"
+    }
+  ],
+  "placeholders": []
+}
