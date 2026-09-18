@@ -10,12 +10,11 @@ Published **static shell** of the MuJoCo drop lab from sibling repo `physical/mu
 
 | | |
 |--|--|
-| Source | `OneDollarComputer/physical` PR **#5** |
-| Branch | `cursor/sg90-odc-lab-fusion-b3ac` |
-| Commit | `679c7b58fbc884f3263b945ef427b437e0252f4f` |
-| Built | 2026-09-18T06:11Z (`vite build --base=/physical/`) |
+| Source | `OneDollarComputer/physical` |
+| Commit | `05f04f0841814831833d84b64a917fdb43cdf08e` |
+| Built | 2026-09-18T08:09Z (`vite build --base=/physical/`) |
 
-Includes SG90 motor, Fusion STEP parts, Attach/Detach welds, and reorient-any.
+Mobile UI (Controls drawer on phone) plus SG90 motor, Fusion STEP parts, Attach/Detach welds, and motor orient.
 
 ## Do not confuse with `3d/`
 
