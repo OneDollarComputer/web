@@ -8,7 +8,7 @@ Primary dynamics narrative: [Dan Aukes — Micro Servo Fitting, Parts 5–6](htt
 |-----------|------:|------|------------|
 | Housing size (L×W×H) | 22.2 × 11.8 × 31 | mm | Manufacturer datasheet (Components101-class SG90 sheet) |
 | MuJoCo box half-extents | 0.0111 × 0.0059 × 0.0155 | m | Inferred from datasheet dims ÷ 2 |
-| Mass (whole servo) | 0.009 | kg | Manufacturer datasheet (9 g) |
+| Mass (whole servo) | 0.009 | kg | Manufacturer datasheet (9 g). Do **not** invent a heavier mass to “fix” bounce — lab free-fall rebound is contact `solref`/`solimp` (peer `0.012 0.25`), not mass. |
 | Housing diaginertia | 8.25e-7, 1.09e-6, 4.74e-7 | kg·m² | Inferred: uniform box about COM, \(I=\frac{m}{12}(a^2+b^2)\) |
 | Output travel | ±π/2 (±90°) | rad | Manufacturer datasheet (~180° total) |
 | Joint `range` | −1.5708 … 1.5708 | rad | Same as travel |

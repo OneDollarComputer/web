@@ -146,10 +146,11 @@
   <!--
     Reusable SG90 (physics from models/sg90/sg90.xml). Lab load rewrites the
     include via MjVFS: free joint on housing, air spawn beside ODC, CAD-sized
-    housing collider, and stiffer floor contact (solref 0.004/0.9) so the 9 g
-    body + GrabCAD visual do not tunnel the soft ODC bounce plane. Hinge
-    actuator on the rotor child couples reaction into the free housing. Stock
-    include stays world-fixed for /sg90.html bench.
+    housing collider, and peer ODC-family bounce contact (solref 0.012/0.25,
+    matching solimp). Mass stays datasheet 0.009 kg — dead-looking impact was
+    overdamped contact (old 0.004/0.9), not mass. Hinge actuator on the rotor
+    child couples reaction into the free housing. Stock include stays
+    world-fixed for /sg90.html bench.
     Actuator "sg90", joint "sg90_joint", bodies "sg90" / "sg90_rotor".
   -->
   <include file="sg90.xml"/>
