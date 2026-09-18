@@ -23,6 +23,12 @@
       "lastmod": "2026-08-15"
     },
     {
+      "path": "/physical/cloud/",
+      "changefreq": "weekly",
+      "priority": 0.55,
+      "lastmod": "2026-09-18"
+    },
+    {
       "path": "/about/",
       "changefreq": "monthly",
       "priority": 0.9,

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pose projects — Physical Lab — One Dollar Computer</title>
+  <meta name="description" content="Sign in with Google to save and load Physical Lab assembly pose JSON (positions, welds) under your account." />
+  <link rel="canonical" href="https://onedollarcomputer.com/physical/cloud/" />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Pose projects — Physical Lab" />
+  <meta property="og:description" content="Assembly pose JSON for Horn / Physical Lab — same Google login as editor projects." />
+  <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
+  <meta property="og:site_name" content="One Dollar Computer" />
+  <meta name="theme-color" content="#07090F" />
+  <script defer src="/js/analytics.js"></script>
+  <link rel="stylesheet" href="/js/auth-nav.css" />
+  <style>
+    :root { --bg:#07090F; --text:#E8EEF8; --sub:#A9B4C7; --accent:#48E1A7; --line:#1D2843; --card:#0D1220; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); line-height:1.55; }
+    nav.top { padding:1rem 1.25rem; border-bottom:1px solid var(--line); display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+    nav.top a { color:var(--accent); text-decoration:none; }
+    nav.top .brand { display:flex; align-items:center; gap:0.75rem; color:var(--text); font-weight:600; text-decoration:none; }
+    nav.top .odc-auth-slot { margin-left:auto; }
+    main { max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+    h1 { font-size: clamp(1.5rem, 4vw, 2rem); line-height:1.2; margin:0 0 0.5rem; }
+    h2 { font-size:1.05rem; margin:0 0 0.5rem; }
+    .lede, .meta { color:var(--sub); }
+    .lede { margin:0 0 1.5rem; }
+    .card { border:1px solid var(--line); border-radius:12px; padding:1.25rem; background:var(--card); }
+    button, .btn, input, textarea, select { font: inherit; }
+    button, .btn { cursor: pointer; border:0; border-radius:8px; padding:0.65rem 1rem; }
+    #btnGoogle { background:#fff; color:#1f1f1f; display:inline-flex; align-items:center; gap:0.6rem; font-weight:600; }
+    .ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+    .primary { background:var(--accent); color:#04140e; font-weight:600; }
+    .danger { background:transparent; color:#ff8a8a; border:1px solid #4a2a2a; }
+    .error { color:#ff8a8a; margin:0.75rem 0 0; }
+    .row { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; align-items:center; }
+    label { display:block; font-weight:600; margin:0 0 0.35rem; }
+    input[type=text] { width:100%; max-width:22rem; background:#07090F; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:0.65rem 0.75rem; }
+    textarea {
+      width:100%; min-height:18rem; background:#07090F; color:var(--text);
+      border:1px solid var(--line); border-radius:8px; padding:0.75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.82rem;
+    }
+    .list { display:flex; flex-direction:column; gap:0.5rem; margin:1rem 0; }
+    .pose-row {
+      display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; justify-content:space-between;
+      border:1px solid var(--line); border-radius:10px; padding:0.85rem 1rem; text-align:left;
+      background:transparent; color:var(--text); width:100%; cursor:pointer;
+    }
+    .pose-row:hover { border-color:var(--accent); }
+    .pose-row strong { display:block; }
+    .pose-row span { color:var(--sub); font-size:0.82rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    #status { color:var(--sub); font-size:0.9rem; min-height:1.2em; }
+    a.btn { text-decoration:none; display:inline-flex; align-items:center; }
+    [hidden] { display: none !important; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.8rem; color:var(--accent); word-break:break-all; }
+  </style>
+</head>
+<body>
+  <nav class="top">
+    <a class="brand" href="/">
+      <img src="/odc_logo_black.svg" width="28" height="28" alt="" />
+      One Dollar Computer
+    </a>
+    <a href="/physical/">Physical Lab</a>
+    <a href="/project/">Projects</a>
+    <span class="odc-auth-slot">
+      <a href="/project/" data-odc-signin>Sign in</a>
+    </span>
+  </nav>
+  <main>
+    <p id="authError" class="error" hidden></p>
+
+    <section id="viewLogin" class="card" hidden>
+      <h1>Pose projects</h1>
+      <p class="lede">Sign in with Google — the same account as firmware projects. Save Horn / assembly pose JSON (positions and welds), not 3D meshes.</p>
+      <button type="button" id="btnGoogle">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.3 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.7-6.4 7.1l.1.1 6.3 5.2C38.4 38.3 44 32 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        Sign in
+      </button>
+    </section>
+
+    <section id="viewList" hidden>
+      <h1>Pose projects</h1>
+      <p class="lede">Assembly pose JSON under your Google login. Open one to edit, or create a new Horn / assembly pose.</p>
+      <div class="card">
+        <h2>New pose</h2>
+        <label for="newName">Name</label>
+        <input id="newName" type="text" maxlength="80" placeholder="Horn assembly" autocomplete="off" />
+        <div class="row">
+          <button type="button" class="primary" id="btnNew">Create</button>
+          <a class="btn ghost" href="/physical/">Open Physical Lab</a>
+        </div>
+      </div>
+      <div id="poseList" class="list" aria-live="polite"></div>
+      <p id="emptyNote" class="meta" hidden>No pose projects yet. Create one above, or Save from Physical Lab when signed in.</p>
+      <p id="status" role="status"></p>
+    </section>
+
+    <section id="viewEdit" hidden>
+      <p class="meta"><a href="/physical/cloud/" id="backLink">← Pose projects</a></p>
+      <h1 id="editTitle">Pose</h1>
+      <p class="path" id="editPath"></p>
+      <div class="row">
+        <label for="editName" style="margin:0">Name</label>
+        <input id="editName" type="text" maxlength="80" />
+      </div>
+      <div class="row">
+        <label for="editAssembly" style="margin:0">Assembly</label>
+        <input id="editAssembly" type="text" maxlength="64" />
+      </div>
+      <label for="editJson">Pose JSON</label>
+      <textarea id="editJson" spellcheck="false"></textarea>
+      <div class="row">
+        <button type="button" class="primary" id="btnSave">Save</button>
+        <a class="btn ghost" id="btnOpenLab" href="/physical/">Open in Lab</a>
+        <button type="button" class="danger" id="btnDelete">Delete</button>
+      </div>
+      <p id="editStatus" class="meta" role="status"></p>
+    </section>
+  </main>
+  <script type="module" src="/js/auth-nav.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

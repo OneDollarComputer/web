@@ -3,7 +3,23 @@
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && auth.uid === $uid",
+        "physicalPoses": {
+          "$projectId": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['ownerUid', 'name', 'assemblyId', 'updatedAt']) && newData.child('ownerUid').val() === $uid && newData.child('name').isString() && newData.child('assemblyId').isString() && newData.child('updatedAt').isString()",
+            "ownerUid": {
+              ".validate": "newData.val() === $uid"
+            },
+            "parts": {
+              ".validate": "true"
+            },
+            "welds": {
+              ".validate": "true"
+            }
+          }
+        }
       }
     },
     "usernames": {
