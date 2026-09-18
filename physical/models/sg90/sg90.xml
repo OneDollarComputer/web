@@ -1,0 +1,71 @@
+<mujoco model="sg90">
+  <!--
+    Reusable SG90 micro-servo (physics approximation, not CAD twin).
+
+    Provenance: see PARAMS.md in this folder.
+    Geometry/mass: manufacturer datasheet (e.g. Components101) 22.2×11.8×31 mm, 9 g.
+    forcerange ±0.15 N·m: conservative stall (Aukes / 6 V ~15 N·cm consensus).
+    Joint damping + position kp: calibrated approximation of ~0.1 s/60° no-load slew
+    under torque saturation — NOT Aukes voltage-loop fit (kp≈8.9 @ 5 V).
+
+    Include into a parent scene (MuJoCo merges sections), e.g. sg90_bench.xml:
+      <include file="sg90.xml"/>
+    Load via MjVFS in the browser (see src/loadMjcf.js).
+    Actuator name "sg90", joint "sg90_joint", bodies "sg90" / "sg90_rotor".
+  -->
+  <compiler angle="radian" coordinate="local" autolimits="true"/>
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="implicitfast" iterations="50"/>
+
+  <default>
+    <default class="sg90">
+      <!--
+        damping: calibrated approx τ_stall/ω_nl = 0.15/10.47 (PARAMS.md)
+        armature: assumption — numerical stability only
+      -->
+      <joint limited="true" damping="0.01432" armature="1e-6" frictionloss="0"/>
+      <!--
+        kp: calibrated approximation (saturates early on large moves) — NOT Aukes 8.9
+        kv: assumption — light settle damping
+        forcerange: conservative stall 0.15 N·m (Aukes band); see PARAMS.md vs 0.177
+      -->
+      <position kp="3" kv="0.01" forcerange="-0.15 0.15" ctrlrange="-1.5708 1.5708"/>
+      <geom friction="0.6 0.01 0.001" condim="3" density="0"/>
+    </default>
+  </default>
+
+  <asset>
+    <material name="sg90_housing" rgba="0.18 0.42 0.48 1" specular="0.25" shininess="0.35"/>
+    <material name="sg90_horn" rgba="0.82 0.84 0.86 1" specular="0.4" shininess="0.5"/>
+    <material name="sg90_hub" rgba="0.55 0.58 0.62 1" specular="0.35" shininess="0.4"/>
+  </asset>
+
+  <worldbody>
+    <!--
+      Housing fixed to world (no freejoint). euler tips the datasheet “upright”
+      SG90 so the output shaft (local +Z) lies horizontal in world +Y — needed so
+      gravity can load the hinge for “can it lift?” checks. Default Z clears floor.
+      Box half-extents from datasheet 22.2×11.8×31 mm → meters/2.
+      Inertia: inferred uniform box about COM (PARAMS.md).
+    -->
+    <body name="sg90" childclass="sg90" pos="0 0 0.05" euler="1.5708 0 0">
+      <inertial pos="0 0 0" mass="0.009" diaginertia="8.252e-7 1.090e-6 4.741e-7"/>
+      <geom name="sg90_housing" type="box" size="0.0111 0.0059 0.0155"
+            material="sg90_housing" priority="1"/>
+
+      <!-- Output shaft at top face (+Z local). Travel ±90° per datasheet. -->
+      <body name="sg90_rotor" pos="0 0 0.0155">
+        <joint name="sg90_joint" type="hinge" axis="0 0 1" range="-1.5708 1.5708"/>
+        <!-- Horn mass/inertia: assumption (PARAMS.md) — not datasheet-split. -->
+        <inertial pos="0.01 0 0.002" mass="0.0005" diaginertia="2.0e-9 4.5e-8 4.5e-8"/>
+        <geom name="sg90_hub" type="cylinder" size="0.0035 0.002" pos="0 0 0.002"
+              material="sg90_hub"/>
+        <geom name="sg90_horn" type="box" size="0.014 0.003 0.0012" pos="0.01 0 0.0035"
+              material="sg90_horn"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="sg90" joint="sg90_joint" class="sg90"/>
+  </actuator>
+</mujoco>

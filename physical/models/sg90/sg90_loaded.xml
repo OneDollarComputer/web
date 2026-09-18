@@ -1,0 +1,58 @@
+<mujoco model="sg90_loaded">
+  <!--
+    Same as sg90.xml plus an absurd stick payload on the horn (demo only).
+    Mass/lever are assumptions to exceed forcerange 0.15 N·m when holding against gravity.
+    Keep housing/joint/actuator in sync with sg90.xml — see PARAMS.md.
+  -->
+  <compiler angle="radian" coordinate="local" autolimits="true"/>
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="implicitfast" iterations="50"/>
+
+  <default>
+    <default class="sg90">
+      <joint limited="true" damping="0.01432" armature="1e-6" frictionloss="0"/>
+      <position kp="3" kv="0.01" forcerange="-0.15 0.15" ctrlrange="-1.5708 1.5708"/>
+      <geom friction="0.6 0.01 0.001" condim="3" density="0"/>
+    </default>
+  </default>
+
+  <asset>
+    <material name="sg90_housing" rgba="0.18 0.42 0.48 1" specular="0.25" shininess="0.35"/>
+    <material name="sg90_horn" rgba="0.82 0.84 0.86 1" specular="0.4" shininess="0.5"/>
+    <material name="sg90_hub" rgba="0.55 0.58 0.62 1" specular="0.35" shininess="0.4"/>
+    <material name="absurd_load" rgba="0.72 0.32 0.22 1" specular="0.3" shininess="0.35"/>
+  </asset>
+
+  <worldbody>
+    <!-- Side-mount (euler) so shaft is horizontal — see sg90.xml comment. -->
+    <body name="sg90" childclass="sg90" pos="0 0 0.05" euler="1.5708 0 0">
+      <inertial pos="0 0 0" mass="0.009" diaginertia="8.252e-7 1.090e-6 4.741e-7"/>
+      <geom name="sg90_housing" type="box" size="0.0111 0.0059 0.0155"
+            material="sg90_housing" priority="1"/>
+
+      <body name="sg90_rotor" pos="0 0 0.0155">
+        <joint name="sg90_joint" type="hinge" axis="0 0 1" range="-1.5708 1.5708"/>
+        <inertial pos="0.01 0 0.002" mass="0.0005" diaginertia="2.0e-9 4.5e-8 4.5e-8"/>
+        <geom name="sg90_hub" type="cylinder" size="0.0035 0.002" pos="0 0 0.002"
+              material="sg90_hub"/>
+        <geom name="sg90_horn" type="box" size="0.014 0.003 0.0012" pos="0.01 0 0.0035"
+              material="sg90_horn"/>
+
+        <!--
+          Absurd payload (assumption): m=0.4 kg, COM ~0.08 m from axis.
+          Horizontal hold ≈ m g r ≈ 0.314 N·m > 0.15 stall → saturation.
+        -->
+        <body name="absurd_load" pos="0.08 0 0.004">
+          <inertial pos="0 0 0" mass="0.4" diaginertia="2.0e-4 2.0e-4 5.0e-5"/>
+          <geom name="absurd_stick" type="box" size="0.06 0.004 0.004" pos="-0.03 0 0"
+                material="absurd_load" contype="0" conaffinity="0"/>
+          <geom name="absurd_tip" type="sphere" size="0.012" pos="0.02 0 0"
+                material="absurd_load" contype="0" conaffinity="0"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="sg90" joint="sg90_joint" class="sg90"/>
+  </actuator>
+</mujoco>

@@ -1,0 +1,33 @@
+<mujoco model="rj45_breakout_v8">
+  <!--
+    RJ45 breakout v8 — free rigid body for Physical Lab.
+
+    Provenance: user Fusion STEP export — cad/RJ45_breakout_v8.step — see cad/SOURCE.md.
+    Product name from STEP: "RJ45_breakout v8".
+
+    Physics: free body only — NO joints, actuators, or animation.
+    Collider: axis-aligned box from STEP AABB (half-extents in meters).
+    Mass: ASSUMPTION — 0.0072 kg ≈ mixed density 1.50 g/cm³ × mesh vol ~4.80 cm³.
+  -->
+  <compiler angle="radian" coordinate="local"/>
+
+  <asset>
+    <material name="rj45_breakout" rgba="0.12 0.45 0.28 1" specular="0.3" shininess="0.35"/>
+  </asset>
+
+  <worldbody>
+    <!--
+      Air spawn near other free bodies.
+      Half-extents from ALIGN.txt: 0.017 × 0.009975 × 0.014 m
+      → full ≈ 34.00 × 19.95 × 28.00 mm.
+    -->
+    <body name="rj45_breakout_v8" pos="-0.32 -0.08 1.50" euler="0.04 0.02 -0.05">
+      <freejoint name="rj45_breakout_v8_free"/>
+      <!-- ASSUMPTION mass 0.0072 kg; diaginertia = solid-box about COM from AABB. -->
+      <inertial pos="0 0 0" mass="0.0072" diaginertia="7.092015e-7 1.164000e-6 9.324015e-7"/>
+      <geom name="rj45_breakout_v8_box" type="box" size="0.017 0.009975 0.014"
+            material="rj45_breakout" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+  </worldbody>
+</mujoco>

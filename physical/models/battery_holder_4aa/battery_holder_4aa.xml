@@ -1,0 +1,33 @@
+<mujoco model="battery_holder_4aa">
+  <!--
+    Enclosed 4×AA battery holder — free rigid body for Physical Lab.
+
+    Provenance: GrabCAD https://grabcad.com/library/enclosed-4-aa-battery-holder-1
+    (Let There Be Engineering). STEP: cad/batteryHolder.step — see cad/SOURCE.md.
+
+    Physics: free body only — NO joints, actuators, or animation.
+    Collider: axis-aligned box from STEP AABB (half-extents in meters).
+    Mass: ASSUMPTION — ~110 g (plastic holder + 4×AA cells); not weighed.
+  -->
+  <compiler angle="radian" coordinate="local"/>
+
+  <asset>
+    <material name="battery_holder" rgba="0.18 0.20 0.22 1" specular="0.3" shininess="0.35"/>
+  </asset>
+
+  <worldbody>
+    <!--
+      Air spawn beside ODC (origin) and SG90 (+X). Slight tip for natural impact.
+      Half-extents from ALIGN.txt: 0.03225 × 0.0354 × 0.010225 m
+      → full ≈ 64.5 × 70.8 × 20.45 mm.
+    -->
+    <body name="battery_holder_4aa" pos="-0.28 0.18 1.45" euler="0.03 -0.025 0.08">
+      <freejoint name="battery_holder_4aa_free"/>
+      <!-- ASSUMPTION mass 0.110 kg; diaginertia = solid-box about COM from AABB. -->
+      <inertial pos="0 0 0" mass="0.110" diaginertia="4.978272e-5 4.196915e-5 8.408483e-5"/>
+      <geom name="battery_holder_4aa_box" type="box" size="0.03225 0.0354 0.010225"
+            material="battery_holder" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+  </worldbody>
+</mujoco>

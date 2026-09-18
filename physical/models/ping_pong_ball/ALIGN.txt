@@ -1,0 +1,11 @@
+# Sphere from Fusion Ball.step (mm in STEP; meters below)
+# origin: user Fusion export — see cad/SOURCE.md
+# SPHERICAL_SURFACE radius 15 → Ø30 mm (mm units verified via AABB ≈ 30 mm)
+radius_mm: 15.0000
+radius_m: 0.015000
+diameter_mm: 30.0000
+aabb_extents_mm: 29.9755 29.9878 30.0000
+note: MuJoCo sphere geom size = radius_m (not half-extents); visual centers on AABB
+units: mm verified — NOT rescaled to ITTF 40 mm diameter
+mass_kg: 0.0027
+mass_cite: ITTF Law 2.3.2 (2.7 g; range ≈ 2.67–2.77 g)

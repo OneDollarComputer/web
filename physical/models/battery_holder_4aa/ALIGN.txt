@@ -1,0 +1,9 @@
+# AABB from GrabCAD batteryHolder.step (mm in STEP; meters below)
+# source: https://grabcad.com/library/enclosed-4-aa-battery-holder-1
+extents_mm: 64.5000 70.8000 20.4500
+extents_m: 0.064500 0.070800 0.020450
+half_extents_m: 0.032250 0.035400 0.010225
+aabb_min_mm: -32.2500 -36.9000 -1.4000
+aabb_max_mm: 32.2500 33.9000 19.0500
+center_mm: 0.0000 -1.5000 8.8250
+note: visual centers AABB on body origin; collider half-extents match this box

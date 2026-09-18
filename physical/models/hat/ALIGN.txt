@@ -1,0 +1,13 @@
+# AABB from Fusion Hat.step (mm in STEP; meters below)
+# origin: user Fusion export — see cad/SOURCE.md
+extents_mm: 29.2365 17.0000 29.2560
+extents_m: 0.029237 0.017000 0.029256
+half_extents_m: 0.014618 0.008500 0.014628
+aabb_min_mm: -14.6378 -6.4000 -17.2658
+aabb_max_mm: 14.5987 10.6000 11.9902
+center_mm: -0.0195 2.1000 -2.6378
+mesh_vol_mm3: 9751.4
+density_g_cm3: 1.20
+mass_kg: 0.0117
+note: visual centers AABB on body origin; collider half-extents match this box
+units: mm verified (≈29×17×29 mm — small hat/figurine scale)

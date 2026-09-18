@@ -22,6 +22,11 @@
     <texture name="grid" type="2d" builtin="checker" rgb1="0.22 0.26 0.30" rgb2="0.16 0.19 0.22" width="512" height="512"/>
     <material name="floor" texture="grid" texrepeat="8 8" reflectance="0.1"/>
     <material name="odc" rgba="0.95 0.72 0.12 1" specular="0.4" shininess="0.6"/>
+    <material name="battery_holder" rgba="0.18 0.20 0.22 1" specular="0.3" shininess="0.35"/>
+    <material name="ut_longhorn" rgba="0.72 0.42 0.12 1" specular="0.35" shininess="0.4"/>
+    <material name="ping_pong_ball" rgba="0.95 0.93 0.88 1" specular="0.45" shininess="0.55"/>
+    <material name="hat" rgba="0.55 0.22 0.28 1" specular="0.3" shininess="0.35"/>
+    <material name="rj45_breakout" rgba="0.12 0.45 0.28 1" specular="0.3" shininess="0.35"/>
   </asset>
 
   <default>
@@ -39,15 +44,113 @@
 
     <!--
       Suspended above the floor so it is not intersecting on load.
-      Half-extents ≈ 60 × 40 × 10 mm — credit-card-ish PCB slab.
+      Half-extents 18.75 × 12.5 × 3.125 mm → full 37.5 × 25.0 × 6.25 mm.
+      Fusion (Claudio): PCB outline short edge = 25.00 mm (USB-C side).
+      Long edge keeps prior 120:80 planar ratio → 37.5 mm. Thickness 6.25 mm
+      = old 20 mm envelope × (25/80) (board+parts proxy, not measured stackup).
       Small euler tip → first impact is slightly edge-biased (more natural rebound).
     -->
     <body name="odc" pos="0 0 1.4" euler="0.035 0.02 0">
       <freejoint name="odc_free"/>
-      <!-- ~45 g PCB; diaginertia for a thin rectangular plate about COM. -->
-      <inertial pos="0 0 0" mass="0.045" diaginertia="1.2e-5 2.4e-5 3.2e-5"/>
-      <geom name="odc_box" type="box" size="0.06 0.04 0.01" material="odc" priority="1"
+      <!-- ~45 g PCB; thin-plate diaginertia for the Fusion-scaled box about COM. -->
+      <inertial pos="0 0 0" mass="0.045" diaginertia="2.490e-6 5.420e-6 7.617e-6"/>
+      <geom name="odc_box" type="box" size="0.01875 0.0125 0.003125" material="odc" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+
+    <!--
+      Enclosed 4×AA battery holder (GrabCAD STEP — cad/SOURCE.md).
+      Free body only — NO joints / actuators / animation.
+      Box collider = STEP AABB (ALIGN.txt).
+      Half-extents 0.03225 × 0.0354 × 0.010225 → ≈ 64.5 × 70.8 × 20.45 mm.
+      Mass ASSUMPTION 0.110 kg (holder + 4×AA). Air spawn (−X) with ODC + SG90.
+    -->
+    <body name="battery_holder_4aa" pos="-0.28 0.18 1.45" euler="0.03 -0.025 0.08">
+      <freejoint name="battery_holder_4aa_free"/>
+      <inertial pos="0 0 0" mass="0.110" diaginertia="4.978272e-5 4.196915e-5 8.408483e-5"/>
+      <geom name="battery_holder_4aa_box" type="box" size="0.03225 0.0354 0.010225"
+            material="battery_holder" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+
+    <!--
+      UT Longhorn (Fusion STEP — cad/SOURCE.md).
+      Free body only — NO joints / actuators / animation.
+      Box collider = STEP AABB (ALIGN.txt).
+      Half-extents 0.042034 × 0.017542 × 0.00635 → ≈ 84.07 × 35.08 × 12.70 mm.
+      Mass ASSUMPTION 0.055 kg. Air spawn (+Y) near ODC + battery holder + SG90.
+    -->
+    <body name="ut_longhorn" pos="0.08 0.30 1.48" euler="0.04 0.015 -0.06">
+      <freejoint name="ut_longhorn_free"/>
+      <inertial pos="0 0 0" mass="0.055" diaginertia="6.380812e-6 3.313163e-5 3.803395e-5"/>
+      <geom name="ut_longhorn_box" type="box" size="0.042034 0.017542 0.00635"
+            material="ut_longhorn" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+
+    <!--
+      Ping pong ball (Fusion Ball.step — cad/SOURCE.md).
+      Free body only — NO joints / actuators / animation.
+      Sphere collider radius = STEP SPHERICAL_SURFACE 15 mm → 0.015 m (Ø30 mm;
+      not scaled to ITTF 40 mm). Mass 0.0027 kg — ITTF Law 2.3.2.
+      Air spawn (−Y) near ODC + battery + longhorn + SG90; light bounce OK.
+    -->
+    <body name="ping_pong_ball" pos="-0.12 -0.22 1.55" euler="0.02 -0.01 0.05">
+      <freejoint name="ping_pong_ball_free"/>
+      <inertial pos="0 0 0" mass="0.0027" diaginertia="4.05e-7 4.05e-7 4.05e-7"/>
+      <geom name="ping_pong_ball_sphere" type="sphere" size="0.015"
+            material="ping_pong_ball" priority="1"
+            friction="0.25 0.004 0.0001"
+            solref="0.014 0.12" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+
+    <!--
+      Hat (Fusion Hat.step — cad/SOURCE.md).
+      Free body only — NO joints / actuators / animation.
+      Box collider = STEP AABB (ALIGN.txt).
+      Half-extents 0.014618 × 0.0085 × 0.014628 → ≈ 29.24 × 17.00 × 29.26 mm.
+      Mass ASSUMPTION 0.0117 kg (1.20 g/cm³ × mesh vol ~9.75 cm³).
+      Air spawn (+X/+Y) near other free bodies.
+    -->
+    <body name="hat" pos="0.22 0.18 1.52" euler="0.05 -0.03 0.1">
+      <freejoint name="hat_free"/>
+      <inertial pos="0 0 0" mass="0.0117" diaginertia="1.116448e-6 1.668154e-6 1.115335e-6"/>
+      <geom name="hat_box" type="box" size="0.014618 0.0085 0.014628"
+            material="hat" priority="1"
+            solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+
+    <!--
+      RJ45 breakout v8 (Fusion STEP — cad/SOURCE.md).
+      Free body only — NO joints / actuators / animation.
+      Box collider = STEP AABB (ALIGN.txt).
+      Half-extents 0.017 × 0.009975 × 0.014 → ≈ 34.00 × 19.95 × 28.00 mm.
+      Mass ASSUMPTION 0.0072 kg (1.50 g/cm³ × mesh vol ~4.80 cm³).
+      Air spawn (−X) near other free bodies.
+    -->
+    <body name="rj45_breakout_v8" pos="-0.32 -0.08 1.50" euler="0.04 0.02 -0.05">
+      <freejoint name="rj45_breakout_v8_free"/>
+      <inertial pos="0 0 0" mass="0.0072" diaginertia="7.092015e-7 1.164000e-6 9.324015e-7"/>
+      <geom name="rj45_breakout_v8_box" type="box" size="0.017 0.009975 0.014"
+            material="rj45_breakout" priority="1"
             solref="0.012 0.25" solimp="0.9 0.95 0.001 0.5 2"/>
     </body>
   </worldbody>
+  <!--
+    Includeable fragment (same body): models/battery_holder_4aa/battery_holder_4aa.xml
+    Includeable fragment (same body): models/ut_longhorn/ut_longhorn.xml
+    Includeable fragment (same body): models/ping_pong_ball/ping_pong_ball.xml
+    Includeable fragment (same body): models/hat/hat.xml
+    Includeable fragment (same body): models/rj45_breakout_v8/rj45_breakout_v8.xml
+  -->
+  <!--
+    Reusable SG90 (physics from models/sg90/sg90.xml). Lab load rewrites the
+    include via MjVFS: free joint on housing, air spawn beside ODC, CAD-sized
+    housing collider, and stiffer floor contact (solref 0.004/0.9) so the 9 g
+    body + GrabCAD visual do not tunnel the soft ODC bounce plane. Hinge
+    actuator on the rotor child couples reaction into the free housing. Stock
+    include stays world-fixed for /sg90.html bench.
+    Actuator "sg90", joint "sg90_joint", bodies "sg90" / "sg90_rotor".
+  -->
+  <include file="sg90.xml"/>
 </mujoco>

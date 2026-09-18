@@ -1,0 +1,33 @@
+<mujoco model="ping_pong_ball">
+  <!--
+    Ping pong / table-tennis ball — free rigid body for Physical Lab.
+
+    Provenance: user Fusion STEP export — cad/ping_pong_ball.step — see cad/SOURCE.md.
+    Product name from STEP: "Ball". SPHERICAL_SURFACE radius 15 (mm) → Ø30 mm.
+
+    Physics: free body only — NO joints, actuators, or animation.
+    Collider: sphere geom size = measured radius 0.015 m (matches STEP; not ITTF 40 mm).
+    Mass: 0.0027 kg — ITTF Law 2.3.2 (2.7 g; range ≈ 2.67–2.77 g).
+  -->
+  <compiler angle="radian" coordinate="local"/>
+
+  <asset>
+    <material name="ping_pong_ball" rgba="0.95 0.93 0.88 1" specular="0.45" shininess="0.55"/>
+  </asset>
+
+  <worldbody>
+    <!--
+      Air spawn near ODC / battery holder / UT Longhorn / SG90.
+      Sphere radius from ALIGN.txt: 0.015 m (Ø30 mm STEP; not scaled to 40 mm).
+    -->
+    <body name="ping_pong_ball" pos="-0.12 -0.22 1.55" euler="0.02 -0.01 0.05">
+      <freejoint name="ping_pong_ball_free"/>
+      <!-- ITTF Law 2.3.2 mass 2.7 g; ASSUMPTION thin-shell inertia ⅔ m r². -->
+      <inertial pos="0 0 0" mass="0.0027" diaginertia="4.05e-7 4.05e-7 4.05e-7"/>
+      <geom name="ping_pong_ball_sphere" type="sphere" size="0.015"
+            material="ping_pong_ball" priority="1"
+            friction="0.25 0.004 0.0001"
+            solref="0.014 0.12" solimp="0.9 0.95 0.001 0.5 2"/>
+    </body>
+  </worldbody>
+</mujoco>
