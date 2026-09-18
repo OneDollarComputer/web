@@ -81,10 +81,10 @@ firebase deploy --only database --project odc-files
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `9a41797f5c1910011a91490bbef3bbace9182f7f` |
-| Built | 2026-09-18T22:38Z (`vite build --base=/physical/`) |
+| Commit | `6a68deb611a275494708010abeb939d9e4f8e3a9` |
+| Built | 2026-09-18T23:42Z (`vite build --base=/physical/`) |
 
-Numeric **Pose data** panel on selected free bodies: editable X/Y/Z (m) plus euler XYZ° / quat wxyz; Apply on Enter or blur. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
+Lab panels draggable from title bars; positions persist in `localStorage` (physical PR #7). Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
 
 ## Do not confuse with `3d/`
 
