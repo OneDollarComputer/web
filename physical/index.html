@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-CpdNEv3m.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-ANXnnOFY.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-DFAvMjLC.css">
+    <script type="module" crossorigin src="/physical/assets/main-m16rm6gP.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-ODuLqntG.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-BmhF1vJQ.css">
     <script type="module" src="/physical/js/pose-bridge.js"></script>
   </head>
   <body>
@@ -49,7 +49,7 @@
       </div>
 
       <aside id="selection-panel" class="selection-panel" aria-label="Selected object" hidden>
-        <header>
+        <header class="panel-header">
           <strong>Selection</strong>
           <span class="frame-tag">click · Shift+click partner</span>
         </header>
@@ -298,7 +298,7 @@
       </aside>
 
       <aside id="pose-hud" aria-label="ODC pose readout">
-        <header>
+        <header class="panel-header">
           <strong>Pose</strong>
           <span class="frame-tag">MuJoCo Z-up · body odc</span>
         </header>
@@ -324,7 +324,7 @@
       </aside>
 
       <aside id="sg90-panel" aria-label="SG90 position commands">
-        <header>
+        <header class="panel-header">
           <strong>SG90</strong>
           <span class="frame-tag">±90° · forcerange 0.15 N·m</span>
         </header>
@@ -435,7 +435,7 @@
 
       
       <aside id="assemblies-panel" class="assemblies-panel" aria-label="Assemblies">
-        <header>
+        <header class="panel-header">
           <strong>Assemblies</strong>
           <span class="frame-tag">recipes · multi-instance</span>
         </header>
