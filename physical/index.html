@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-CceUnTTo.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-Ca-L6EXK.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-DpJiCG3D.css">
+    <script type="module" crossorigin src="/physical/assets/main-BTuPK8BT.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-CIyINzeU.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-DoDkOdlr.css">
     <script type="module" src="/physical/js/pose-bridge.js"></script>
   </head>
   <body>
@@ -61,9 +61,28 @@
             id="btn-mode-place"
             type="button"
             aria-pressed="false"
-            title="Left-drag moves the selected free body (pause first)"
+            title="Show move/rotate gizmo on the selected free body (pause first)"
           >
             Place
+          </button>
+        </div>
+        <div class="gizmo-space" role="group" aria-label="Gizmo space" hidden>
+          <span class="gizmo-space-label">Gizmo</span>
+          <button
+            id="btn-gizmo-local"
+            type="button"
+            aria-pressed="true"
+            title="Move/rotate in the object's local axes"
+          >
+            Local
+          </button>
+          <button
+            id="btn-gizmo-world"
+            type="button"
+            aria-pressed="false"
+            title="Move/rotate in world axes"
+          >
+            World
           </button>
         </div>
         <dl>
@@ -255,7 +274,7 @@
           </button>
           <p class="pose-data-hint">
             Click a field and type · Enter or blur updates the sim (Pause) ·
-            Place drag still works · fields sync after drag / selection change
+            Gizmo / Place drag still work · fields sync after drag / selection change
           </p>
         </section>
         <div class="place-nudge" role="group" aria-label="Nudge position">
@@ -290,8 +309,8 @@
         </div>
         <p id="sel-hint" class="sel-hint" hidden>Drag to reorient</p>
         <p class="pose-hint">
-          Place = translate (Pause) · <strong>Pose data</strong> = type XYZ / euler ·
-          Orbit = camera · Attach welds at current relpose ·
+          Place = RGB gizmo move/rotate (Pause) · <strong>Pose data</strong> = type XYZ / euler ·
+          Orbit = camera (works in Place when not dragging a handle) · Attach welds at current relpose ·
           <strong>Save</strong> downloads recipe JSON ·
           <code>window.__labWelds</code>
         </p>
@@ -445,7 +464,7 @@
         </p>
         <p class="pose-hint place-howto">
           <strong>Place + Save:</strong> Pause → Selection → <em>Place</em> → select a part →
-          drag or nudge XYZ → rotate via sliders / Reorient (Orbit mode) →
+          drag RGB gizmo arrows/rings (or nudge / Pose data) →
           <em>Save poses (JSON)</em> downloads
           <code>&lt;id&gt;_poses.json</code> (part ids +
           <code>pos</code>/<code>euler_xyz_deg</code> + welds) · Shift+click partner →
