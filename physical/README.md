@@ -109,10 +109,10 @@ firebase deploy --only database --project odc-files
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `6a68deb611a275494708010abeb939d9e4f8e3a9` |
-| Built | 2026-09-18T23:42Z (`vite build --base=/physical/`) |
+| Commit | `8c9e14efaa32ff18cfb87106c92242c783b114e1` |
+| Built | 2026-09-19T01:57Z (`vite build --base=/physical/`) |
 
-Lab panels draggable from title bars; positions persist in `localStorage` (physical PR #7). Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
+Save/Load fix (physical PR #8): live `__labAssemblyPose`, `odc-pose-load` applies freejoint qpos, Pose cloud Save updates the open project. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
 
 ## Do not confuse with `3d/`
 
