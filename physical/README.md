@@ -109,10 +109,10 @@ firebase deploy --only database --project odc-files
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `2d67079732594b5096d368ca46a686072215456c` |
-| Built | 2026-09-19T02:48Z (`vite build --base=/physical/`) |
+| Commit | `21bc99582f0318a821986e7dbe73f1c507b7906f` |
+| Built | 2026-09-19T04:27Z (`vite build --base=/physical/`) |
 
-Place transform gizmo (physical PR #10 / `2d67079`): Fusion-style RGB translate+rotate TransformControls in Place; Pose data / Attach / Save unchanged. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
+Click-to-select fix (physical PR #11 / `21bc995`): clicks no longer swallowed by invisible TransformControls plane; Place gizmo still works. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting. Main bundle: `main-CkcvkZdM.js`.
 
 ## Do not confuse with `3d/`
 
