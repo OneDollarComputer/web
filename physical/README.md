@@ -109,10 +109,10 @@ firebase deploy --only database --project odc-files
 | | |
 |--|--|
 | Source | `OneDollarComputer/physical` |
-| Commit | `d08ba1a279c729cbe49715be7981500dea195de4` |
-| Built | 2026-09-19T02:23Z (`vite build --base=/physical/`) |
+| Commit | `2d67079732594b5096d368ca46a686072215456c` |
+| Built | 2026-09-19T02:48Z (`vite build --base=/physical/`) |
 
-Pose load spawns assembly + Pose data panel (physical PR #9 / `d08ba1a`): `?poseProject=` auto-spawns assembly then shows editable Pose data. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
+Place transform gizmo (physical PR #10 / `2d67079`): Fusion-style RGB translate+rotate TransformControls in Place; Pose data / Attach / Save unchanged. Dist paths `/models` and `/vendor` rewritten to `/physical/...` for site hosting.
 
 ## Do not confuse with `3d/`
 
