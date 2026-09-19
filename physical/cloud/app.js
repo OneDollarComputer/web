@@ -1,5 +1,8 @@
 /**
  * /physical/cloud/ — list / create / edit assembly pose projects (Firebase RTDB).
+ *
+ * Open → Physical Lab with ?poseProject= (bridge loads JSON + fires odc-pose-load).
+ * Edit → JSON editor on this page. Save updates the open id; Create new mints a new id.
  */
 import {
   auth,
@@ -37,7 +40,7 @@ function hideAll() {
 
 function route() {
   const params = new URLSearchParams(location.search);
-  return params.get("id") || params.get("poseProject") || null;
+  return params.get("id") || null;
 }
 
 function setRoute(id, replace) {
@@ -62,6 +65,19 @@ function formatWhen(iso) {
   }
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Open in Lab — bridge auto-loads JSON and notifies the lab. */
+function openInLab(id) {
+  location.href = labUrlForPose(id);
+}
+
 async function renderList() {
   hideAll();
   $("viewList").hidden = false;
@@ -72,27 +88,39 @@ async function renderList() {
     $("emptyNote").hidden = rows.length > 0;
     $("status").textContent = rows.length ? `${rows.length} pose project${rows.length === 1 ? "" : "s"}` : "";
     for (const row of rows) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "pose-row";
-      btn.innerHTML = `<span><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.id)} · ${escapeHtml(row.assemblyId)} · ${row.partCount} parts · ${row.weldCount} welds</span></span><span>${escapeHtml(formatWhen(row.updatedAt))}</span>`;
-      btn.addEventListener("click", () => openProject(row.id));
-      $("poseList").appendChild(btn);
+      const item = document.createElement("div");
+      item.className = "pose-row";
+      item.innerHTML = `
+        <button type="button" class="pose-main" data-open-lab="${escapeHtml(row.id)}">
+          <strong>${escapeHtml(row.name)}</strong>
+          <span>${escapeHtml(row.id)} · ${escapeHtml(row.assemblyId)} · ${row.partCount} parts · ${row.weldCount} welds</span>
+        </button>
+        <span class="pose-meta">${escapeHtml(formatWhen(row.updatedAt))}</span>
+        <span class="pose-actions">
+          <button type="button" class="ghost small" data-open-lab="${escapeHtml(row.id)}">Open</button>
+          <button type="button" class="ghost small" data-edit="${escapeHtml(row.id)}">Edit</button>
+        </span>
+      `;
+      $("poseList").appendChild(item);
     }
   } catch (e) {
     $("status").textContent = (e && e.message) || "Could not load pose projects.";
   }
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+$("poseList").addEventListener("click", (e) => {
+  const labBtn = e.target.closest("[data-open-lab]");
+  if (labBtn) {
+    openInLab(labBtn.getAttribute("data-open-lab"));
+    return;
+  }
+  const editBtn = e.target.closest("[data-edit]");
+  if (editBtn) {
+    openEditor(editBtn.getAttribute("data-edit"));
+  }
+});
 
-async function openProject(id, replace) {
+async function openEditor(id, replace) {
   hideAll();
   $("viewEdit").hidden = false;
   currentId = id;
@@ -113,7 +141,7 @@ async function openProject(id, replace) {
     const { id: _drop, ...body } = doc;
     $("editJson").value = JSON.stringify({ id, ...body }, null, 2);
     $("btnOpenLab").href = labUrlForPose(id);
-    $("editStatus").textContent = `Updated ${formatWhen(doc.updatedAt)} · REST ${poseRestUrl(me.uid, id)}`;
+    $("editStatus").textContent = `Updated ${formatWhen(doc.updatedAt)}`;
   } catch (e) {
     $("editStatus").textContent = (e && e.message) || "Could not open.";
   }
@@ -126,8 +154,15 @@ async function render() {
     $("viewLogin").hidden = false;
     return;
   }
+  // Legacy ?poseProject= on cloud → send straight to Lab (load + apply notify).
+  const params = new URLSearchParams(location.search);
+  const poseProject = params.get("poseProject");
+  if (poseProject && !params.get("id")) {
+    openInLab(poseProject);
+    return;
+  }
   const id = route();
-  if (id) await openProject(id, true);
+  if (id) await openEditor(id, true);
   else await renderList();
 }
 
@@ -148,7 +183,7 @@ $("btnNew").addEventListener("click", async () => {
   try {
     const doc = await createPoseProject(me, { name, assemblyId: DEFAULT_ASSEMBLY_ID });
     $("newName").value = "";
-    await openProject(doc.id);
+    openInLab(doc.id);
   } catch (e) {
     $("status").textContent = (e && e.message) || "Could not create.";
   }
@@ -172,6 +207,33 @@ $("btnSave").addEventListener("click", async () => {
     $("editStatus").textContent = `Saved ${formatWhen(doc.updatedAt)}`;
   } catch (e) {
     $("editStatus").textContent = (e && e.message) || "Save failed.";
+  }
+});
+
+$("btnSaveAs").addEventListener("click", async () => {
+  if (!me) return;
+  $("editStatus").textContent = "Saving as…";
+  try {
+    let parsed;
+    try {
+      parsed = JSON.parse($("editJson").value || "{}");
+    } catch {
+      throw new Error("Pose JSON is not valid JSON.");
+    }
+    const name =
+      ($("editName").value || "").trim() ||
+      (parsed.name ? `${parsed.name} copy` : "Untitled pose");
+    parsed.name = name;
+    parsed.assemblyId = ($("editAssembly").value || "").trim() || parsed.assemblyId || DEFAULT_ASSEMBLY_ID;
+    const created = await createPoseProject(me, {
+      name,
+      assemblyId: parsed.assemblyId
+    });
+    const doc = await savePoseProject(me, created.id, { ...parsed, ...created, name });
+    await openEditor(doc.id);
+    $("editStatus").textContent = `Created ${doc.name} (${doc.id})`;
+  } catch (e) {
+    $("editStatus").textContent = (e && e.message) || "Save as failed.";
   }
 });
 

@@ -5,11 +5,14 @@
  *   <script type="module" src="/physical/js/pose-bridge.js"></script>
  *
  * When signed in (same Google session as /project/):
- *   window.OdcPhysicalPoses.save({ name })     → create/update Firebase project
- *   window.OdcPhysicalPoses.load(projectId)  → fetch + publish window.__labAssemblyPose
+ *   window.OdcPhysicalPoses.save({ name })      → update open project (or create if none)
+ *   window.OdcPhysicalPoses.saveAs({ name })    → always mint a new project id
+ *   window.OdcPhysicalPoses.load(projectId)     → fetch + publish window.__labAssemblyPose
  *   window.OdcPhysicalPoses.list()
+ *   window.OdcPhysicalPoses.current()           → { id, name } | null
  *
  * Auto-load: /physical/?poseProject=pp…
+ * Open project is remembered via URL + sessionStorage so Save updates the same id.
  *
  * Capture prefers window.__labAssemblyPose (export from mujoco-drop).
  * Fallback: window.__odcPose, __sg90Pose, __labWelds (partial).
@@ -31,6 +34,72 @@ import {
 } from "./pose-cloud.js";
 
 const STATUS_ID = "odc-pose-bridge-status";
+const NAME_ID = "odc-pose-bridge-name";
+const OPEN_ID = "odc-pose-bridge-open";
+const SESSION_KEY = "odc-pose-project";
+
+/** @type {{ id: string, name: string } | null} */
+let openProject = null;
+
+function readSessionProject() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.id !== "string") return null;
+    return {
+      id: parsed.id,
+      name: typeof parsed.name === "string" ? parsed.name : parsed.id
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionProject(project) {
+  try {
+    if (!project || !project.id) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({ id: project.id, name: project.name || project.id })
+    );
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function setOpenProject(project, { syncUrl = true } = {}) {
+  openProject = project && project.id
+    ? { id: project.id, name: project.name || project.id }
+    : null;
+  writeSessionProject(openProject);
+  if (syncUrl) {
+    try {
+      const url = new URL(location.href);
+      if (openProject) url.searchParams.set("poseProject", openProject.id);
+      else url.searchParams.delete("poseProject");
+      history.replaceState(null, "", url);
+    } catch {
+      /* ignore */
+    }
+  }
+  refreshChrome();
+}
+
+function currentProjectIdFromUrl() {
+  try {
+    return new URL(location.href).searchParams.get("poseProject");
+  } catch {
+    return null;
+  }
+}
+
+function resolveOpenProjectId(explicitId) {
+  return explicitId || (openProject && openProject.id) || currentProjectIdFromUrl() || (readSessionProject() || {}).id || null;
+}
 
 function ensureChrome() {
   if (document.getElementById("odc-pose-bridge")) return;
@@ -45,22 +114,36 @@ function ensureChrome() {
         font: 600 0.8rem ui-sans-serif, system-ui, sans-serif;
         pointer-events: none;
       }
-      #odc-pose-bridge a, #odc-pose-bridge button {
+      #odc-pose-bridge a, #odc-pose-bridge button, #odc-pose-bridge select {
         pointer-events: auto; border: 1px solid #1D2843; border-radius: 8px;
         padding: 0.4rem 0.65rem; background: #0D1220; color: #48E1A7;
         text-decoration: none; cursor: pointer; font: inherit;
       }
+      #odc-pose-bridge select {
+        color: #E8EEF8; max-width: 11rem;
+      }
       #odc-pose-bridge button.primary { background: #48E1A7; color: #04140e; border-color: transparent; }
+      #odc-pose-bridge #${NAME_ID} {
+        pointer-events: none; color: #E8EEF8; font-weight: 600; font-size: 0.75rem;
+        max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      #odc-pose-bridge #${NAME_ID}:empty { display: none; }
       #odc-pose-bridge #${STATUS_ID} {
         pointer-events: none; color: #A9B4C7; font-weight: 500; font-size: 0.75rem;
-        max-width: 16rem;
+        max-width: 14rem;
       }
       #odc-pose-bridge[data-auth="out"] [data-need-auth] { display: none; }
       #odc-pose-bridge[data-auth="in"] [data-need-guest] { display: none; }
+      #odc-pose-bridge[data-has-open="0"] [data-need-open] { display: none; }
     </style>
     <a href="/physical/cloud/">Poses</a>
+    <span id="${NAME_ID}" data-need-auth></span>
     <button type="button" data-need-guest data-action="signin">Sign in</button>
-    <button type="button" class="primary" data-need-auth data-action="save">Save pose</button>
+    <button type="button" class="primary" data-need-auth data-action="save">Save</button>
+    <button type="button" data-need-auth data-action="saveas">Save as</button>
+    <select id="${OPEN_ID}" data-need-auth aria-label="Open pose">
+      <option value="">Open…</option>
+    </select>
     <span id="${STATUS_ID}" role="status"></span>
   `;
   document.body.appendChild(bar);
@@ -75,8 +158,19 @@ function ensureChrome() {
       });
     } else if (action === "save") {
       api.save().catch((err) => setStatus((err && err.message) || "Save failed"));
+    } else if (action === "saveas") {
+      api.saveAs().catch((err) => setStatus((err && err.message) || "Save as failed"));
     }
   });
+  const openSelect = bar.querySelector(`#${OPEN_ID}`);
+  if (openSelect) {
+    openSelect.addEventListener("change", () => {
+      const id = openSelect.value;
+      openSelect.value = "";
+      if (!id) return;
+      api.load(id).catch((err) => setStatus((err && err.message) || "Open failed"));
+    });
+  }
 }
 
 function setStatus(msg) {
@@ -91,31 +185,78 @@ function setAuthUi(user) {
   if (bar) bar.dataset.auth = user ? "in" : "out";
 }
 
+function refreshChrome() {
+  ensureChrome();
+  const bar = document.getElementById("odc-pose-bridge");
+  if (bar) bar.dataset.hasOpen = openProject ? "1" : "0";
+  const nameEl = document.getElementById(NAME_ID);
+  if (nameEl) {
+    nameEl.textContent = openProject ? openProject.name : "";
+    nameEl.title = openProject ? `${openProject.name} (${openProject.id})` : "";
+  }
+}
+
+async function refreshOpenList() {
+  ensureChrome();
+  const select = document.getElementById(OPEN_ID);
+  if (!select) return;
+  const user = auth.currentUser;
+  const keep = select.value;
+  select.innerHTML = `<option value="">Open…</option>`;
+  if (!user) return;
+  try {
+    const rows = await listPoseProjects(user.uid);
+    for (const row of rows) {
+      const opt = document.createElement("option");
+      opt.value = row.id;
+      opt.textContent = row.name || row.id;
+      if (openProject && row.id === openProject.id) opt.selected = false;
+      select.appendChild(opt);
+    }
+    if (keep && [...select.options].some((o) => o.value === keep)) select.value = keep;
+    else select.value = "";
+  } catch {
+    /* list is best-effort for the Open menu */
+  }
+}
+
 function applyPoseToLab(doc) {
   const payload = {
     id: doc.id,
+    name: doc.name || doc.id,
     assemblyId: doc.assemblyId || DEFAULT_ASSEMBLY_ID,
     parts: doc.parts || {},
     welds: Array.isArray(doc.welds) ? doc.welds : [],
+    recipe: doc.recipe || null,
     updatedAt: doc.updatedAt || null,
     source: "firebase"
   };
   window.__labAssemblyPose = payload;
   window.dispatchEvent(new CustomEvent("odc-pose-load", { detail: payload }));
+  // Best-effort: if mujoco-drop exposes an apply hook, call it.
+  try {
+    if (typeof window.__labApplyAssemblyPose === "function") {
+      window.__labApplyAssemblyPose(payload);
+    }
+  } catch (err) {
+    console.warn("[odc-pose] __labApplyAssemblyPose failed", err);
+  }
   return payload;
 }
 
-function currentProjectIdFromUrl() {
-  try {
-    return new URL(location.href).searchParams.get("poseProject");
-  } catch {
-    return null;
-  }
+function promptName(defaultName) {
+  const fallback = defaultName || "Lab pose";
+  if (typeof window.prompt !== "function") return fallback;
+  const entered = window.prompt("Pose name", fallback);
+  if (entered === null) return null;
+  const name = String(entered).trim();
+  return name || fallback;
 }
 
 const api = {
   auth,
   capture: () => captureLabPose(window),
+  current: () => (openProject ? { ...openProject } : null),
   async list() {
     const user = auth.currentUser;
     if (!user) throw new Error("Sign in required");
@@ -124,50 +265,80 @@ const api = {
   async load(projectId) {
     const user = auth.currentUser;
     if (!user) throw new Error("Sign in required");
-    const id = projectId || currentProjectIdFromUrl();
+    const id = projectId || resolveOpenProjectId();
     if (!id) throw new Error("Missing pose project id");
     const doc = await getPoseProject(user.uid, id);
     if (!doc) throw new Error("Pose project not found");
     applyPoseToLab(doc);
+    setOpenProject({ id: doc.id, name: doc.name || doc.id });
     setStatus(`Loaded ${doc.name || id}`);
+    await refreshOpenList();
     return doc;
   },
-  async save({ name, projectId, assemblyId } = {}) {
+  /**
+   * Update the open project. Creates one only when nothing is open.
+   * Pass { createNew: true } or use saveAs() to always mint a new id.
+   */
+  async save({ name, projectId, assemblyId, createNew = false } = {}) {
     const user = auth.currentUser;
     if (!user) throw new Error("Sign in required");
     const snap = captureLabPose(window);
-    const urlId = projectId || currentProjectIdFromUrl();
+    const existingId = createNew ? null : resolveOpenProjectId(projectId);
+
     let doc;
-    if (urlId) {
-      const existing = await getPoseProject(user.uid, urlId);
-      doc = await savePoseProject(user, urlId, {
-        ...(existing || {}),
-        name: name || (existing && existing.name) || "Lab pose",
-        assemblyId: assemblyId || snap.assemblyId || DEFAULT_ASSEMBLY_ID,
+    if (existingId) {
+      const existing = await getPoseProject(user.uid, existingId);
+      if (!existing) {
+        throw new Error(`Pose project ${existingId} not found — use Save as`);
+      }
+      doc = await savePoseProject(user, existingId, {
+        ...existing,
+        name: name || existing.name || "Lab pose",
+        assemblyId: assemblyId || snap.assemblyId || existing.assemblyId || DEFAULT_ASSEMBLY_ID,
         parts: snap.parts,
-        welds: snap.welds
+        welds: snap.welds,
+        recipe: snap.recipe || existing.recipe || null
       });
     } else {
+      const poseName = name || promptName("Lab pose");
+      if (poseName === null) {
+        setStatus("Save cancelled");
+        return null;
+      }
       doc = await createPoseProject(user, {
-        name: name || "Lab pose",
+        name: poseName,
         assemblyId: assemblyId || snap.assemblyId || DEFAULT_ASSEMBLY_ID
       });
       doc = await savePoseProject(user, doc.id, {
         ...doc,
         parts: snap.parts,
-        welds: snap.welds
+        welds: snap.welds,
+        recipe: snap.recipe || null
       });
-      const url = new URL(location.href);
-      url.searchParams.set("poseProject", doc.id);
-      history.replaceState(null, "", url);
     }
-    setStatus(`Saved ${doc.name} (${doc.id})`);
+
+    setOpenProject({ id: doc.id, name: doc.name || doc.id });
+    setStatus(existingId ? `Saved ${doc.name}` : `Created ${doc.name}`);
+    await refreshOpenList();
     return doc;
+  },
+  /** Always mint a new project id (Save as / Create new). */
+  async saveAs({ name, assemblyId } = {}) {
+    const poseName = name || promptName((openProject && openProject.name) || "Lab pose");
+    if (poseName === null) {
+      setStatus("Save as cancelled");
+      return null;
+    }
+    return api.save({ name: poseName, assemblyId, createNew: true });
   },
   async updateMeta(projectId, patch) {
     const user = auth.currentUser;
     if (!user) throw new Error("Sign in required");
-    return updatePoseProject(user, projectId, patch);
+    const doc = await updatePoseProject(user, projectId, patch);
+    if (openProject && openProject.id === projectId && doc) {
+      setOpenProject({ id: doc.id, name: doc.name || doc.id });
+    }
+    return doc;
   },
   labUrlForPose,
   poseRestUrl: (projectId) => {
@@ -180,13 +351,31 @@ const api = {
 window.OdcPhysicalPoses = api;
 
 ensureChrome();
+refreshChrome();
+
+// Restore open project id from URL or session before auth settles.
+(() => {
+  const fromUrl = currentProjectIdFromUrl();
+  const fromSession = readSessionProject();
+  if (fromUrl) {
+    setOpenProject(
+      { id: fromUrl, name: (fromSession && fromSession.id === fromUrl && fromSession.name) || fromUrl },
+      { syncUrl: false }
+    );
+  } else if (fromSession) {
+    setOpenProject(fromSession, { syncUrl: true });
+  }
+})();
+
 watchAuth(async (user) => {
   setAuthUi(user);
   if (!user) {
     setStatus("");
+    await refreshOpenList();
     return;
   }
-  const id = currentProjectIdFromUrl();
+  await refreshOpenList();
+  const id = resolveOpenProjectId();
   if (id) {
     try {
       await api.load(id);

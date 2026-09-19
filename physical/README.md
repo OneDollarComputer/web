@@ -21,16 +21,21 @@ Same Google login as `/project/` and `/editor/`. Public client config only (`phy
 ### Claudio — save / load
 
 1. Open https://onedollarcomputer.com/physical/cloud/ and **Sign in** (Google).
-2. **Create** a pose project (or open an existing one) and edit the JSON online, **Save**.
-3. Or in Physical Lab (signed in): use **Save pose** (bottom-left), or in the console:
-   ```js
-   await OdcPhysicalPoses.save({ name: "Horn assembly" })
-   ```
-4. Load by id: `/physical/?poseProject=pp…` (auto-loads when signed in), or:
-   ```js
-   await OdcPhysicalPoses.load("pp…")
-   ```
-5. Open the JSON editor anytime: `/physical/cloud/?id=pp…`
+2. **Open** a listed pose → Physical Lab (`?poseProject=pp…`). The bridge loads JSON, sets `window.__labAssemblyPose`, and fires `odc-pose-load`.
+3. Or **Create new** only when you want a new id, then Open / Save from the lab.
+4. In Physical Lab (signed in), bottom-left:
+   - Current project **name** is shown when one is open
+   - **Save** updates the open project (URL + session). Mints an id only if nothing is open.
+   - **Save as** always creates a new id
+   - **Open…** picks from your list (same as cloud Open)
+5. JSON editor: `/physical/cloud/?id=pp…` — **Save** updates that id; **Save as** mints a copy; **Open** returns to Lab.
+
+```js
+await OdcPhysicalPoses.save({ name: "Horn assembly" })   // update open, or create if none
+await OdcPhysicalPoses.saveAs({ name: "Horn copy" })     // always new id
+await OdcPhysicalPoses.load("pp…")
+OdcPhysicalPoses.current()  // { id, name } | null
+```
 
 Pose document shape:
 
@@ -46,12 +51,35 @@ Pose document shape:
   "welds": [
     { "name": "lab_weld_a__b", "body1": "a", "body2": "b", "relpose": [0,0,0,1,0,0,0] }
   ],
+  "recipe": null,
   "createdAt": "…",
   "updatedAt": "…"
 }
 ```
 
-Capture prefers `window.__labAssemblyPose` (export this from mujoco-drop for a full snapshot). Fallback: `__odcPose`, `__sg90Pose`, `__labWelds`. Load sets `__labAssemblyPose` and fires `odc-pose-load` for the lab to apply.
+Capture prefers live `window.__labExportPoses()` / `__labGetAssemblyPose()` (same snapshot as lab **Save poses (JSON)**), then `__labAssemblyPose`, then `__odcPose` / `__sg90Pose` / `__labWelds`. Load sets `__labAssemblyPose` and fires `odc-pose-load`; also calls `__labApplyAssemblyPose(payload)` when present.
+
+### Lab-side apply (physical / mujoco-drop) — required for restored positions
+
+Published lab @ `6a68deb` does **not** yet listen for cloud load. Until physical lands the hook, Open still writes Firebase JSON onto the page globals/events, but MuJoCo bodies will not move.
+
+Add in mujoco-drop (then republish dist to `web/physical/`):
+
+```js
+// Live export for cloud Save (reuse the same snapshot as download Save poses):
+window.__labExportPoses = () => /* recipe from go() */;
+
+// Apply cloud / bridge loads:
+window.addEventListener("odc-pose-load", (e) => {
+  window.__labApplyAssemblyPose?.(e.detail);
+});
+window.__labApplyAssemblyPose = (payload) => {
+  // Prefer payload.recipe (lab download shape) when present;
+  // else map payload.parts + payload.welds onto free joints / welds.
+};
+```
+
+Do **not** change Firebase owner-only rules for this feature.
 
 ### Agent / Grok Bot — read with Claudio’s session
 
