@@ -49,12 +49,20 @@
     .list { display:flex; flex-direction:column; gap:0.5rem; margin:1rem 0; }
     .pose-row {
       display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; justify-content:space-between;
-      border:1px solid var(--line); border-radius:10px; padding:0.85rem 1rem; text-align:left;
-      background:transparent; color:var(--text); width:100%; cursor:pointer;
+      border:1px solid var(--line); border-radius:10px; padding:0.65rem 0.85rem; text-align:left;
+      background:transparent; color:var(--text); width:100%;
     }
     .pose-row:hover { border-color:var(--accent); }
-    .pose-row strong { display:block; }
-    .pose-row span { color:var(--sub); font-size:0.82rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .pose-main {
+      flex:1 1 12rem; min-width:0; border:0; background:transparent; color:inherit;
+      text-align:left; padding:0.2rem 0; cursor:pointer; font:inherit;
+    }
+    .pose-main strong { display:block; }
+    .pose-main span, .pose-meta {
+      color:var(--sub); font-size:0.82rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .pose-actions { display:flex; gap:0.35rem; flex-wrap:wrap; }
+    button.small, .btn.small { padding:0.4rem 0.7rem; font-size:0.85rem; }
     #status { color:var(--sub); font-size:0.9rem; min-height:1.2em; }
     a.btn { text-decoration:none; display:inline-flex; align-items:center; }
     [hidden] { display: none !important; }
@@ -87,18 +95,18 @@
 
     <section id="viewList" hidden>
       <h1>Pose projects</h1>
-      <p class="lede">Assembly pose JSON under your Google login. Open one to edit, or create a new Horn / assembly pose.</p>
+      <p class="lede">Open a pose in Physical Lab to restore positions. Create new only when you want a new id.</p>
       <div class="card">
-        <h2>New pose</h2>
+        <h2>Create new</h2>
         <label for="newName">Name</label>
         <input id="newName" type="text" maxlength="80" placeholder="Horn assembly" autocomplete="off" />
         <div class="row">
-          <button type="button" class="primary" id="btnNew">Create</button>
-          <a class="btn ghost" href="/physical/">Open Physical Lab</a>
+          <button type="button" class="primary" id="btnNew">Create new</button>
+          <a class="btn ghost" href="/physical/">Physical Lab</a>
         </div>
       </div>
       <div id="poseList" class="list" aria-live="polite"></div>
-      <p id="emptyNote" class="meta" hidden>No pose projects yet. Create one above, or Save from Physical Lab when signed in.</p>
+      <p id="emptyNote" class="meta" hidden>No pose projects yet. Create new above, or Save from Physical Lab when signed in.</p>
       <p id="status" role="status"></p>
     </section>
 
@@ -118,7 +126,8 @@
       <textarea id="editJson" spellcheck="false"></textarea>
       <div class="row">
         <button type="button" class="primary" id="btnSave">Save</button>
-        <a class="btn ghost" id="btnOpenLab" href="/physical/">Open in Lab</a>
+        <button type="button" class="ghost" id="btnSaveAs">Save as</button>
+        <a class="btn ghost" id="btnOpenLab" href="/physical/">Open</a>
         <button type="button" class="danger" id="btnDelete">Delete</button>
       </div>
       <p id="editStatus" class="meta" role="status"></p>

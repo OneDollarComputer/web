@@ -102,18 +102,28 @@ export function normalizePoseDoc(raw, { ownerUid, projectId } = {}) {
           z: Number(val.eulerDeg.z)
         };
       }
+      if (val.kind != null) row.kind = String(val.kind);
+      if (val.motor && typeof val.motor === "object") row.motor = { ...val.motor };
+      if (val.hornMount !== undefined) row.hornMount = val.hornMount;
+      if (val.hingeDeg !== undefined) row.hingeDeg = Number(val.hingeDeg);
+      if (val.jointDeg !== undefined) row.jointDeg = Number(val.jointDeg);
+      if (val.targetDeg !== undefined) row.targetDeg = Number(val.targetDeg);
+      if (val.hornMountIndex !== undefined) row.hornMountIndex = val.hornMountIndex;
+      if (val.motorOrientation && typeof val.motorOrientation === "object") {
+        row.motorOrientation = { ...val.motorOrientation };
+      }
       parts[key] = row;
     }
   }
   const welds = Array.isArray(src.welds)
     ? src.welds.map((w) => ({
         name: String((w && w.name) || ""),
-        body1: String((w && w.body1) || ""),
-        body2: String((w && w.body2) || ""),
+        body1: String((w && (w.body1 || w.parent)) || ""),
+        body2: String((w && (w.body2 || w.child)) || ""),
         relpose: Array.isArray(w && w.relpose) ? w.relpose.map(Number) : []
       }))
     : [];
-  return {
+  const doc = {
     id,
     ownerUid: uid,
     name: String(src.name || "Untitled pose").trim() || "Untitled pose",
@@ -123,21 +133,93 @@ export function normalizePoseDoc(raw, { ownerUid, projectId } = {}) {
     createdAt,
     updatedAt: nowIso()
   };
+  // Optional recipe blob (lab download shape) — pass through for apply hooks.
+  if (src.recipe && typeof src.recipe === "object") {
+    doc.recipe = src.recipe;
+  }
+  return doc;
+}
+
+/**
+ * Convert a Physical Lab recipe snapshot (parts[]) into cloud parts map.
+ * Recipe shape from lab "Save poses (JSON)":
+ *   { id, parts:[{id,pos,euler_xyz_deg,quat_wxyz}], welds:[{parent,child}] }
+ */
+export function recipeToPartsAndWelds(recipe) {
+  const parts = {};
+  const list = recipe && Array.isArray(recipe.parts) ? recipe.parts : [];
+  for (const part of list) {
+    if (!part || !part.id) continue;
+    const row = {};
+    if (part.kind != null) row.kind = String(part.kind);
+    if (Array.isArray(part.pos)) row.pos = part.pos.map(Number);
+    if (Array.isArray(part.quat_wxyz)) row.quat = part.quat_wxyz.map(Number);
+    else if (Array.isArray(part.quat)) row.quat = part.quat.map(Number);
+    if (Array.isArray(part.euler_xyz_deg) && part.euler_xyz_deg.length >= 3) {
+      row.eulerDeg = {
+        x: Number(part.euler_xyz_deg[0]),
+        y: Number(part.euler_xyz_deg[1]),
+        z: Number(part.euler_xyz_deg[2])
+      };
+    }
+    if (part.motor) row.motor = { ...part.motor };
+    if (part.hornMount !== undefined) row.hornMount = part.hornMount;
+    if (part.hingeDeg !== undefined) row.hingeDeg = part.hingeDeg;
+    parts[part.id] = row;
+  }
+  const welds = Array.isArray(recipe && recipe.welds)
+    ? recipe.welds.map((w, i) => ({
+        name: String((w && w.name) || `weld_${i}`),
+        body1: String((w && (w.body1 || w.parent)) || ""),
+        body2: String((w && (w.body2 || w.child)) || ""),
+        relpose: Array.isArray(w && w.relpose) ? w.relpose.map(Number) : []
+      }))
+    : [];
+  return { parts, welds, recipe };
 }
 
 /**
  * Collect a best-effort snapshot from Physical Lab window globals.
- * Prefer window.__labAssemblyPose when mujoco-drop exports a full snapshot.
+ * Prefer live exporters from mujoco-drop, then __labAssemblyPose, then partial globals.
  */
 export function captureLabPose(win = window) {
-  if (win.__labAssemblyPose && typeof win.__labAssemblyPose === "object") {
-    return {
-      assemblyId: win.__labAssemblyPose.assemblyId || DEFAULT_ASSEMBLY_ID,
-      parts: win.__labAssemblyPose.parts || {},
-      welds: win.__labAssemblyPose.welds || [],
-      source: "labAssemblyPose"
-    };
+  const exporters = [win.__labExportPoses, win.__labGetAssemblyPose];
+  for (const fn of exporters) {
+    if (typeof fn !== "function") continue;
+    try {
+      const recipe = fn.call(win);
+      if (recipe && typeof recipe === "object" && Array.isArray(recipe.parts)) {
+        const { parts, welds } = recipeToPartsAndWelds(recipe);
+        return {
+          assemblyId: recipe.assemblyId || recipe.id || DEFAULT_ASSEMBLY_ID,
+          parts,
+          welds,
+          recipe,
+          source: "labExportPoses"
+        };
+      }
+    } catch {
+      /* try next */
+    }
   }
+
+  if (win.__labAssemblyPose && typeof win.__labAssemblyPose === "object") {
+    const src = win.__labAssemblyPose;
+    // Skip firebase-only mirrors so Save can still fall through to live globals.
+    if (src.source !== "firebase") {
+      const fromRecipe = src.recipe ? recipeToPartsAndWelds(src.recipe) : null;
+      return {
+        assemblyId: src.assemblyId || DEFAULT_ASSEMBLY_ID,
+        parts: Object.keys(src.parts || {}).length ? src.parts : (fromRecipe && fromRecipe.parts) || {},
+        welds: Array.isArray(src.welds) && src.welds.length
+          ? src.welds
+          : (fromRecipe && fromRecipe.welds) || [],
+        recipe: src.recipe || null,
+        source: "labAssemblyPose"
+      };
+    }
+  }
+
   const parts = {};
   const odc = win.__odcPose;
   if (odc && Array.isArray(odc.pos)) {
@@ -170,7 +252,25 @@ export function captureLabPose(win = window) {
   }
   const weldBag = win.__labWelds;
   const welds = weldBag && Array.isArray(weldBag.welds) ? weldBag.welds.map((w) => ({ ...w })) : [];
-  return { assemblyId: DEFAULT_ASSEMBLY_ID, parts, welds, source: "window-globals" };
+
+  // Last resort: re-save the loaded firebase payload if nothing live is available.
+  if (
+    !Object.keys(parts).length &&
+    !welds.length &&
+    win.__labAssemblyPose &&
+    typeof win.__labAssemblyPose === "object"
+  ) {
+    const src = win.__labAssemblyPose;
+    return {
+      assemblyId: src.assemblyId || DEFAULT_ASSEMBLY_ID,
+      parts: src.parts || {},
+      welds: Array.isArray(src.welds) ? src.welds : [],
+      recipe: src.recipe || null,
+      source: "labAssemblyPose-cached"
+    };
+  }
+
+  return { assemblyId: DEFAULT_ASSEMBLY_ID, parts, welds, recipe: null, source: "window-globals" };
 }
 
 export async function requireUser() {
