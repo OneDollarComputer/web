@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-B1e2t0bf.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-DfPioTWQ.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-DXbWK1pr.css">
+    <script type="module" crossorigin src="/physical/assets/main-CCTYdmy0.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-BuuzBJ0f.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-lQeXQdWF.css">
+      <script type="module" src="/physical/js/pose-bridge.js"></script>
   </head>
   <body>
     <div id="app">
@@ -22,6 +23,14 @@
           <button id="btn-play" type="button">Play</button>
           <button id="btn-pause" type="button" disabled>Pause</button>
           <button id="btn-reset" type="button">Reset</button>
+          <button
+            id="btn-save"
+            type="button"
+            disabled
+            title="Firebase Save when signed in · otherwise downloads pose JSON"
+          >
+            Save
+          </button>
           <button id="btn-pose" type="button" aria-pressed="true" title="Toggle pose HUD">Pose</button>
           <button id="btn-camera" type="button" aria-pressed="true" title="Toggle camera angle HUD">Camera</button>
           <button
@@ -271,10 +280,13 @@
           >
             Apply pose
           </button>
-          <p class="pose-data-hint">
-            Click a field and type · Enter or blur updates the sim (Pause) ·
-            Gizmo / Place drag still work · fields sync after drag / selection change
-          </p>
+          <details class="lab-help lab-help-inline">
+            <summary title="Pose data help">[?]</summary>
+            <div class="lab-help-body">
+              Click a field and type · Enter or blur updates (Pause) ·
+              Gizmo / Place drag still work · fields sync after drag / selection change
+            </div>
+          </details>
         </section>
         <div class="place-nudge" role="group" aria-label="Nudge position">
           <span class="place-nudge-label">Nudge 5&nbsp;mm</span>
@@ -292,6 +304,13 @@
           <button id="btn-detach" type="button" disabled title="Remove weld involving selection">
             Detach
           </button>
+          <button
+            id="btn-deselect"
+            type="button"
+            title="Clear selection (Esc)"
+          >
+            Deselect
+          </button>
         </div>
         <div class="sel-attach" role="group" aria-label="Save / copy pose">
           <button id="btn-copy-pose" type="button" disabled title="Copy selected body pose as recipe JSON">
@@ -307,12 +326,15 @@
           </button>
         </div>
         <p id="sel-hint" class="sel-hint" hidden>Drag to reorient</p>
-        <p class="pose-hint">
-          Place = RGB gizmo move/rotate (Pause) · <strong>Pose data</strong> = type XYZ / euler ·
-          Orbit = camera (works in Place when not dragging a handle) · Attach welds at current relpose ·
-          <strong>Save</strong> downloads recipe JSON ·
-          <code>window.__labWelds</code>
-        </p>
+        <details class="lab-help lab-help-block">
+          <summary title="Help">[?]</summary>
+          <div class="lab-help-body">
+            Place = RGB gizmo (Pause) · Pose data = type XYZ / euler ·
+            Orbit still works when not dragging a handle ·
+            <kbd>Esc</kbd> deselects · Shift+click partner → Attach ·
+            Save downloads recipe JSON · <code>window.__labWelds</code>
+          </div>
+        </details>
       </aside>
 
       <aside id="pose-hud" aria-label="ODC pose readout">
@@ -455,22 +477,33 @@
       <aside id="assemblies-panel" class="assemblies-panel" aria-label="Assemblies">
         <header class="panel-header">
           <strong>Assemblies</strong>
-          <span class="frame-tag">recipes · multi-instance</span>
+          <details class="lab-help">
+            <summary title="Help">[?]</summary>
+            <div class="lab-help-body">
+              Spawn a JSON recipe (parts + poses + welds). Demo:
+              <strong>Cowboy Walker</strong> — hat→computer→RJ45→battery on 4× SG90 legs.
+              After spawn: Pause → Place → pick a part (list or click) → gizmo / Pose data →
+              Save poses (JSON). Shift+click partner → Attach. Authoring:
+              <code>docs/ASSEMBLIES.md</code> · <code>window.__labAssemblies</code>
+            </div>
+          </details>
         </header>
-        <p class="pose-hint">
-          Spawn a JSON recipe (parts + poses + welds). First demo:
-          <strong>Cowboy Walker</strong> — hat→ODC→RJ45→battery on 4× SG90 legs (horns down).
-        </p>
-        <p class="pose-hint place-howto">
-          <strong>Place + Save:</strong> Pause → Selection → <em>Place</em> → select a part →
-          drag RGB gizmo arrows/rings (or nudge / Pose data) →
-          <em>Save poses (JSON)</em> downloads
-          <code>&lt;id&gt;_poses.json</code> (part ids +
-          <code>pos</code>/<code>euler_xyz_deg</code> + welds) · Shift+click partner →
-          <em>Attach</em> welds at the current relative pose.
-        </p>
         <ul id="assembly-list" class="assembly-list"></ul>
-        <pre id="assembly-meta" class="assembly-meta">(no assembly spawned)</pre>
+        <p id="assembly-meta" class="assembly-meta-line" role="status">(no assembly spawned)</p>
+        <div class="lab-parts-block">
+          <div class="lab-parts-heading">
+            <strong>In scene</strong>
+            <details class="lab-help">
+              <summary title="Help">[?]</summary>
+              <div class="lab-help-body">
+                Every free body currently in the lab. Click a row to select it
+                (same as picking in the viewport) — useful when parts overlap or
+                are hard to click.
+              </div>
+            </details>
+          </div>
+          <ul id="lab-parts-list" class="lab-parts-list" aria-label="Parts in scene"></ul>
+        </div>
         <div class="sel-attach" role="group" aria-label="Assembly actions">
           <button
             id="btn-assembly-save"
@@ -478,25 +511,28 @@
             disabled
             title="Download recipe-compatible JSON with current poses + welds"
           >
-            Save poses (JSON)
+            Save poses
           </button>
           <button id="btn-assembly-clear" type="button" disabled title="Remove the active assembly recipe">
-            Clear assembly
+            Clear
           </button>
           <button
             id="btn-assembly-clone"
             type="button"
             disabled
-            title="Duplicate the selected free part nearby (SG90 supported)"
+            title="Duplicate the selected free part nearby (SG90)"
           >
-            Clone selected
+            Clone
           </button>
+          <details class="lab-help lab-help-inline">
+            <summary title="Clone help">[?]</summary>
+            <div class="lab-help-body">
+              Select an SG90 (list or viewport), then Clone — places a copy ~40&nbsp;mm
+              along +X with its own body id. Only SG90 is clonable for now.
+            </div>
+          </details>
         </div>
-        <p id="assembly-clone-hint" class="pose-hint" role="status">Select a part to clone</p>
-        <p class="pose-hint">
-          Authoring: <code>docs/ASSEMBLIES.md</code> ·
-          <code>window.__labAssemblies</code>
-        </p>
+        <p id="assembly-clone-hint" class="assembly-status" role="status" hidden></p>
       </aside>
 
       <canvas id="c"></canvas>
