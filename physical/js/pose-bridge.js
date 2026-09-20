@@ -139,7 +139,6 @@ function ensureChrome() {
     <a href="/physical/cloud/">Poses</a>
     <span id="${NAME_ID}" data-need-auth></span>
     <button type="button" data-need-guest data-action="signin">Sign in</button>
-    <button type="button" class="primary" data-need-auth data-action="save" title="Save current pose (or name a new project if none open)">Save</button>
     <select id="${OPEN_ID}" data-need-auth aria-label="Open or save as">
       <option value="">Open…</option>
     </select>
@@ -155,8 +154,6 @@ function ensureChrome() {
         if (err && err.code === "auth/popup-closed-by-user") return;
         setStatus((err && err.message) || "Sign-in failed");
       });
-    } else if (action === "save") {
-      api.save().catch((err) => setStatus((err && err.message) || "Save failed"));
     }
   });
   const openSelect = bar.querySelector(`#${OPEN_ID}`);
