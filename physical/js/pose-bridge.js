@@ -139,9 +139,8 @@ function ensureChrome() {
     <a href="/physical/cloud/">Poses</a>
     <span id="${NAME_ID}" data-need-auth></span>
     <button type="button" data-need-guest data-action="signin">Sign in</button>
-    <button type="button" class="primary" data-need-auth data-action="save">Save</button>
-    <button type="button" data-need-auth data-action="saveas">Save as</button>
-    <select id="${OPEN_ID}" data-need-auth aria-label="Open pose">
+    <button type="button" class="primary" data-need-auth data-action="save" title="Save current pose (or name a new project if none open)">Save</button>
+    <select id="${OPEN_ID}" data-need-auth aria-label="Open or save as">
       <option value="">Open…</option>
     </select>
     <span id="${STATUS_ID}" role="status"></span>
@@ -158,8 +157,6 @@ function ensureChrome() {
       });
     } else if (action === "save") {
       api.save().catch((err) => setStatus((err && err.message) || "Save failed"));
-    } else if (action === "saveas") {
-      api.saveAs().catch((err) => setStatus((err && err.message) || "Save as failed"));
     }
   });
   const openSelect = bar.querySelector(`#${OPEN_ID}`);
@@ -168,6 +165,10 @@ function ensureChrome() {
       const id = openSelect.value;
       openSelect.value = "";
       if (!id) return;
+      if (id === "__save_as__") {
+        api.saveAs().catch((err) => setStatus((err && err.message) || "Save as failed"));
+        return;
+      }
       api.load(id).catch((err) => setStatus((err && err.message) || "Open failed"));
     });
   }
@@ -203,6 +204,10 @@ async function refreshOpenList() {
   const user = auth.currentUser;
   const keep = select.value;
   select.innerHTML = `<option value="">Open…</option>`;
+  const saveAsOpt = document.createElement("option");
+  saveAsOpt.value = "__save_as__";
+  saveAsOpt.textContent = "Save as new…";
+  select.appendChild(saveAsOpt);
   if (!user) return;
   try {
     const rows = await listPoseProjects(user.uid);
