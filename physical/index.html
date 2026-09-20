@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-Cth089Nd.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-ChAibyJx.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-CrdS5uqZ.css">
+    <script type="module" crossorigin src="/physical/assets/main-B-th_nfw.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-BdqKAfL-.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-Csl1cCXb.css">
       <script type="module" src="/physical/js/pose-bridge.js"></script>
   </head>
   <body>
@@ -15,8 +15,7 @@
         <div class="brand">
           <span class="mark">$</span>
           <div>
-            <strong>One Dollar Computer</strong>
-            <small>Physical Lab · Marco 0 drop + Fusion parts + SG90</small>
+            <strong>Physical Lab</strong>
           </div>
         </div>
         <div id="controls" class="controls" aria-label="Simulation controls">
@@ -33,18 +32,17 @@
             Save
           </button>
           <button id="btn-pose" type="button" aria-pressed="true" title="Toggle pose HUD">Pose</button>
-          <button id="btn-camera" type="button" aria-pressed="true" title="Toggle camera angle HUD">Camera</button>
+          <button id="btn-camera" type="button" aria-pressed="true" title="Toggle camera HUD">Camera</button>
           <button
             id="btn-record"
             type="button"
             aria-pressed="false"
-            title="Record the WebGL canvas (WebM)"
+            title="Record canvas (WebM)"
           >
             Record
           </button>
-          <a class="nav-link" href="./sg90.html">SG90 bench</a>
         </div>
-        <p id="status" role="status">Loading MuJoCo…</p>
+        <p id="status" role="status" class="topbar-status">Loading…</p>
       </header>
       <div id="record-bar" class="record-bar" hidden>
         <span id="record-live" class="record-live" hidden aria-live="polite">
@@ -54,34 +52,32 @@
         <a id="btn-download" class="download-link" href="#" download hidden
           >Download video</a
         >
-        <span class="record-tip">Chrome/Edge: WebM · Safari may differ · local only</span>
+        <span class="record-tip">WebM</span>
       </div>
 
       <aside id="selection-panel" class="selection-panel" aria-label="Selected object" hidden>
         <header class="panel-header">
-          <strong>Selection</strong>
-          <span class="frame-tag">click · Shift+click partner</span>
+          <strong>Item</strong>
         </header>
         <div class="pointer-mode" role="group" aria-label="Pointer mode">
-          <button id="btn-mode-orbit" type="button" aria-pressed="true" title="Left-drag orbits the camera">
+          <button id="btn-mode-orbit" type="button" aria-pressed="true" title="Orbit camera">
             Orbit
           </button>
           <button
             id="btn-mode-place"
             type="button"
             aria-pressed="false"
-            title="Show move/rotate gizmo on the selected free body (pause first)"
+            title="Move / rotate gizmo (pause first)"
           >
             Place
           </button>
         </div>
         <div class="gizmo-space" role="group" aria-label="Gizmo space" hidden>
-          <span class="gizmo-space-label">Gizmo</span>
           <button
             id="btn-gizmo-local"
             type="button"
             aria-pressed="true"
-            title="Move/rotate in the object's local axes"
+            title="Local axes"
           >
             Local
           </button>
@@ -89,7 +85,7 @@
             id="btn-gizmo-world"
             type="button"
             aria-pressed="false"
-            title="Move/rotate in world axes"
+            title="World axes"
           >
             World
           </button>
@@ -131,8 +127,7 @@
           hidden
         >
           <header>
-            <strong>Pose data</strong>
-            <span class="frame-tag">meters · degrees · Enter/Apply</span>
+            <strong>Transform</strong>
           </header>
           <dl class="pose-data-meta">
             <div>
@@ -314,34 +309,24 @@
           </button>
         </div>
         <div class="sel-attach" role="group" aria-label="Save / copy pose">
-          <button id="btn-copy-pose" type="button" disabled title="Copy selected body pose as recipe JSON">
-            Copy pose
+          <button id="btn-copy-pose" type="button" disabled title="Copy pose JSON">
+            Copy
           </button>
           <button
             id="btn-save-poses"
             type="button"
             disabled
-            title="Download recipe-compatible JSON (part ids + pos/euler + welds)"
+            title="Download poses JSON"
           >
-            Save poses (JSON)
+            Export
           </button>
         </div>
-        <p id="sel-hint" class="sel-hint" hidden>Drag to reorient</p>
-        <details class="lab-help lab-help-block">
-          <summary title="Help">[?]</summary>
-          <div class="lab-help-body">
-            Place = RGB gizmo (Pause) · Pose data = type XYZ / euler ·
-            Orbit still works when not dragging a handle ·
-            <kbd>Esc</kbd> deselects · Shift+click partner → Attach ·
-            Save downloads recipe JSON · <code>window.__labWelds</code>
-          </div>
-        </details>
+        <p id="sel-hint" class="sel-hint" hidden></p>
       </aside>
 
       <aside id="pose-hud" aria-label="ODC pose readout">
         <header class="panel-header">
           <strong>Pose</strong>
-          <span class="frame-tag">MuJoCo Z-up · body odc</span>
         </header>
         <dl>
           <div>
@@ -361,64 +346,55 @@
             <dd id="pose-vel">—</dd>
           </div>
         </dl>
-        <p class="pose-hint">Also <code>window.__odcPose</code> · camera <code>window.__cameraPose</code></p>
+        <p class="pose-hint" hidden></p>
       </aside>
 
-      <aside id="sg90-panel" aria-label="SG90 position commands">
+      <aside id="sg90-panel" aria-label="SG90">
         <header class="panel-header">
           <strong>SG90</strong>
-          <span class="frame-tag">±90° · forcerange 0.15 N·m</span>
         </header>
         <label class="horn-row" for="horn-select">
           <span>Horn</span>
           <select id="horn-select" disabled>
-            <option value="cross" selected>Cross (4 pads)</option>
+            <option value="cross" selected>Cross</option>
             <option value="single">1-arm</option>
             <option value="short">Short</option>
-            <option value="long">Long / wide</option>
+            <option value="long">Long</option>
             <option value="double">2-arm</option>
           </select>
         </label>
         <label class="horn-row horn-mount-row" for="horn-mount-select">
-          <span>Horn mount (spline)</span>
-          <select id="horn-mount-select" disabled aria-describedby="horn-mount-note">
-            <option value="0" selected>0 (0.0°)</option>
+          <span>Mount</span>
+          <select id="horn-mount-select" disabled>
+            <option value="0" selected>0</option>
           </select>
         </label>
-        <p id="horn-mount-note" class="spline-note">
-          21T SG90 spline — 360°/21 per tooth
-          <span class="spline-cite"
-            >(ServoDatabase Gear Spline/Teeth 21T; RobotShop; Thingiverse SG-90). Seat index only — does not move the hinge target.</span
-          >
-        </p>
-        <fieldset class="motor-orient" aria-describedby="motor-orient-note">
-          <legend>Motor orientation</legend>
+        <p id="horn-mount-note" class="spline-note" hidden></p>
+        <fieldset class="motor-orient">
+          <legend>Orient</legend>
           <label class="slider-row" for="motor-yaw">
-            <span>Yaw</span>
+            <span>Y</span>
             <input id="motor-yaw" type="range" min="-180" max="180" step="1" value="0" disabled />
             <span id="motor-yaw-readout">0°</span>
           </label>
           <label class="slider-row" for="motor-pitch">
-            <span>Pitch</span>
+            <span>P</span>
             <input id="motor-pitch" type="range" min="-180" max="180" step="1" value="0" disabled />
             <span id="motor-pitch-readout">0°</span>
           </label>
           <label class="slider-row" for="motor-roll">
-            <span>Roll</span>
+            <span>R</span>
             <input id="motor-roll" type="range" min="-180" max="180" step="1" value="0" disabled />
             <span id="motor-roll-readout">0°</span>
           </label>
-          <div class="orient-presets" role="group" aria-label="Motor orientation presets">
-            <button type="button" data-motor-yaw="0" disabled>Yaw 0°</button>
-            <button type="button" data-motor-yaw="90" disabled>Yaw 90°</button>
-            <button type="button" data-motor-yaw="-90" disabled>Yaw −90°</button>
-            <button type="button" id="motor-orient-reset" disabled>Reset triad</button>
+          <div class="orient-presets" role="group" aria-label="Orientation presets">
+            <button type="button" data-motor-yaw="0" disabled>0°</button>
+            <button type="button" data-motor-yaw="90" disabled>90°</button>
+            <button type="button" data-motor-yaw="-90" disabled>−90°</button>
+            <button type="button" id="motor-orient-reset" disabled>Reset</button>
           </div>
         </fieldset>
-        <p id="motor-orient-note" class="spline-note">
-          Whole housing + horn. Lab: edit while paused / applied on Reset (does not fight freejoint mid-flight). Independent of shaft target and horn mount.
-          Click any free body to select, then drag to reorient. Shift+click a second body, then Attach to weld (demo: SG90 onto battery holder).
-        </p>
+        <p id="motor-orient-note" class="spline-note" hidden></p>
         <div class="angle-presets" role="group" aria-label="Horn angle presets">
           <button type="button" data-angle="-90" disabled>−90°</button>
           <button type="button" data-angle="-45" disabled>−45°</button>
@@ -427,7 +403,7 @@
           <button type="button" data-angle="90" disabled>+90°</button>
         </div>
         <label class="slider-row" for="angle-slider">
-          <span>Horn angle</span>
+          <span>Angle</span>
           <input
             id="angle-slider"
             type="range"
@@ -439,12 +415,10 @@
           />
           <span id="angle-readout">0.0°</span>
         </label>
-        <p class="spline-note">
-          While paused, sets the selected SG90’s initial shaft pose (does not auto-Play). Hit Play to drop.
-        </p>
+        <p class="spline-note" hidden></p>
         <label class="load-row" for="load-toggle">
           <input id="load-toggle" type="checkbox" disabled />
-          <span>Absurd load (0.4 kg stick — expect stall)</span>
+          <span>Load</span>
         </label>
         <dl class="sg90-hud">
           <div>
@@ -472,69 +446,42 @@
             <dd id="hud-sat">—</dd>
           </div>
         </dl>
-        <p class="pose-hint">
-          Same world as ODC — see <code>models/sg90/PARAMS.md</code>
-        </p>
+        <p class="pose-hint" hidden></p>
       </aside>
 
       
-      <aside id="assemblies-panel" class="assemblies-panel" aria-label="Assemblies">
+      <aside id="assemblies-panel" class="assemblies-panel" aria-label="Outliner">
         <header class="panel-header">
-          <strong>Assemblies</strong>
-          <details class="lab-help">
-            <summary title="Help">[?]</summary>
-            <div class="lab-help-body">
-              Spawn a JSON recipe (parts + poses + welds). Demo:
-              <strong>Cowboy Walker</strong> — hat→computer→RJ45→battery on 4× SG90 legs.
-              After spawn: Pause → Place → pick a part (list or click) → gizmo / Pose data →
-              Save poses (JSON). Shift+click partner → Attach. Authoring:
-              <code>docs/ASSEMBLIES.md</code> · <code>window.__labAssemblies</code>
-            </div>
-          </details>
+          <strong>Outliner</strong>
         </header>
         <ul id="assembly-list" class="assembly-list"></ul>
-        <p id="assembly-meta" class="assembly-meta-line" role="status">(no assembly spawned)</p>
+        <p id="assembly-meta" class="assembly-meta-line" role="status"></p>
         <div class="lab-parts-block">
           <div class="lab-parts-heading">
-            <strong>In scene</strong>
-            <details class="lab-help">
-              <summary title="Help">[?]</summary>
-              <div class="lab-help-body">
-                Every free body currently in the lab. Click a row to select it
-                (same as picking in the viewport). Use × on a clone / assembly
-                SG90 to remove it (stock parts stay).
-              </div>
-            </details>
+            <strong>Scene</strong>
           </div>
           <ul id="lab-parts-list" class="lab-parts-list" aria-label="Parts in scene"></ul>
         </div>
-        <div class="sel-attach" role="group" aria-label="Assembly actions">
+        <div class="sel-attach" role="group" aria-label="Actions">
           <button
             id="btn-assembly-save"
             type="button"
             disabled
-            title="Download recipe-compatible JSON with current poses + welds"
+            title="Export poses JSON"
           >
-            Save poses
+            Export
           </button>
-          <button id="btn-assembly-clear" type="button" disabled title="Remove the active assembly recipe">
+          <button id="btn-assembly-clear" type="button" disabled title="Clear assembly">
             Clear
           </button>
           <button
             id="btn-assembly-clone"
             type="button"
             disabled
-            title="Duplicate the selected free part nearby (SG90)"
+            title="Duplicate selected SG90"
           >
-            Clone
+            Duplicate
           </button>
-          <details class="lab-help lab-help-inline">
-            <summary title="Clone help">[?]</summary>
-            <div class="lab-help-body">
-              Select an SG90 (list or viewport), then Clone — places a copy ~40&nbsp;mm
-              along +X with its own body id. Only SG90 is clonable for now.
-            </div>
-          </details>
         </div>
         <p id="assembly-clone-hint" class="assembly-status" role="status" hidden></p>
       </aside>
