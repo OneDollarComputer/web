@@ -102,79 +102,46 @@ function resolveOpenProjectId(explicitId) {
 }
 
 function ensureChrome() {
-  if (document.getElementById("odc-pose-bridge")) return;
-  const bar = document.createElement("div");
+  let bar = document.getElementById("odc-pose-bridge");
+  if (bar) {
+    bar.hidden = true;
+    bar.setAttribute("aria-hidden", "true");
+    return;
+  }
+  bar = document.createElement("div");
   bar.id = "odc-pose-bridge";
-  bar.setAttribute("aria-label", "Pose cloud");
+  bar.hidden = true;
+  bar.setAttribute("aria-hidden", "true");
   bar.innerHTML = `
-    <style>
-      #odc-pose-bridge {
-        position: fixed; z-index: 40; left: 0.75rem; bottom: 0.75rem;
-        display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;
-        font: 600 0.8rem ui-sans-serif, system-ui, sans-serif;
-        pointer-events: none;
-      }
-      #odc-pose-bridge a, #odc-pose-bridge button, #odc-pose-bridge select {
-        pointer-events: auto; border: 1px solid #1D2843; border-radius: 8px;
-        padding: 0.4rem 0.65rem; background: #0D1220; color: #48E1A7;
-        text-decoration: none; cursor: pointer; font: inherit;
-      }
-      #odc-pose-bridge select {
-        color: #E8EEF8; max-width: 11rem;
-      }
-      #odc-pose-bridge button.primary { background: #48E1A7; color: #04140e; border-color: transparent; }
-      #odc-pose-bridge #${NAME_ID} {
-        pointer-events: none; color: #E8EEF8; font-weight: 600; font-size: 0.75rem;
-        max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
-      #odc-pose-bridge #${NAME_ID}:empty { display: none; }
-      #odc-pose-bridge #${STATUS_ID} {
-        pointer-events: none; color: #A9B4C7; font-weight: 500; font-size: 0.75rem;
-        max-width: 14rem;
-      }
-      #odc-pose-bridge[data-auth="out"] [data-need-auth] { display: none; }
-      #odc-pose-bridge[data-auth="in"] [data-need-guest] { display: none; }
-      #odc-pose-bridge[data-has-open="0"] [data-need-open] { display: none; }
-    </style>
-    <a href="/physical/cloud/">Poses</a>
-    <span id="${NAME_ID}" data-need-auth></span>
+    <span id="${NAME_ID}"></span>
     <button type="button" data-need-guest data-action="signin">Sign in</button>
-    <select id="${OPEN_ID}" data-need-auth aria-label="Open or save as">
-      <option value="">Open…</option>
-    </select>
+    <select id="${OPEN_ID}" aria-label="Open or save as"></select>
     <span id="${STATUS_ID}" role="status"></span>
   `;
   document.body.appendChild(bar);
   bar.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-action]");
     if (!btn) return;
-    const action = btn.getAttribute("data-action");
-    if (action === "signin") {
+    if (btn.getAttribute("data-action") === "signin") {
       signIn().catch((err) => {
         if (err && err.code === "auth/popup-closed-by-user") return;
         setStatus((err && err.message) || "Sign-in failed");
       });
     }
   });
-  const openSelect = bar.querySelector(`#${OPEN_ID}`);
-  if (openSelect) {
-    openSelect.addEventListener("change", () => {
-      const id = openSelect.value;
-      openSelect.value = "";
-      if (!id) return;
-      if (id === "__save_as__") {
-        api.saveAs().catch((err) => setStatus((err && err.message) || "Save as failed"));
-        return;
-      }
-      api.load(id).catch((err) => setStatus((err && err.message) || "Open failed"));
-    });
-  }
 }
 
 function setStatus(msg) {
   ensureChrome();
   const el = document.getElementById(STATUS_ID);
   if (el) el.textContent = msg || "";
+  try {
+    window.dispatchEvent(
+      new CustomEvent("odc-pose-bridge-status", { detail: { message: msg || "" } }),
+    );
+  } catch {
+    /* ignore */
+  }
 }
 
 function setAuthUi(user) {
@@ -192,33 +159,45 @@ function refreshChrome() {
     nameEl.textContent = openProject ? openProject.name : "";
     nameEl.title = openProject ? `${openProject.name} (${openProject.id})` : "";
   }
+  const chipName = document.querySelector("#lab-autosave-chip [data-bridge-name]");
+  if (chipName) {
+    chipName.textContent = openProject ? openProject.name : "No project";
+    chipName.title = openProject ? `${openProject.name} (${openProject.id})` : "";
+  }
 }
 
 async function refreshOpenList() {
   ensureChrome();
-  const select = document.getElementById(OPEN_ID);
-  if (!select) return;
+  const selects = [
+    document.getElementById(OPEN_ID),
+    document.querySelector("#lab-autosave-chip [data-pose-open]"),
+  ].filter(Boolean);
+  if (!selects.length) return;
   const user = auth.currentUser;
-  const keep = select.value;
-  select.innerHTML = `<option value="">Open…</option>`;
-  const saveAsOpt = document.createElement("option");
-  saveAsOpt.value = "__save_as__";
-  saveAsOpt.textContent = "Save as new…";
-  select.appendChild(saveAsOpt);
-  if (!user) return;
-  try {
-    const rows = await listPoseProjects(user.uid);
+  /** @type {{ id: string, name: string }[]} */
+  let rows = [];
+  if (user) {
+    try {
+      rows = await listPoseProjects(user.uid);
+    } catch {
+      rows = [];
+    }
+  }
+  for (const select of selects) {
+    const keep = select.value;
+    select.innerHTML = `<option value="">Open…</option>`;
+    const saveAsOpt = document.createElement("option");
+    saveAsOpt.value = "__save_as__";
+    saveAsOpt.textContent = "Save as new…";
+    select.appendChild(saveAsOpt);
     for (const row of rows) {
       const opt = document.createElement("option");
       opt.value = row.id;
       opt.textContent = row.name || row.id;
-      if (openProject && row.id === openProject.id) opt.selected = false;
       select.appendChild(opt);
     }
     if (keep && [...select.options].some((o) => o.value === keep)) select.value = keep;
     else select.value = "";
-  } catch {
-    /* list is best-effort for the Open menu */
   }
 }
 
