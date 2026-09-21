@@ -4,6 +4,11 @@
       "poses": {
         ".read": false,
         ".write": false
+      },
+      "sharedDefault": {
+        ".read": true,
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['name', 'assemblyId', 'updatedAt', 'parts']) && newData.child('name').isString() && newData.child('assemblyId').isString() && newData.child('updatedAt').isString()"
       }
     },
     "users": {

@@ -29,6 +29,8 @@ import {
   listPoseProjects,
   updatePoseProject,
   deletePoseProject,
+  getSharedDefaultPose,
+  publishSharedDefaultPose,
   labUrlForPose,
   poseRestUrl,
   DEFAULT_ASSEMBLY_ID
@@ -310,6 +312,16 @@ const api = {
 
     setOpenProject({ id: doc.id, name: doc.name || doc.id });
     setStatus(existingId ? `Saved ${doc.name}` : `Created ${doc.name}`);
+    try {
+      await publishSharedDefaultPose(user, doc);
+      setStatus(
+        existingId
+          ? `Saved ${doc.name} · set as lab default`
+          : `Created ${doc.name} · set as lab default`,
+      );
+    } catch (err) {
+      console.warn("[pose-bridge] shared default publish failed", err);
+    }
     await refreshOpenList();
     return doc;
   },
@@ -382,6 +394,14 @@ const api = {
     setOpenProject({ id: doc.id, name: doc.name || doc.id });
     await refreshOpenList();
     return doc;
+  },
+  async getSharedDefault() {
+    return getSharedDefaultPose();
+  },
+  async publishSharedDefault(payload = {}) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sign in required");
+    return publishSharedDefaultPose(user, payload);
   },
   labUrlForPose,
   poseRestUrl: (projectId) => {

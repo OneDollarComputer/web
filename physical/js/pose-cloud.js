@@ -340,6 +340,65 @@ export async function deletePoseProject(user, projectId) {
   await remove(ref(db, posesPath(user.uid, projectId)));
 }
 
+/** Shared lab start pose — any visitor reads; signed-in Save publishes. */
+export const SHARED_DEFAULT_PATH = "physicalLab/sharedDefault";
+
+export async function getSharedDefaultPose() {
+  const snap = await get(ref(db, SHARED_DEFAULT_PATH));
+  if (!snap.exists()) return null;
+  const val = snap.val() || {};
+  return {
+    ...val,
+    name: val.name || "Cowboy Walker",
+    assemblyId: val.assemblyId || "cowboy_walker",
+    parts: val.parts && typeof val.parts === "object" ? val.parts : {},
+    welds: Array.isArray(val.welds) ? val.welds : [],
+    source: "shared-default"
+  };
+}
+
+/**
+ * Publish the pose everyone gets on lab start.
+ * @param {import("firebase/auth").User} user
+ * @param {object} payload
+ */
+export async function publishSharedDefaultPose(user, payload = {}) {
+  if (!user) throw new Error("Sign in required");
+  const live =
+    typeof window !== "undefined" &&
+    window.__labAssemblyPose &&
+    typeof window.__labAssemblyPose === "object"
+      ? window.__labAssemblyPose
+      : {};
+  const doc = {
+    name: String(payload.name || live.name || "Cowboy Walker").trim() || "Cowboy Walker",
+    assemblyId: String(
+      payload.assemblyId || live.assemblyId || "cowboy_walker"
+    ),
+    parts:
+      payload.parts && typeof payload.parts === "object"
+        ? payload.parts
+        : live.parts || {},
+    welds: Array.isArray(payload.welds)
+      ? payload.welds
+      : Array.isArray(live.welds)
+        ? live.welds
+        : [],
+    updatedAt: nowIso(),
+    updatedByUid: user.uid,
+    updatedByName: user.displayName || user.email || user.uid
+  };
+  if (payload.camera || live.camera) doc.camera = payload.camera || live.camera;
+  if (payload.horns || live.horns) doc.horns = payload.horns || live.horns;
+  if (payload.hornMounts || live.hornMounts) {
+    doc.hornMounts = payload.hornMounts || live.hornMounts;
+  }
+  if (payload.recipe || live.recipe) doc.recipe = payload.recipe || live.recipe;
+  if (payload.id) doc.sourceProjectId = payload.id;
+  await set(ref(db, SHARED_DEFAULT_PATH), doc);
+  return doc;
+}
+
 export async function signIn() {
   const provider = new GoogleAuthProvider();
   return signInWithGoogle(auth, provider);
