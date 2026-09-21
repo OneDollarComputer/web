@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Physical Lab — MuJoCo drop (Marco 0)</title>
-    <script type="module" crossorigin src="/physical/assets/main-B-th_nfw.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-BdqKAfL-.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-Csl1cCXb.css">
-      <script type="module" src="/physical/js/pose-bridge.js"></script>
-  </head>
+    <title>Physical Lab</title>
+    <script type="module" crossorigin src="/physical/assets/main-DWoAGaM3.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-9Wjcu6ig.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-BHWqWlmX.css">
+    <script type="module" src="/physical/js/pose-bridge.js"></script>
+</head>
   <body>
     <div id="app">
       <header id="topbar">
@@ -21,6 +21,31 @@
         <div id="controls" class="controls" aria-label="Simulation controls">
           <button id="btn-play" type="button">Play</button>
           <button id="btn-pause" type="button" disabled>Pause</button>
+          <div class="script-controls" role="group" aria-label="Lab script">
+            <label class="script-select-wrap" for="script-select">
+              <span class="visually-hidden">Script</span>
+              <select id="script-select" title="Choose a motion script" disabled>
+                <option value="">Script…</option>
+              </select>
+            </label>
+            <button
+              id="btn-script-run"
+              type="button"
+              disabled
+              title="Run selected script (starts motors; hit Play if paused)"
+            >
+              Run
+            </button>
+            <button
+              id="btn-script-stop"
+              type="button"
+              disabled
+              hidden
+              title="Stop script"
+            >
+              Stop
+            </button>
+          </div>
           <button id="btn-reset" type="button">Reset</button>
           <button
             id="btn-save"
@@ -31,8 +56,8 @@
           >
             Save
           </button>
-          <button id="btn-pose" type="button" aria-pressed="true" title="Toggle pose HUD">Pose</button>
-          <button id="btn-camera" type="button" aria-pressed="true" title="Toggle camera HUD">Camera</button>
+          <button id="btn-camera" type="button" aria-pressed="true" title="Toggle ViewCube camera">Camera</button>
+          <button id="btn-scene" type="button" aria-pressed="true" title="Toggle Scene panel">Scene</button>
           <button
             id="btn-record"
             type="button"
@@ -57,8 +82,17 @@
 
       <aside id="selection-panel" class="selection-panel" aria-label="Selected object" hidden>
         <header class="panel-header">
-          <strong>Item</strong>
+          <strong id="sel-name">Item</strong>
         </header>
+        <p id="sel-status" class="sel-status" role="status"></p>
+        <div id="sel-group" class="sel-group" hidden>
+          <div class="sel-group-head">
+            <strong>Group</strong>
+            <span id="sel-group-meta" class="sel-group-meta"></span>
+          </div>
+          <div id="sel-group-links" class="sel-group-links" role="list"></div>
+          <p id="sel-group-hint" class="sel-group-hint"></p>
+        </div>
         <div class="pointer-mode" role="group" aria-label="Pointer mode">
           <button id="btn-mode-orbit" type="button" aria-pressed="true" title="Orbit camera">
             Orbit
@@ -90,55 +124,15 @@
             World
           </button>
         </div>
-        <dl>
-          <div>
-            <dt>name</dt>
-            <dd id="sel-name">—</dd>
-          </div>
-          <div>
-            <dt>type</dt>
-            <dd id="sel-type">—</dd>
-          </div>
-          <div>
-            <dt>id</dt>
-            <dd id="sel-id">—</dd>
-          </div>
-          <div>
-            <dt>pose</dt>
-            <dd id="sel-pose">—</dd>
-          </div>
-          <div>
-            <dt>extra</dt>
-            <dd id="sel-extra">—</dd>
-          </div>
-          <div>
-            <dt>partner</dt>
-            <dd id="sel-partner">— (Shift+click)</dd>
-          </div>
-          <div>
-            <dt>group</dt>
-            <dd id="sel-group">—</dd>
-          </div>
-        </dl>
         <section
           id="pose-data-panel"
           class="pose-data-panel"
-          aria-label="Pose data"
+          aria-label="Transform"
           hidden
         >
           <header>
             <strong>Transform</strong>
           </header>
-          <dl class="pose-data-meta">
-            <div>
-              <dt>body</dt>
-              <dd id="pose-data-body">—</dd>
-            </div>
-            <div>
-              <dt>weld</dt>
-              <dd id="pose-data-weld">—</dd>
-            </div>
-          </dl>
           <fieldset class="pose-data-fields" aria-label="Position meters">
             <legend>Position (m)</legend>
             <label>
@@ -178,8 +172,8 @@
               />
             </label>
           </fieldset>
-          <fieldset class="pose-data-fields" aria-label="Euler XYZ degrees">
-            <legend>Euler XYZ (°)</legend>
+          <fieldset class="pose-data-fields" aria-label="Rotation degrees">
+            <legend>Rotation (°)</legend>
             <label>
               <span>X</span>
               <input
@@ -217,88 +211,141 @@
               />
             </label>
           </fieldset>
-          <fieldset class="pose-data-fields pose-data-quat" aria-label="Quaternion wxyz">
-            <legend>Quat wxyz</legend>
-            <label>
-              <span>W</span>
-              <input
-                id="pose-data-qw"
-                type="text"
-                inputmode="decimal"
-                data-pose-group="quat"
-                autocomplete="off"
-                spellcheck="false"
-                disabled
-              />
-            </label>
-            <label>
-              <span>X</span>
-              <input
-                id="pose-data-qx"
-                type="text"
-                inputmode="decimal"
-                data-pose-group="quat"
-                autocomplete="off"
-                spellcheck="false"
-                disabled
-              />
-            </label>
-            <label>
-              <span>Y</span>
-              <input
-                id="pose-data-qy"
-                type="text"
-                inputmode="decimal"
-                data-pose-group="quat"
-                autocomplete="off"
-                spellcheck="false"
-                disabled
-              />
-            </label>
-            <label>
-              <span>Z</span>
-              <input
-                id="pose-data-qz"
-                type="text"
-                inputmode="decimal"
-                data-pose-group="quat"
-                autocomplete="off"
-                spellcheck="false"
-                disabled
-              />
-            </label>
-          </fieldset>
+          <details class="pose-data-advanced">
+            <summary>Advanced (quaternion)</summary>
+            <fieldset class="pose-data-fields pose-data-quat" aria-label="Quaternion wxyz">
+              <legend class="visually-hidden">Quat wxyz</legend>
+              <label>
+                <span>W</span>
+                <input
+                  id="pose-data-qw"
+                  type="text"
+                  inputmode="decimal"
+                  data-pose-group="quat"
+                  autocomplete="off"
+                  spellcheck="false"
+                  disabled
+                />
+              </label>
+              <label>
+                <span>X</span>
+                <input
+                  id="pose-data-qx"
+                  type="text"
+                  inputmode="decimal"
+                  data-pose-group="quat"
+                  autocomplete="off"
+                  spellcheck="false"
+                  disabled
+                />
+              </label>
+              <label>
+                <span>Y</span>
+                <input
+                  id="pose-data-qy"
+                  type="text"
+                  inputmode="decimal"
+                  data-pose-group="quat"
+                  autocomplete="off"
+                  spellcheck="false"
+                  disabled
+                />
+              </label>
+              <label>
+                <span>Z</span>
+                <input
+                  id="pose-data-qz"
+                  type="text"
+                  inputmode="decimal"
+                  data-pose-group="quat"
+                  autocomplete="off"
+                  spellcheck="false"
+                  disabled
+                />
+              </label>
+            </fieldset>
+          </details>
           <button
             id="btn-pose-apply"
             type="button"
             disabled
-            title="Apply typed pose to the freejoint (pause first if running)"
+            title="Apply typed pose (pause first if running)"
           >
-            Apply pose
+            Apply
           </button>
-          <details class="lab-help lab-help-inline">
-            <summary title="Pose data help">[?]</summary>
-            <div class="lab-help-body">
-              Click a field and type · Enter or blur updates (Pause) ·
-              Gizmo / Place drag still work · fields sync after drag / selection change
-            </div>
-          </details>
+        </section>
+        <section id="sg90-servo" class="sg90-servo" aria-label="SG90 servo" hidden>
+          <header>
+            <strong>Servo</strong>
+          </header>
+          <label class="horn-row" for="horn-select">
+            <span>Horn</span>
+            <select id="horn-select" disabled>
+              <option value="cross" selected>Cross</option>
+              <option value="single">1-arm</option>
+              <option value="short">Short</option>
+              <option value="long">Long</option>
+              <option value="double">2-arm</option>
+            </select>
+          </label>
+          <label class="horn-row horn-mount-row" for="horn-mount-select">
+            <span>Mount</span>
+            <select id="horn-mount-select" disabled>
+              <option value="0" selected>0</option>
+            </select>
+          </label>
+          <p id="horn-mount-note" class="spline-note" hidden></p>
+          <div class="angle-presets" role="group" aria-label="Horn angle presets">
+            <button type="button" data-angle="-90" disabled>−90°</button>
+            <button type="button" data-angle="-45" disabled>−45°</button>
+            <button type="button" data-angle="0" disabled>0°</button>
+            <button type="button" data-angle="45" disabled>+45°</button>
+            <button type="button" data-angle="90" disabled>+90°</button>
+          </div>
+          <label class="slider-row" for="angle-slider">
+            <span>Angle</span>
+            <input
+              id="angle-slider"
+              type="range"
+              min="-90"
+              max="90"
+              step="1"
+              value="0"
+              disabled
+            />
+            <span id="angle-readout">0.0°</span>
+          </label>
+          <label class="load-row" for="load-toggle">
+            <input id="load-toggle" type="checkbox" disabled />
+            <span>Load</span>
+          </label>
+          <p id="motor-orient-note" class="spline-note" hidden></p>
         </section>
         <div class="place-nudge" role="group" aria-label="Nudge position">
-          <span class="place-nudge-label">Nudge 5&nbsp;mm</span>
-          <button type="button" data-nudge="-0.005,0,0" title="−X">−X</button>
-          <button type="button" data-nudge="0.005,0,0" title="+X">+X</button>
-          <button type="button" data-nudge="0,-0.005,0" title="−Y">−Y</button>
-          <button type="button" data-nudge="0,0.005,0" title="+Y">+Y</button>
-          <button type="button" data-nudge="0,0,-0.005" title="−Z">−Z</button>
-          <button type="button" data-nudge="0,0,0.005" title="+Z">+Z</button>
+          <span class="place-nudge-label">Nudge</span>
+          <button type="button" data-nudge="-0.01,0,0" title="−X 1 cm">−X</button>
+          <button type="button" data-nudge="0.01,0,0" title="+X 1 cm">+X</button>
+          <button type="button" data-nudge="0,-0.01,0" title="−Y 1 cm">−Y</button>
+          <button type="button" data-nudge="0,0.01,0" title="+Y 1 cm">+Y</button>
+          <button type="button" data-nudge="0,0,-0.01" title="−Z 1 cm">−Z</button>
+          <button type="button" data-nudge="0,0,0.01" title="+Z 1 cm">+Z</button>
         </div>
         <div class="sel-attach" role="group" aria-label="Glue / weld">
-          <button id="btn-attach" type="button" disabled title="Weld selected + partner at current relative pose">
-            Attach
+          <button
+            id="btn-attach"
+            type="button"
+            disabled
+            title="Weld selected to partner (Shift+click partner, or use ⊕ in Scene)"
+          >
+            Weld
           </button>
-          <button id="btn-detach" type="button" disabled title="Remove weld involving selection">
-            Detach
+          <button
+            id="btn-detach"
+            type="button"
+            disabled
+            title="Break all welds on the selection"
+          >
+            Unweld
           </button>
           <button
             id="btn-deselect"
@@ -324,166 +371,83 @@
         <p id="sel-hint" class="sel-hint" hidden></p>
       </aside>
 
-      <aside id="pose-hud" aria-label="ODC pose readout">
-        <header class="panel-header">
-          <strong>Pose</strong>
-        </header>
-        <dl>
-          <div>
-            <dt>pos m</dt>
-            <dd id="pose-pos">—</dd>
-          </div>
-          <div>
-            <dt>quat wxyz</dt>
-            <dd id="pose-quat">—</dd>
-          </div>
-          <div>
-            <dt>euler XYZ °</dt>
-            <dd id="pose-euler">—</dd>
-          </div>
-          <div>
-            <dt>vel m/s</dt>
-            <dd id="pose-vel">—</dd>
-          </div>
-        </dl>
-        <p class="pose-hint" hidden></p>
-      </aside>
-
-      <aside id="sg90-panel" aria-label="SG90">
-        <header class="panel-header">
-          <strong>SG90</strong>
-        </header>
-        <label class="horn-row" for="horn-select">
-          <span>Horn</span>
-          <select id="horn-select" disabled>
-            <option value="cross" selected>Cross</option>
-            <option value="single">1-arm</option>
-            <option value="short">Short</option>
-            <option value="long">Long</option>
-            <option value="double">2-arm</option>
-          </select>
-        </label>
-        <label class="horn-row horn-mount-row" for="horn-mount-select">
-          <span>Mount</span>
-          <select id="horn-mount-select" disabled>
-            <option value="0" selected>0</option>
-          </select>
-        </label>
-        <p id="horn-mount-note" class="spline-note" hidden></p>
-        <fieldset class="motor-orient">
-          <legend>Orient</legend>
-          <label class="slider-row" for="motor-yaw">
-            <span>Y</span>
-            <input id="motor-yaw" type="range" min="-180" max="180" step="1" value="0" disabled />
-            <span id="motor-yaw-readout">0°</span>
-          </label>
-          <label class="slider-row" for="motor-pitch">
-            <span>P</span>
-            <input id="motor-pitch" type="range" min="-180" max="180" step="1" value="0" disabled />
-            <span id="motor-pitch-readout">0°</span>
-          </label>
-          <label class="slider-row" for="motor-roll">
-            <span>R</span>
-            <input id="motor-roll" type="range" min="-180" max="180" step="1" value="0" disabled />
-            <span id="motor-roll-readout">0°</span>
-          </label>
-          <div class="orient-presets" role="group" aria-label="Orientation presets">
-            <button type="button" data-motor-yaw="0" disabled>0°</button>
-            <button type="button" data-motor-yaw="90" disabled>90°</button>
-            <button type="button" data-motor-yaw="-90" disabled>−90°</button>
-            <button type="button" id="motor-orient-reset" disabled>Reset</button>
-          </div>
-        </fieldset>
-        <p id="motor-orient-note" class="spline-note" hidden></p>
-        <div class="angle-presets" role="group" aria-label="Horn angle presets">
-          <button type="button" data-angle="-90" disabled>−90°</button>
-          <button type="button" data-angle="-45" disabled>−45°</button>
-          <button type="button" data-angle="0" disabled>0°</button>
-          <button type="button" data-angle="45" disabled>+45°</button>
-          <button type="button" data-angle="90" disabled>+90°</button>
-        </div>
-        <label class="slider-row" for="angle-slider">
-          <span>Angle</span>
-          <input
-            id="angle-slider"
-            type="range"
-            min="-90"
-            max="90"
-            step="1"
-            value="0"
-            disabled
-          />
-          <span id="angle-readout">0.0°</span>
-        </label>
-        <p class="spline-note" hidden></p>
-        <label class="load-row" for="load-toggle">
-          <input id="load-toggle" type="checkbox" disabled />
-          <span>Load</span>
-        </label>
-        <dl class="sg90-hud">
-          <div>
-            <dt>shaft</dt>
-            <dd id="hud-angle">—</dd>
-          </div>
-          <div>
-            <dt>target</dt>
-            <dd id="hud-target">—</dd>
-          </div>
-          <div>
-            <dt>mount</dt>
-            <dd id="hud-mount">0 (0.0°)</dd>
-          </div>
-          <div>
-            <dt>orient</dt>
-            <dd id="hud-orient">Y0 P0 R0</dd>
-          </div>
-          <div>
-            <dt>τ act</dt>
-            <dd id="hud-torque">—</dd>
-          </div>
-          <div>
-            <dt>saturated</dt>
-            <dd id="hud-sat">—</dd>
-          </div>
-        </dl>
-        <p class="pose-hint" hidden></p>
-      </aside>
-
       
-      <aside id="assemblies-panel" class="assemblies-panel" aria-label="Outliner">
-        <header class="panel-header">
-          <strong>Outliner</strong>
+      <aside id="assemblies-panel" class="assemblies-panel" aria-label="Scene panels">
+        <header class="panel-header" title="Drag to move panel">
+          <span class="panel-drag-label">Scene</span>
         </header>
-        <ul id="assembly-list" class="assembly-list"></ul>
-        <p id="assembly-meta" class="assembly-meta-line" role="status"></p>
-        <div class="lab-parts-block">
-          <div class="lab-parts-heading">
-            <strong>Scene</strong>
+        <div class="panel-tabs" role="tablist" aria-label="Outliner and Library">
+          <button
+            type="button"
+            role="tab"
+            id="tab-outliner"
+            aria-controls="pane-outliner"
+            aria-selected="true"
+            data-panel-tab="outliner"
+          >
+            Outliner
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-library"
+            aria-controls="pane-library"
+            aria-selected="false"
+            data-panel-tab="library"
+          >
+            Library
+          </button>
+        </div>
+
+        <div
+          id="pane-outliner"
+          class="panel-pane"
+          role="tabpanel"
+          aria-labelledby="tab-outliner"
+          data-panel-pane="outliner"
+        >
+          <p id="assembly-meta" class="assembly-meta-line" role="status"></p>
+          <div class="lab-parts-block">
+            <ul id="lab-parts-list" class="lab-parts-list" aria-label="Parts in scene"></ul>
           </div>
-          <ul id="lab-parts-list" class="lab-parts-list" aria-label="Parts in scene"></ul>
+          <div class="sel-attach" role="group" aria-label="Actions">
+            <button
+              id="btn-assembly-save"
+              type="button"
+              disabled
+              title="Export poses JSON"
+            >
+              Export
+            </button>
+            <button id="btn-assembly-clear" type="button" disabled title="Clear assembly">
+              Clear
+            </button>
+            <button
+              id="btn-assembly-clone"
+              type="button"
+              disabled
+              title="Duplicate selected SG90"
+            >
+              Duplicate
+            </button>
+          </div>
+          <p id="assembly-clone-hint" class="assembly-status" role="status" hidden></p>
         </div>
-        <div class="sel-attach" role="group" aria-label="Actions">
-          <button
-            id="btn-assembly-save"
-            type="button"
-            disabled
-            title="Export poses JSON"
-          >
-            Export
-          </button>
-          <button id="btn-assembly-clear" type="button" disabled title="Clear assembly">
-            Clear
-          </button>
-          <button
-            id="btn-assembly-clone"
-            type="button"
-            disabled
-            title="Duplicate selected SG90"
-          >
-            Duplicate
-          </button>
+
+        <div
+          id="pane-library"
+          class="panel-pane"
+          role="tabpanel"
+          aria-labelledby="tab-library"
+          data-panel-pane="library"
+          hidden
+        >
+          <p class="library-intro">
+            Place a part into the open project — no need to select and Duplicate.
+          </p>
+          <ul id="library-list" class="library-list" aria-label="Part library"></ul>
+          <p id="library-hint" class="assembly-status" role="status"></p>
         </div>
-        <p id="assembly-clone-hint" class="assembly-status" role="status" hidden></p>
       </aside>
 
       <canvas id="c"></canvas>

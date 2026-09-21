@@ -1,5 +1,11 @@
 {
   "rules": {
+    "physicalLab": {
+      "poses": {
+        ".read": false,
+        ".write": false
+      }
+    },
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

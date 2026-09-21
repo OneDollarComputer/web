@@ -326,7 +326,9 @@ const api = {
     const user = auth.currentUser;
     if (!user) throw new Error("Sign in required");
     return poseRestUrl(user.uid, projectId);
-  }
+  },
+  signIn: () => signIn(),
+  signOut: () => auth.signOut(),
 };
 
 window.OdcPhysicalPoses = api;
