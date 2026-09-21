@@ -137,6 +137,15 @@ export function normalizePoseDoc(raw, { ownerUid, projectId } = {}) {
   if (src.recipe && typeof src.recipe === "object") {
     doc.recipe = src.recipe;
   }
+  if (src.camera && typeof src.camera === "object") {
+    doc.camera = src.camera;
+  }
+  if (src.horns && typeof src.horns === "object") {
+    doc.horns = src.horns;
+  }
+  if (src.hornMounts && typeof src.hornMounts === "object") {
+    doc.hornMounts = src.hornMounts;
+  }
   return doc;
 }
 

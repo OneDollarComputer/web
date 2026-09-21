@@ -28,6 +28,7 @@ import {
   getPoseProject,
   listPoseProjects,
   updatePoseProject,
+  deletePoseProject,
   labUrlForPose,
   poseRestUrl,
   DEFAULT_ASSEMBLY_ID
@@ -209,6 +210,9 @@ function applyPoseToLab(doc) {
     parts: doc.parts || {},
     welds: Array.isArray(doc.welds) ? doc.welds : [],
     recipe: doc.recipe || null,
+    camera: doc.camera || null,
+    horns: doc.horns || null,
+    hornMounts: doc.hornMounts || null,
     updatedAt: doc.updatedAt || null,
     source: "firebase"
   };
@@ -274,14 +278,17 @@ const api = {
       }
       doc = await savePoseProject(user, existingId, {
         ...existing,
-        name: name || existing.name || "Lab pose",
+        name: name || existing.name || "Untitled",
         assemblyId: assemblyId || snap.assemblyId || existing.assemblyId || DEFAULT_ASSEMBLY_ID,
         parts: snap.parts,
         welds: snap.welds,
-        recipe: snap.recipe || existing.recipe || null
+        recipe: snap.recipe || existing.recipe || null,
+        camera: snap.camera || existing.camera || null,
+        horns: snap.horns || existing.horns || null,
+        hornMounts: snap.hornMounts || existing.hornMounts || null
       });
     } else {
-      const poseName = name || promptName("Lab pose");
+      const poseName = name || promptName("Untitled");
       if (poseName === null) {
         setStatus("Save cancelled");
         return null;
@@ -294,7 +301,10 @@ const api = {
         ...doc,
         parts: snap.parts,
         welds: snap.welds,
-        recipe: snap.recipe || null
+        recipe: snap.recipe || null,
+        camera: snap.camera || null,
+        horns: snap.horns || null,
+        hornMounts: snap.hornMounts || null
       });
     }
 
@@ -305,7 +315,7 @@ const api = {
   },
   /** Always mint a new project id (Save as / Create new). */
   async saveAs({ name, assemblyId } = {}) {
-    const poseName = name || promptName((openProject && openProject.name) || "Lab pose");
+    const poseName = name || promptName((openProject && openProject.name) || "Untitled");
     if (poseName === null) {
       setStatus("Save as cancelled");
       return null;
@@ -319,6 +329,38 @@ const api = {
     if (openProject && openProject.id === projectId && doc) {
       setOpenProject({ id: doc.id, name: doc.name || doc.id });
     }
+    return doc;
+  },
+  async delete(projectId) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sign in required");
+    const id = projectId || (openProject && openProject.id);
+    if (!id) throw new Error("Missing pose project id");
+    await deletePoseProject(user, id);
+    if (openProject && openProject.id === id) {
+      setOpenProject(null);
+    }
+    await refreshOpenList();
+    setStatus(`Deleted ${id}`);
+    return true;
+  },
+  /** Create a project from an explicit payload (used to seed Cowboy Walker). */
+  async upsertFromPayload(payload = {}) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sign in required");
+    const name = String(payload.name || "Cowboy Walker").trim() || "Cowboy Walker";
+    const assemblyId = payload.assemblyId || DEFAULT_ASSEMBLY_ID;
+    const created = await createPoseProject(user, { name, assemblyId });
+    const doc = await savePoseProject(user, created.id, {
+      ...payload,
+      id: created.id,
+      ownerUid: user.uid,
+      name,
+      assemblyId,
+      createdAt: created.createdAt
+    });
+    setOpenProject({ id: doc.id, name: doc.name || doc.id });
+    await refreshOpenList();
     return doc;
   },
   labUrlForPose,
