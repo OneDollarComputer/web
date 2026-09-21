@@ -1,7 +1,7 @@
 {
   "id": "cowboy_walker",
   "title": "Cowboy Walker",
-  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45, UT Longhorn on mast, orange front bumper box_proxy, Ball free ahead. (Hat omitted — CAD disabled.)",
+  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45, UT Longhorn on mast, Ball free ahead.",
   "origin": [
     0.15,
     0,
@@ -161,35 +161,6 @@
       }
     },
     {
-      "id": "bumper",
-      "fusionName": "orange U/C plow (Fusion front bumper)",
-      "kind": "box_proxy",
-      "pos": [
-        0.045,
-        0,
-        0.022
-      ],
-      "euler_xyz_deg": [
-        0,
-        0,
-        0
-      ],
-      "box": {
-        "size": [
-          0.01,
-          0.036,
-          0.012
-        ],
-        "rgba": [
-          1,
-          0.45,
-          0.08,
-          1
-        ],
-        "mass": 0.008
-      }
-    },
-    {
       "id": "ball",
       "fusionName": "Ball:1",
       "kind": "ping_pong_ball",
@@ -234,10 +205,6 @@
     {
       "parent": "chassis",
       "child": "sg90_7"
-    },
-    {
-      "parent": "chassis",
-      "child": "bumper"
     }
   ],
   "placeholders": []
