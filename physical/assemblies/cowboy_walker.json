@@ -1,7 +1,7 @@
 {
   "id": "cowboy_walker",
   "title": "Cowboy Walker",
-  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45+Hat, UT Longhorn at hat, orange front bumper box_proxy, Ball free ahead.",
+  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45, UT Longhorn on mast, orange front bumper box_proxy, Ball free ahead. (Hat omitted — CAD disabled.)",
   "origin": [
     0.15,
     0,
@@ -53,22 +53,6 @@
         90,
         0,
         90
-      ],
-      "reuseLabBody": true
-    },
-    {
-      "id": "hat",
-      "fusionName": "Hat:1",
-      "kind": "hat",
-      "pos": [
-        0,
-        0,
-        0.112
-      ],
-      "euler_xyz_deg": [
-        0,
-        0,
-        -15
       ],
       "reuseLabBody": true
     },
@@ -233,10 +217,6 @@
     },
     {
       "parent": "odc",
-      "child": "hat"
-    },
-    {
-      "parent": "hat",
       "child": "longhorn"
     },
     {

@@ -363,6 +363,26 @@ const api = {
     await refreshOpenList();
     return doc;
   },
+  /** Overwrite an existing project id with an explicit payload. */
+  async replacePayload(projectId, payload = {}) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sign in required");
+    if (!projectId) throw new Error("Missing pose project id");
+    const name = String(payload.name || "Cowboy Walker").trim() || "Cowboy Walker";
+    const assemblyId = payload.assemblyId || DEFAULT_ASSEMBLY_ID;
+    const existing = await getPoseProject(user.uid, projectId);
+    const doc = await savePoseProject(user, projectId, {
+      ...payload,
+      id: projectId,
+      ownerUid: user.uid,
+      name,
+      assemblyId,
+      createdAt: (existing && existing.createdAt) || undefined
+    });
+    setOpenProject({ id: doc.id, name: doc.name || doc.id });
+    await refreshOpenList();
+    return doc;
+  },
   labUrlForPose,
   poseRestUrl: (projectId) => {
     const user = auth.currentUser;
