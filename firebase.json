@@ -92,6 +92,14 @@
         {
           "source": "/login/**",
           "function": "curriculumAgent"
+        },
+        {
+          "source": "/motion-coach",
+          "function": "motionCoach"
+        },
+        {
+          "source": "/api/motion-coach",
+          "function": "motionCoach"
         }
       ]
     }

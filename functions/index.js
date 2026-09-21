@@ -1249,3 +1249,142 @@ exports.curriculumAgent = onRequest({ cors: false, invoker: "public" }, async (r
     return json(res, 500, { error: "Server error" });
   }
 });
+
+/**
+ * Physical Lab voice→motion coach (text only — never stores audio).
+ * Secret: firebase functions:secrets:set GEMINI_API_KEY --project odc-files
+ */
+const { defineSecret } = require("firebase-functions/params");
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
+const MOTION_COACH_MODEL = "gemini-3.1-flash-lite";
+const MOTION_COACH_SYSTEM = `You generate MOTION DATA for a 4-leg Cowboy Walker robot (SG90 hinges).
+Reply in the user's language in "reply". Output ONE JSON object only.
+
+Legs: sg90_4, sg90_5, sg90_6, sg90_7. Horns-down rest ≈ −90 / +90 / −90 / +90.
+Prefer type "gait" (continuous walk). Use type "sequence" only for sit / wave / one-leg / custom poses (≤8 keyframes, at in seconds).
+
+Schema:
+{
+  "reply": "short",
+  "actions": ["start_walk"|"stop_walk"|"play"|"none"],
+  "motion": {
+    "type": "gait"|"sequence",
+    "gait": { "ampDeg": 8-35, "hz": 0.5-2.5, "forwardSign": 1|-1, "phaseOffsets"?: {}, "restAdjust"?: {} },
+    "sequence": [{ "at": 0, "hinges": { "sg90_4": -90, "sg90_5": 90, "sg90_6": -90, "sg90_7": 90 } }],
+    "loop": false,
+    "duration": 2
+  },
+  "success": true|false|null,
+  "saveNote": ""
+}
+Keep numbers few. Empty motion {} if only chatting.`;
+
+exports.motionCoach = onRequest(
+  {
+    cors: false,
+    invoker: "public",
+    secrets: [geminiApiKey],
+    timeoutSeconds: 30,
+    memory: "256MiB"
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        ...CORS,
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      });
+      return res.end();
+    }
+    if (req.method !== "POST") {
+      return json(res, 405, { error: "POST only" });
+    }
+
+    let body = req.body;
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body || "{}");
+      } catch {
+        return json(res, 400, { error: "Invalid JSON body" });
+      }
+    }
+    body = body && typeof body === "object" ? body : {};
+
+    const utterance = String(body.utterance || body.command || "").trim().slice(0, 240);
+    const world = body.world && typeof body.world === "object" ? body.world : {};
+    if (!utterance) {
+      return json(res, 400, { error: "Missing utterance" });
+    }
+
+    const key = geminiApiKey.value();
+    if (!key) {
+      return json(res, 501, { error: "GEMINI_API_KEY not configured" });
+    }
+
+    const model = process.env.GEMINI_MODEL || MOTION_COACH_MODEL;
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/` +
+      `${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+
+    try {
+      const upstream = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  // Text + compact world only — never audio.
+                  text: `${MOTION_COACH_SYSTEM}\n\nWORLD:\n${JSON.stringify(world)}\n\nUSER:\n${utterance}`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.25,
+            maxOutputTokens: 350,
+            responseMimeType: "application/json"
+          }
+        })
+      });
+      const text = await upstream.text();
+      if (!upstream.ok) {
+        return json(res, upstream.status, {
+          error: `Gemini ${upstream.status}`,
+          detail: text.slice(0, 400),
+          model
+        });
+      }
+      const data = JSON.parse(text);
+      const raw =
+        data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || "";
+      let parsed;
+      try {
+        let s = String(raw).trim();
+        const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (fence) s = fence[1].trim();
+        parsed = JSON.parse(s);
+      } catch {
+        const start = raw.indexOf("{");
+        const end = raw.lastIndexOf("}");
+        parsed =
+          start >= 0 && end > start
+            ? JSON.parse(raw.slice(start, end + 1))
+            : { reply: raw || "OK", motion: {}, actions: [] };
+      }
+      parsed.source = "gemini";
+      parsed.model = model;
+      parsed.privacy = {
+        audioStored: false,
+        voiceUploaded: false,
+        keeps: "motion-params-only"
+      };
+      // Do not log utterance / audio — learning stays on the client.
+      return json(res, 200, parsed);
+    } catch (err) {
+      console.error("[motionCoach]", err && err.message);
+      return json(res, 502, { error: (err && err.message) || "Gemini proxy failed" });
+    }
+  }
+);

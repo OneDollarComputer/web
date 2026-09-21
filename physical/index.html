@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab</title>
-    <script type="module" crossorigin src="/physical/assets/main-CCrW22kx.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-Ca2njy4U.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-DToj8Zcg.css">
-    <script type="module" src="/physical/js/pose-bridge.js"></script>
-</head>
+    <script type="module" crossorigin src="/physical/assets/main-CEEDiKIm.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-4WpjkEfD.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-CWkQdeB1.css">
+      <script type="module" src="/physical/js/pose-bridge.js"></script>
+  </head>
   <body>
     <div id="app">
       <header id="topbar">
@@ -45,6 +45,14 @@
             >
               Stop
             </button>
+            <button
+              id="btn-voice-coach"
+              type="button"
+              aria-pressed="false"
+              title="Voice gait coach (mic + Gemini Flash-Lite) — local experiment"
+            >
+              Mic
+            </button>
           </div>
           <button id="btn-reset" type="button">Reset</button>
           <button
@@ -79,6 +87,48 @@
         >
         <span class="record-tip">WebM</span>
       </div>
+
+      <div id="voice-subtitle" class="voice-subtitle" hidden aria-live="polite"></div>
+
+      <aside id="voice-coach-panel" class="voice-coach-panel" hidden aria-label="Voice gait coach">
+        <header class="panel-header">
+          <strong>Voice → motion</strong>
+          <span class="voice-coach-model">Gemini 3.1 Flash-Lite</span>
+        </header>
+        <p class="voice-coach-privacy" role="note">
+          <strong>Privacy:</strong> your voice is never recorded or stored.
+          Only learned motion (gait numbers + success/fail) stays in this browser —
+          no audio files, no cloud voice archive.
+        </p>
+        <p id="voice-coach-status" class="voice-coach-status" role="status">
+          Mic: “anda”, “para”, “mais rápido”, “passo maior”, “inverte”, “funcionou”.
+        </p>
+        <p id="voice-coach-heard" class="voice-coach-heard" aria-live="polite"></p>
+        <p id="voice-coach-reply" class="voice-coach-reply"></p>
+        <form id="voice-coach-form" class="voice-coach-form">
+          <input
+            id="voice-coach-input"
+            type="text"
+            maxlength="240"
+            placeholder="anda · para · mais rápido · senta · funcionou"
+            autocomplete="off"
+          />
+          <button type="submit">Go</button>
+        </form>
+        <div class="voice-coach-actions">
+          <button
+            type="button"
+            id="btn-voice-export"
+            title="Download training JSON only (motion + labels — no audio)"
+          >
+            Export training
+          </button>
+          <button type="button" id="btn-voice-apply-best" title="Apply last successful motion">
+            Apply best
+          </button>
+        </div>
+        <pre id="voice-coach-params" class="voice-coach-params" aria-label="Current motion"></pre>
+      </aside>
 
       <aside id="selection-panel" class="selection-panel" aria-label="Selected object" hidden>
         <header class="panel-header">
