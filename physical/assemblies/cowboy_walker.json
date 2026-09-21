@@ -1,7 +1,7 @@
 {
   "id": "cowboy_walker",
   "title": "Cowboy Walker",
-  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45, UT Longhorn on mast, Ball free ahead. (Hat temporarily omitted.)",
+  "description": "Fusion silhouette: AA Battery Holder chassis, 4× SG90 side-corner legs (5-hole horns down), mast ODC+RJ45+Hat, UT Longhorn at hat, orange front bumper box_proxy, Ball free ahead.",
   "origin": [
     0.15,
     0,
@@ -57,6 +57,22 @@
       "reuseLabBody": true
     },
     {
+      "id": "hat",
+      "fusionName": "Hat:1",
+      "kind": "hat",
+      "pos": [
+        0,
+        0,
+        0.112
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        -15
+      ],
+      "reuseLabBody": true
+    },
+    {
       "id": "longhorn",
       "fusionName": "UT Longhorn:1",
       "kind": "ut_longhorn",
@@ -108,7 +124,7 @@
         0,
         0
       ],
-      "hingeDeg": 90,
+      "hingeDeg": -90,
       "hornMount": 0,
       "motor": {
         "yaw": 0,
@@ -152,12 +168,41 @@
         0,
         0
       ],
-      "hingeDeg": 90,
+      "hingeDeg": -90,
       "hornMount": 0,
       "motor": {
         "yaw": 0,
         "pitch": 0,
         "roll": 0
+      }
+    },
+    {
+      "id": "bumper",
+      "fusionName": "orange U/C plow (Fusion front bumper)",
+      "kind": "box_proxy",
+      "pos": [
+        0.045,
+        0,
+        0.022
+      ],
+      "euler_xyz_deg": [
+        0,
+        0,
+        0
+      ],
+      "box": {
+        "size": [
+          0.01,
+          0.036,
+          0.012
+        ],
+        "rgba": [
+          1,
+          0.45,
+          0.08,
+          1
+        ],
+        "mass": 0.008
       }
     },
     {
@@ -188,6 +233,10 @@
     },
     {
       "parent": "odc",
+      "child": "hat"
+    },
+    {
+      "parent": "hat",
       "child": "longhorn"
     },
     {
@@ -205,6 +254,10 @@
     {
       "parent": "chassis",
       "child": "sg90_7"
+    },
+    {
+      "parent": "chassis",
+      "child": "bumper"
     }
   ],
   "placeholders": []
