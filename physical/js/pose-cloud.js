@@ -10,7 +10,9 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.5.
 import {
   getAuth,
   onAuthStateChanged,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 import {
   getDatabase,
@@ -37,6 +39,11 @@ export const DEFAULT_ASSEMBLY_ID = "odc-drop";
 const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_PUBLIC);
 export const auth = getAuth(app);
 export const db = getDatabase(app);
+
+// Same Google session across reloads (local Vite + production).
+setPersistence(auth, browserLocalPersistence).catch(() => {
+  /* private mode / blocked storage */
+});
 
 function nowIso() {
   return new Date().toISOString();
