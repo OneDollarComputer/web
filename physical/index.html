@@ -4,12 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Physical Lab</title>
-    <script type="module" crossorigin src="/physical/assets/main-g-q_P-6Z.js"></script>
-    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-X7sUiAt_.js">
-    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-eibDXMgo.css">
-      <script type="module" src="/physical/js/pose-bridge.js"></script>
+    <script type="module" crossorigin src="/physical/assets/main-B2bMPjEb.js"></script>
+    <link rel="modulepreload" crossorigin href="/physical/assets/sg90MotorReorientDrag-D-t62zYI.js">
+    <link rel="stylesheet" crossorigin href="/physical/assets/sg90MotorReorientDrag-GlAoiqAV.css">
   </head>
   <body>
+    <script>
+      /* Early train-mode class so CSS hides lab chrome before modules load. */
+      try {
+        if (new URLSearchParams(location.search).get("mode") === "train") {
+          document.documentElement.classList.add("train-mode");
+          document.body.classList.add("train-mode");
+          document.title = "Train — One Dollar Computer";
+        }
+      } catch (e) { /* ignore */ }
+    </script>
     <div id="app">
       <header id="topbar">
         <div class="brand">
