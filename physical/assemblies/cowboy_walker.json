@@ -92,7 +92,8 @@
         "yaw": 0,
         "pitch": 0,
         "roll": 0
-      }
+      },
+      "hornId": "single"
     },
     {
       "id": "sg90_5",
@@ -114,7 +115,8 @@
         "yaw": 0,
         "pitch": 0,
         "roll": 0
-      }
+      },
+      "hornId": "single"
     },
     {
       "id": "sg90_6",
@@ -136,7 +138,8 @@
         "yaw": 0,
         "pitch": 0,
         "roll": 0
-      }
+      },
+      "hornId": "single"
     },
     {
       "id": "sg90_7",
@@ -158,7 +161,8 @@
         "yaw": 0,
         "pitch": 0,
         "roll": 0
-      }
+      },
+      "hornId": "single"
     },
     {
       "id": "ball",
