@@ -86,8 +86,8 @@
         0,
         0
       ],
-      "hingeDeg": -90,
-      "hornMount": 0,
+      "hingeDeg": 0,
+      "hornMount": 16,
       "motor": {
         "yaw": 0,
         "pitch": 0,
@@ -109,8 +109,8 @@
         0,
         0
       ],
-      "hingeDeg": -90,
-      "hornMount": 0,
+      "hingeDeg": 0,
+      "hornMount": 5,
       "motor": {
         "yaw": 0,
         "pitch": 0,
@@ -132,8 +132,8 @@
         0,
         0
       ],
-      "hingeDeg": -90,
-      "hornMount": 0,
+      "hingeDeg": 0,
+      "hornMount": 16,
       "motor": {
         "yaw": 0,
         "pitch": 0,
@@ -155,8 +155,8 @@
         0,
         0
       ],
-      "hingeDeg": -90,
-      "hornMount": 0,
+      "hingeDeg": 0,
+      "hornMount": 5,
       "motor": {
         "yaw": 0,
         "pitch": 0,
