@@ -7,7 +7,7 @@
       },
       "sharedDefault": {
         ".read": true,
-        ".write": "auth != null",
+        ".write": "auth != null && auth.uid === 'BFA6PLKbYyNSpoezNfb8iFNU15B2'",
         ".validate": "newData.hasChildren(['name', 'assemblyId', 'updatedAt', 'parts']) && newData.child('name').isString() && newData.child('assemblyId').isString() && newData.child('updatedAt').isString()"
       }
     },
