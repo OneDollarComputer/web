@@ -30,8 +30,10 @@ instant over time. It is deliberately child-simple: audio only, no typing.
 - **Undo** — reverses the last spoken command.
 - **Share** (top-right) — copies the train link (`?mode=train`; the project id
   is dropped so shared links open clean training).
-- **Circular arrow (Reset, top-right)** — tap twice within 4 seconds to erase
-  all training data and learned words (fresh start).
+- **Circular arrow (Reset, top-right)** — one tap returns the walker to its
+  start position (middle of the floor, upright). It never erases training
+  data or learned words. Erasing all training data is a two-tap confirm
+  inside the "?" help sheet.
 - **"?"** (top-right) — help sheet ("How to train").
 
 ## How the AI pipeline works
@@ -57,7 +59,9 @@ instant over time. It is deliberately child-simple: audio only, no typing.
 
 - **3 Rewards on the same word → it becomes a "learned word"**: next time it
   responds instantly, no AI call.
-- Stored locally: `odc.learnedWords.v1` (max 60 words). Cleared by Reset.
+- Stored locally: `odc.learnedWords.v1` (max 60 words). Cleared only by the
+  two-tap "Erase training data" button inside the "?" help sheet — never by
+  Reset.
 - Training log (command text + motion + reward labels, last 200 entries) in
   localStorage `odc-gait-training-log`. Microphone audio is NEVER stored.
 
@@ -66,11 +70,14 @@ instant over time. It is deliberately child-simple: audio only, no typing.
 - A word isn't working: have them say it and Reward it 3 times — that's the
   fastest path to an instant response.
 - The robot fell or is upside down: the AI already sees `upZ`/`tiltDeg` and
-  should explain and ask for it to be flipped; the user can Reset the scene.
+  should explain and ask for it to be flipped; the user can tap Reset to put
+  the walker back at its start position (middle, upright).
 - Mic problems: check the browser microphone permission; speech recognition
   needs a network connection.
 - The AI misbehaves: use Feedback (speech bubble) to leave a coaching note.
-- Start over: Reset (double-tap) clears telemetry and learned words.
+- Start over: "Erase training data" (two taps, inside the "?" help sheet)
+  clears telemetry and learned words. The top-right Reset only repositions
+  the walker.
 - Share training with someone: use Share (top-right) to copy the link.
 
 ## URL parameters
