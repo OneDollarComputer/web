@@ -30,8 +30,9 @@ instant over time. It is deliberately child-simple: audio only, no typing.
 - **Undo** — reverses the last spoken command.
 - **Share** (top-right) — copies the train link (`?mode=train`; the project id
   is dropped so shared links open clean training).
-- **Circular arrow (Reset, top-right)** — one tap returns the walker to its
-  start position (middle of the floor, upright). It never erases training
+- **Circular arrow (Reset, top-right)** — one tap returns the walker to the
+  position saved in the editor (the loaded project pose; the spawn pose when
+  training without a project). It never erases training
   data or learned words. Erasing all training data is a two-tap confirm
   inside the "?" help sheet.
 - **"?"** (top-right) — help sheet ("How to train").
@@ -71,7 +72,7 @@ instant over time. It is deliberately child-simple: audio only, no typing.
   fastest path to an instant response.
 - The robot fell or is upside down: the AI already sees `upZ`/`tiltDeg` and
   should explain and ask for it to be flipped; the user can tap Reset to put
-  the walker back at its start position (middle, upright).
+  the walker back at the editor-saved position.
 - Mic problems: check the browser microphone permission; speech recognition
   needs a network connection.
 - The AI misbehaves: use Feedback (speech bubble) to leave a coaching note.
