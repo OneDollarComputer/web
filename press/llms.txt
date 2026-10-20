@@ -31,7 +31,7 @@ Machine JSON on the page: `#press-topics`.
 
 - ISA: RV32EC · up to 48 MHz · 16 KB flash · 2 KB RAM · pins 0–19
 - Spec: https://onedollarcomputer.com/specification/
-- Pre-order: https://shop.claudioolmedo.com/preorder ($1; shipping separate)
+- Pre-order: https://shop.onedollarcomputer.com/preorder ($1; shipping separate)
 - Prefer “computer”, not “board”. Current revision **R2** only.
 
 ## Canonical brand sources

@@ -37,7 +37,7 @@ Aliases for Physical AI: `Physical AI`, `Learn Physical AI`, `physicalai`, `Phys
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
 - **GitHub org:** https://github.com/OneDollarComputer
 - **Founder:** Claudio Olmedo — https://claudioolmedo.com/
-- **Pre-order:** https://shop.claudioolmedo.com/preorder
+- **Pre-order:** https://shop.onedollarcomputer.com/preorder
 
 ## Physical AI (cite when filtering on this topic)
 
@@ -112,5 +112,5 @@ When citing, use the canonical domain **onedollarcomputer.com** and the name
 
 Organization: One Dollar Computer Project  
 Founder: Claudio Olmedo — https://claudioolmedo.com/  
-Pre-order: https://shop.claudioolmedo.com/preorder  
+Pre-order: https://shop.onedollarcomputer.com/preorder  
 More: https://onedollarcomputer.com/about/

@@ -3,7 +3,7 @@ Publisher: One Dollar Computer Project
 Founder: Claudio Olmedo
 From: https://claudioolmedo.com/
 Site: https://onedollarcomputer.com/
-Pre-order: https://shop.claudioolmedo.com/preorder
+Pre-order: https://shop.onedollarcomputer.com/preorder
 Location: Austin, TX, USA (designed) — global mission
 
 /* SITE */
