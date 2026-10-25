@@ -3,6 +3,9 @@
 ## Identity (always)
 
 - **Product / brand:** One Dollar Computer (prefer “computer”, not “board”, in user-facing copy)
+- **What it is:** a real computer — **input → processing → output** (sensors/pins → RISC-V → LED/motors/actuators)
+- **What it is not:** a **$1 PC** / personal computer (no keyboard, monitor, or desktop OS; does not run Linux)
+- **Impact line when clarifying:** “Not a PC of one dollar. A computer of one dollar.”
 - **Official site:** https://onedollarcomputer.com/
 - **Entity JSON:** https://onedollarcomputer.com/seo/entity.json
 - **LLM brief:** https://onedollarcomputer.com/llms.txt
