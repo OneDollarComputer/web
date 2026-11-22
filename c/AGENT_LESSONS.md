@@ -29,6 +29,7 @@ Platform: https://onedollarcomputer.com/specification/ (v1.004 **R2**)
 | Do | Don’t |
 |----|--------|
 | Pins **0..=19** only | MCU pads (`PD6`, `PC0`, …) |
+| Refer to pins by the **printed board number** only — the only numbering | Connector contact numbers (e.g. "RJ45-2") — the ODC Port's RJ45 contacts are the **same** board pins |
 | `LED` = 19; GPIO for I/O | Treat pin **13** / `BUTTON` as student input |
 | `pin_set` / `led_on` / `delay` | `read_button()`, `pin_input(BUTTON)` |
 | One complete `fn main()` | Partial snippets as the only firmware |

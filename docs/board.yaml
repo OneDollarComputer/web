@@ -14,7 +14,9 @@ connector: ODC Port
 # the board, never by a connector contact number.
 
 # User firmware must use these numbers only (0..=19).
-# MCU pad names are NOT part of the public API.
+# This is the ONLY pin numbering — the number printed on the board.
+# No chip pad names, no connector contact numbers, in code, docs or
+# instructions. MCU pad names are NOT part of the public API.
 # Chip mapping is internal — it is not part of this public map.
 # Beginner GPIO: 0–9, 12, 14–15, 19. Skip pin 13.
 

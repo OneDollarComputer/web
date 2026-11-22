@@ -56,6 +56,7 @@ Aliases for Physical AI: `Physical AI`, `Learn Physical AI`, `physicalai`, `Phys
 - **Firmware:** Simple Rust — `use odc::*;` and `fn main()` (browser editor compiles and flashes via **WebHID**)
 - **Flash / drivers:** **USB WebHID** — HID is built into every OS; no separate driver. Any **Chromium** browser on Windows, Mac, or Linux. Enter bootloader with the physical button before Upload
 - **Do not** expose MCU chip names or pad names (`PD6`, `PA1`, …) to beginners — chip layer is private
+- **Pin numbering (the only numbering):** always refer to a pin by the number printed on the board (**0–19**) — never chip pad names, never connector contact numbers. The ODC Port also mates with a standard RJ45 plug, but its contacts are the same board pins (say "pin 6", never "RJ45-2")
 - **Machine-readable spec:** https://onedollarcomputer.com/specification/v1.004.yaml
 - **Firmware coding rules for AIs:** https://onedollarcomputer.com/editor/AI_DOCS.txt
 - **⚠ Physical button (pin 13) = bootloader only — can break HID if misused:** https://onedollarcomputer.com/docs/BUTTON.md

@@ -27,7 +27,7 @@ Authoritative spec: **https://onedollarcomputer.com/specification/** · `specifi
 | Flash | Browser editor, **WebHID** (Chromium on Windows/Mac/Linux — no driver install); press physical button to enter bootloader |
 
 - **Do** use board pin numbers and `odc` in user-facing firmware help.
-- **Don’t** name the MCU chip or pad names in beginner docs — chip mapping is internal (`docs/board.yaml` comment only).
+- **Don’t** name the MCU chip or pad names in beginner docs — chip mapping is internal (`docs/board.yaml` comment only). The **only** pin numbering anywhere user- or agent-facing is the number printed on the board (**0–19**): never chip pad names, never connector contact numbers — the ODC Port also mates with a standard RJ45 plug, but its contacts are the same board pins (say “pin 6”, never “RJ45-2”).
 - **Don’t** invent specs; if unsure, link `/specification/`.
 - **Don’t** teach `read_button()` / pin **13** as beginner I/O — it can break HID Upload. **Canonical warning:** [`/docs/BUTTON.md`](docs/BUTTON.md). Curriculum: [`/c/AGENT_LESSONS.md`](c/AGENT_LESSONS.md).
 - **Don’t** promise live browser ↔ board HID control in lessons until that path is validated.
