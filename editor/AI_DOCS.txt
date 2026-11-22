@@ -232,8 +232,9 @@ fn main() {
 https://onedollarcomputer.com/editor/?projectID={PROJECT_ID}&aiToken={TOKEN}&code={BASE64_CODE}
 ```
 
-- Encode the **Rust source only** as UTF-8 Base64.
-- URL-encode the Base64 value, or use Base64URL (`+`→`-`, `/`→`_`, omit padding).
+- Encode the **Rust source only** as UTF-8 **Base64URL** — always this format, never standard Base64:
+  use `-` and `_` instead of `+` and `/`, omit `=` padding, and do NOT percent-encode.
+  (Standard Base64 gets corrupted when the link travels through chat apps: `+` turns into a space.)
 
 ### Response format
 

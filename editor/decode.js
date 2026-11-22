@@ -21,10 +21,19 @@
   function getCodeFromURL() {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('code');
-    
+
     if (encoded) {
       console.log('[decode.js] 🔗 Found code param in URL');
-      return decodeBase64(encoded);
+      window.MAGIC_LINK_CODE_PRESENT = true;
+      const decoded = decodeBase64(encoded);
+      if (decoded == null || decoded.trim() === '') {
+        // The link arrived damaged (truncated or mangled in transit).
+        // The editor checks this flag and tells the user, instead of
+        // silently opening with different code.
+        window.MAGIC_LINK_ERROR = true;
+        return null;
+      }
+      return decoded;
     }
     return null;
   }

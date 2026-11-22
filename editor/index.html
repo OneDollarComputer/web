@@ -950,9 +950,9 @@
 
     TO SEND CODE VIA MAGIC LINK:
     1. Write complete simple Rust: use odc::*; fn main() { ... }
-    2. Encode the source as UTF-8 Base64.
+    2. Encode the source as UTF-8 Base64URL (URL-safe: - and _ instead of + and /, no padding, no percent-encoding).
     3. URL:
-       https://onedollarcomputer.com/editor/?projectID=ID&amp;aiToken=TOKEN&amp;code=BASE64
+       https://onedollarcomputer.com/editor/?projectID=ID&amp;aiToken=TOKEN&amp;code=BASE64URL
 
     STRICT OUTPUT RULES:
       - Board pins 0..=19 only. Beginner GPIO: 0–9, 12, 14–15, 19 (skip 13).
@@ -1674,25 +1674,42 @@
 
       const dbUrl = (firebaseConfig && firebaseConfig.databaseURL) || DEFAULT_FIREBASE.databaseURL;
 
-      function openAIHelp() {
+      async function openAIHelp() {
         const currentSource = editor ? editor.getValue() : '';
-        const aiToken = Math.random().toString(36).substring(2, 8).toUpperCase();
         const projectID = new URL(window.location.href).searchParams.get('projectID') || window.PROJECT_CODE || '';
 
         const patchUrl = IS_LOCAL
           ? `/api/projects/${projectID}`
           : `${dbUrl}/projects/${projectID}/code.json`;
 
-        fetch(patchUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            aiHelpUsed: true,
-            aiSessionToken: aiToken,
-            aiSessionActive: true,
-            aiSessionStartedAt: new Date().toISOString()
-          })
-        }).catch(e => console.warn('Error setting AI session token:', e));
+        // Reuse the project's live session token when one exists, so links
+        // already shared keep working. A new token is minted (replacing the
+        // old one) only when there is no active session.
+        let aiToken = null;
+        if (!IS_LOCAL && projectID) {
+          try {
+            const [tokRes, actRes] = await Promise.all([
+              fetch(`${dbUrl}/projects/${projectID}/code/aiSessionToken.json`),
+              fetch(`${dbUrl}/projects/${projectID}/code/aiSessionActive.json`)
+            ]);
+            const existing = tokRes.ok ? await tokRes.json() : null;
+            const active = actRes.ok ? await actRes.json() : null;
+            if (active && typeof existing === 'string' && existing) aiToken = existing;
+          } catch (_) { /* fall through and mint a fresh token */ }
+        }
+        if (!aiToken) {
+          aiToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+          fetch(patchUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              aiHelpUsed: true,
+              aiSessionToken: aiToken,
+              aiSessionActive: true,
+              aiSessionStartedAt: new Date().toISOString()
+            })
+          }).catch(e => console.warn('Error setting AI session token:', e));
+        }
 
         const docsUrl = 'https://onedollarcomputer.com/editor/AI_DOCS.txt';
         const productionProjectUrl = `https://onedollarcomputer.com/editor/?projectID=${projectID}&aiToken=${aiToken}`;
@@ -1724,13 +1741,13 @@ Body: {"code":"FULL_RUST","content":"FULL_RUST","language":"rust","updated":"ISO
 (Only if aiToken matches.)
 
 Priority 2: Provide a Magic Load Link for one-click sync:
-${productionProjectUrl}&code=BASE64_UTF8_RUST_FIRMWARE
-(Encode ONLY the Rust source as UTF-8 Base64; URL-encode it.)
+${productionProjectUrl}&code=BASE64URL_UTF8_RUST_FIRMWARE
+(Encode ONLY the Rust source as UTF-8 Base64URL: URL-safe alphabet — use - and _ instead of + and /, no = padding, no percent-encoding. Standard Base64 corrupts when the link travels through chat apps.)
 
 Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
 
         const chatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
-        const qrPrompt = `Program the One Dollar Computer. Follow ${docsUrl} and https://onedollarcomputer.com/docs/BUTTON.md. projectID ${projectID}, aiToken ${aiToken}. Board pins 0..=19 only (LED=19). Pin 13 is bootloader only — never read_button(). use odc::*; fn main(). No MCU pad names, no #![no_std]. Magic Link: ${productionProjectUrl}&code=BASE64_UTF8_RUST.`;
+        const qrPrompt = `Program the One Dollar Computer. Follow ${docsUrl} and https://onedollarcomputer.com/docs/BUTTON.md. projectID ${projectID}, aiToken ${aiToken}. Board pins 0..=19 only (LED=19). Pin 13 is bootloader only — never read_button(). use odc::*; fn main(). No MCU pad names, no #![no_std]. Magic Link: ${productionProjectUrl}&code=BASE64URL_UTF8_RUST.`;
         const qrChatGPTUrl = `https://chatgpt.com/?q=${encodeURIComponent(qrPrompt)}`;
 
         if (qrcodeContainer) {
@@ -3266,7 +3283,8 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
       } finally {
         
         try {
-          const encoded = btoa(unescape(encodeURIComponent(content)));
+          const encoded = btoa(unescape(encodeURIComponent(content)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
           const url = new URL(window.location.href);
           url.searchParams.set('code', encoded);
           window.history.replaceState({}, '', url.toString());
@@ -3538,6 +3556,18 @@ fn main() {
         }
       }
 
+      if (!urlCode && window.MAGIC_LINK_ERROR) {
+        // A Magic Link arrived but its code was damaged in transit
+        // (decode.js flagged it). Say so — never open silently with
+        // different code and leave the user guessing.
+        showAiSessionBadge(
+          'invalid',
+          '<span>⚠️</span> Link damaged',
+          'This Magic Link arrived incomplete. Ask the AI to send a new one.',
+          { ephemeral: true, ms: 9000, key: 'magic-link-damaged' }
+        );
+      }
+
       editor = monaco.editor.create(document.getElementById('editor'), {
         value: initialCode,
         language: 'rust',
@@ -3741,7 +3771,9 @@ fn main() {
                   'Current AI session is authorized',
                   { ephemeral: true, ms: 3500, key: `secure:${data.aiSessionToken}` }
                 );
-              } else if (tokenInUrl) {
+              } else if (tokenInUrl && !window.DECODED_CODE_FROM_URL) {
+                // No "expired" alarm when this page arrived via a Magic
+                // Link whose code loaded fine — the link did its job.
                 showAiSessionBadge(
                   'invalid',
                   '<span>⚠️</span> AI Expired',
