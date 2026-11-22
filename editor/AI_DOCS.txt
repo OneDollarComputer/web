@@ -148,6 +148,46 @@ Constant for beginners: `LED` (19).
 
 ---
 
+## 2B. OFFICIAL LIBRARIES (`odc::` modules)
+
+Libraries are included with an extra `use` line under `use odc::*;`.
+Use them instead of hand-writing the signal code yourself.
+
+### Servo — `use odc::servo::*;`
+
+Drives one hobby servo (SG90 class) from a board pin.
+
+```rust
+let mut s = Servo::attach(6);  // signal wire on board pin 6
+s.write(90);                   // move to 90 degrees (0..=180) and hold ~0.5 s
+s.sweep(0, 180, 15);           // sweep 0 → 180, 15 ms extra per step
+s.sweep(180, 0, 15);           // sweep back
+```
+
+Hard rules:
+- Signal pin: board pin **6** is the proven pin. Any GPIO pin except **13** works the same way — pass it to `Servo::attach(pin)`.
+- Angles are **0..=180** only. `write` and `sweep` clamp bigger values.
+- `Servo::attach` returns the servo value; keep it in a `let mut` — `write` / `sweep` need `&mut`.
+- One servo per pin. The program's main loop stays in charge of timing: `write` sends the signal for about half a second, `sweep` sends one frame per degree plus the step delay.
+- **Never** attach a servo to pin **13** (bootloader button) — the library refuses it, and so must you.
+
+Example (sweep):
+
+```rust
+use odc::*;
+use odc::servo::*;
+
+fn main() {
+    let mut s = Servo::attach(6);
+    loop {
+        s.sweep(0, 180, 15);
+        s.sweep(180, 0, 15);
+    }
+}
+```
+
+---
+
 ## 3. EXAMPLES
 
 ### Blink onboard LED (pin 19)
