@@ -1966,6 +1966,10 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
         statusMainText = '';
         statusMainClass = '';
         flashStatusLocked = false;
+        // The message expired — its red state must expire with it, or the
+        // Upload button stays red forever (CSS gives .upload-error priority
+        // over .hid-ready, and no later status may ever arrive to clear it).
+        setUploadError(false);
         renderStatusBar();
       }, ms);
     }
@@ -2010,6 +2014,13 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
       const changed = next !== hidReady;
       hidReady = next;
       if (!btnUpload) return;
+      // A board answering again supersedes a stale error whose message has
+      // already left the screen: clear the latch so green can come back on
+      // its own, without a page refresh. A live (still displayed) error and
+      // an in-progress flash are never touched.
+      if (next && !statusMainText && !flashInProgress && btnUpload.classList.contains('upload-error')) {
+        setUploadError(false);
+      }
       btnUpload.classList.toggle('hid-ready', hidReady);
       if (!btnUpload.classList.contains('upload-error')) {
         btnUpload.title = hidReady
@@ -3292,6 +3303,7 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     async function uploadCode() {
       if (!editor || flashInProgress) return;
       flashStatusLocked = false;
+      setUploadError(false);
       autoFlashAfterCompile = true;
 
       // Use this click to grant WebHID if needed — do NOT require bootloader yet.
