@@ -9,14 +9,26 @@ model: "1.004"
 revision: R2
 version: 1.004 R2
 connector: ODC Port
-# The ODC Port also mates with a standard RJ45 plug. Those contacts are the
-# SAME board pins listed below — always name them by the number printed on
-# the board, never by a connector contact number.
+# Port contacts are printed 1-8 at the port (the RJ45 order) ONLY to land a
+# cable: they are printed on the board so you can match the wires of a
+# standard RJ45 cable. Each contact IS one of the board pins below, and the
+# board itself prints this correspondence beside the port. In code,
+# documentation and instructions, a pin is ALWAYS its board number —
+# a contact number never names a pin.
+port_contacts:
+  1: 7
+  2: 6
+  3: 1   # RX
+  4: 14  # TX
+  5: 18  # +5V
+  6: 4
+  7: 17  # GND
+  8: 10  # +3.3V
 
 # User firmware must use these numbers only (0..=19).
 # This is the ONLY pin numbering — the number printed on the board.
-# No chip pad names, no connector contact numbers, in code, docs or
-# instructions. MCU pad names are NOT part of the public API.
+# No chip pad names in code, docs or instructions, and a port contact
+# number never names a pin. MCU pad names are NOT part of the public API.
 # Chip mapping is internal — it is not part of this public map.
 # Beginner GPIO: 0–9, 12, 14–15, 19. Skip pin 13.
 

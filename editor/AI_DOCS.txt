@@ -52,9 +52,23 @@ Refer to every pin ONLY by the number printed on the board: **0–19**.
 No other numbering exists for you. Never use:
 
 - **Chip pad names** (`PD6`, `PC0`, `PA1`, …) — internal only; they change if the chip changes.
-- **Connector contact numbers** — the ODC Port also mates with a standard RJ45 plug,
-  but its contacts are the SAME board pins. The contact some diagrams call
-  "RJ45-2" is board **pin 6**. Always say "pin 6", never "RJ45-2".
+- **Connector contact numbers as pin names** — the port prints contact numbers
+  **1–8** (the RJ45 order) so you can land a standard RJ45 cable, and prints
+  the board pin beside each contact. The contacts ARE board pins:
+
+  | Port contact (printed) | Board pin |
+  |---|---|
+  | 1 | 7 |
+  | 2 | 6 |
+  | 3 | 1 (RX) |
+  | 4 | 14 (TX) |
+  | 5 | 18 (+5V) |
+  | 6 | 4 |
+  | 7 | 17 (GND) |
+  | 8 | 10 (+3.3V) |
+
+  Use contact numbers ONLY to connect the cable. In code, documentation and
+  instructions, always name the board pin: say "pin 6", never "RJ45-2".
 
 If any source (datasheet, schematic, forum post) gives you another numbering,
 translate it to board numbers before using it. If you cannot translate it,
