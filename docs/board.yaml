@@ -9,11 +9,13 @@ model: "1.004"
 revision: R2
 version: 1.004 R2
 connector: ODC Port
-rj_connector: RJ45
+# The ODC Port also mates with a standard RJ45 plug. Those contacts are the
+# SAME board pins listed below — always name them by the number printed on
+# the board, never by a connector contact number.
 
 # User firmware must use these numbers only (0..=19).
 # MCU pad names are NOT part of the public API.
-# Chip mapping: mcu/CH32V003F4U6.yaml (internal).
+# Chip mapping is internal — it is not part of this public map.
 # Beginner GPIO: 0–9, 12, 14–15, 19. Skip pin 13.
 
 pins:
@@ -26,7 +28,6 @@ pins:
     printed_label: "1"
     type: gpio
     description: "GPIO — PCB label 1"
-    rj_pin: RJ45-3
 
   2:
     printed_label: "2"
@@ -42,7 +43,6 @@ pins:
     printed_label: "4"
     type: gpio
     description: "GPIO — PCB label 4"
-    rj_pin: RJ45-6
 
   5:
     printed_label: "5"
@@ -53,13 +53,11 @@ pins:
     printed_label: "6"
     type: gpio
     description: "GPIO — PCB label 6"
-    rj_pin: RJ45-2
 
   7:
     printed_label: "7"
     type: gpio
     description: "GPIO — PCB label 7"
-    rj_pin: RJ45-1
 
   8:
     printed_label: "8"
@@ -75,7 +73,6 @@ pins:
     printed_label: "10"
     type: power
     description: "3.3V power output"
-    rj_pin: RJ45-8
 
   11:
     printed_label: "11"
@@ -85,7 +82,7 @@ pins:
   12:
     printed_label: "12"
     type: gpio
-    description: "GPIO — also SWIO; using as GPIO disables SWD until reboot"
+    description: "GPIO — PCB label 12 (shared with the programming link; using it as GPIO can pause programming until reboot)"
 
   13:
     printed_label: "13"
@@ -97,7 +94,6 @@ pins:
     printed_label: "14"
     type: gpio
     description: "GPIO — PCB label 14"
-    rj_pin: RJ45-4
 
   15:
     printed_label: "15"
@@ -113,13 +109,11 @@ pins:
     printed_label: "17"
     type: ground
     description: "Ground"
-    rj_pin: RJ45-7
 
   18:
     printed_label: "18"
     type: power
     description: "+5V power output / VBUS"
-    rj_pin: RJ45-5
 
   19:
     printed_label: "19"
