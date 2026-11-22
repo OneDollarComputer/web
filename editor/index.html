@@ -533,10 +533,12 @@
       flex: 1;
       position: relative;
       overflow: hidden;
+      display: flex;
     }
 
     #editor {
-      width: 100%;
+      flex: 1;
+      min-width: 0;
       height: 100%;
     }
 
@@ -821,6 +823,155 @@
       font-size: 0.9rem;
       text-decoration: underline;
     }
+
+    /* ─── Libraries panel ─── */
+    .libraries-panel {
+      width: 320px;
+      flex: none;
+      overflow-y: auto;
+      background: #161b22;
+      border-left: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 1rem;
+      font-size: 0.9rem;
+    }
+    .libraries-panel[hidden] { display: none; }
+    .lib-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .lib-panel-head h2 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+    .lib-close {
+      background: transparent;
+      border: none;
+      color: #8b949e;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.15rem 0.4rem;
+    }
+    .lib-close:hover { color: #e6edf3; }
+    .lib-section { margin-bottom: 1.25rem; }
+    .lib-section h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9fbad1;
+    }
+    .lib-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .lib-card-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+    .lib-card-name { font-weight: 600; }
+    .lib-card-ver { color: #8b949e; font-size: 0.78rem; }
+    .lib-shelf-tag {
+      color: #9fbad1;
+      border: 1px solid #30363d;
+      border-radius: 999px;
+      padding: 0 0.45rem;
+      font-size: 0.7rem;
+      line-height: 1.5;
+    }
+    .lib-card-desc { color: #c9d1d9; margin-top: 0.25rem; }
+    .lib-card-meta { color: #8b949e; font-size: 0.8rem; margin-top: 0.25rem; }
+    .lib-card-actions { display: flex; gap: 0.5rem; margin-top: 0.55rem; flex-wrap: wrap; }
+    .lib-add-btn, .lib-try-btn {
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .lib-add-btn {
+      background: #238636;
+      border: 1px solid #2ea043;
+      color: #fff;
+      font-weight: 600;
+    }
+    .lib-add-btn:disabled {
+      background: transparent;
+      border-color: #30363d;
+      color: #8b949e;
+      cursor: default;
+      font-weight: 400;
+    }
+    .lib-try-btn {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+    }
+    .lib-try-btn:disabled { color: #8b949e; cursor: default; }
+    .lib-conflict {
+      background: rgba(210, 153, 34, 0.12);
+      border: 1px solid rgba(210, 153, 34, 0.55);
+      border-radius: 8px;
+      color: #e3b341;
+      padding: 0.55rem 0.7rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .lib-empty { color: #8b949e; margin: 0.25rem 0 0.5rem; }
+    .lib-note { color: #8b949e; font-size: 0.82rem; margin-top: 0.5rem; }
+    .lib-search {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e6edf3;
+      padding: 0.5rem 0.6rem;
+      font-size: 0.9rem;
+      margin-bottom: 0.6rem;
+    }
+    .lib-search::placeholder { color: #8b949e; }
+    .lib-tabs { display: flex; gap: 0.35rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .lib-tab {
+      background: transparent;
+      border: 1px solid #30363d;
+      border-radius: 999px;
+      color: #c9d1d9;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .lib-tab.is-active {
+      background: #1f6feb;
+      border-color: #1f6feb;
+      color: #fff;
+      font-weight: 600;
+    }
+    .lib-space { margin-top: 0.75rem; }
+    .lib-space[hidden] { display: none; }
+    .lib-space-label { color: #9fbad1; font-size: 0.8rem; margin-bottom: 0.3rem; }
+    .lib-space-bar {
+      height: 8px;
+      border-radius: 99px;
+      background: #30363d;
+      overflow: hidden;
+    }
+    .lib-space-fill {
+      height: 100%;
+      width: 0;
+      background: #2ea043;
+      border-radius: 99px;
+    }
+    .lib-space-fill.is-over { background: #d29922; }
+    .lib-space-text { color: #8b949e; font-size: 0.8rem; margin-top: 0.3rem; }
+    @media (max-width: 720px) {
+      .libraries-panel { width: min(320px, 88vw); }
+    }
   </style>
   <script defer src="/js/share.js"></script>
 </head>
@@ -846,6 +997,7 @@
       <button type="button" class="secondary" id="btnEditorEdit" hidden>Edit</button>
       <button type="button" class="secondary" id="btnEditorPublish" hidden>Publish</button>
       <span id="aiSessionBadge" class="ai-session-badge"></span>
+      <button type="button" class="secondary" id="btnLibraries" aria-expanded="false">Libraries</button>
       <button type="button" class="secondary" id="btnShare" data-odc-share>Share</button>
       <div class="user-menu" id="userMenu">
         <a class="user-signin" id="btnEditorSignIn" href="/project/">Sign in</a>
@@ -869,6 +1021,33 @@
 
   <div id="editor-container">
     <div id="editor"></div>
+    <aside id="librariesPanel" class="libraries-panel" hidden aria-label="Libraries">
+      <div class="lib-panel-head">
+        <h2>Libraries</h2>
+        <button type="button" id="btnCloseLibraries" class="lib-close" aria-label="Close libraries panel">×</button>
+      </div>
+
+      <section class="lib-section" aria-label="Libraries in this project">
+        <h3>This project uses</h3>
+        <div id="libUsedList"></div>
+        <div id="libSpace" class="lib-space" hidden>
+          <div class="lib-space-label">Space on the computer</div>
+          <div class="lib-space-bar"><div id="libSpaceFill" class="lib-space-fill"></div></div>
+          <div class="lib-space-text" id="libSpaceText"></div>
+        </div>
+      </section>
+
+      <section class="lib-section" aria-label="Add a library">
+        <h3>Add a library</h3>
+        <input id="libSearch" class="lib-search" type="search" placeholder="What do you want to do?" aria-label="Search libraries" />
+        <div class="lib-tabs" role="tablist" aria-label="Library shelves">
+          <button type="button" class="lib-tab is-active" data-shelf="official" role="tab">Official</button>
+          <button type="button" class="lib-tab" data-shelf="mine" role="tab">Mine</button>
+          <button type="button" class="lib-tab" data-shelf="agent" role="tab">From my agent</button>
+        </div>
+        <div id="libGallery"></div>
+      </section>
+    </aside>
   </div>
 
   <div class="footer">
@@ -4216,6 +4395,337 @@ fn main() {
     }
 
     setupReconnect();
+
+    // ─── Libraries panel (phase 1: official shelf) ─────────────────────
+    // Self-contained block: reads editor/libraries.json, reflects the
+    // code's `use odc::<lib>` lines as plain cards, and adds libraries
+    // by inserting their `use` line. Everything is wrapped so a panel
+    // failure can never break the editor's own flow.
+    (function initLibrariesPanel() {
+      try {
+        const FLASH_BYTES = 16384; // app region (memory.x: 16K)
+        const FREE_PIN_CANDIDATES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 14, 15];
+        const panel = document.getElementById('librariesPanel');
+        const openBtn = document.getElementById('btnLibraries');
+        if (!panel || !openBtn) return;
+        const usedListEl = document.getElementById('libUsedList');
+        const galleryEl = document.getElementById('libGallery');
+        const searchEl = document.getElementById('libSearch');
+        const spaceEl = document.getElementById('libSpace');
+        const spaceFillEl = document.getElementById('libSpaceFill');
+        const spaceTextEl = document.getElementById('libSpaceText');
+
+        let catalog = [];
+        let catalogById = {};
+        let activeShelf = 'official';
+        let spaceInterval = null;
+        let editorHooked = false;
+
+        function esc(s) {
+          return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        }
+        function codeText() {
+          return (typeof editor !== 'undefined' && editor) ? editor.getValue() : '';
+        }
+        function editorReadOnly() {
+          try {
+            return !!(editor && monaco && editor.getOption(monaco.editor.EditorOption.readOnly));
+          } catch (e) { return false; }
+        }
+        function fixedPins(lib) {
+          return (lib && lib.pins_used && lib.pins_used.mode === 'fixed' &&
+            Array.isArray(lib.pins_used.pins)) ? lib.pins_used.pins : [];
+        }
+        function pinsText(lib) {
+          const pins = fixedPins(lib);
+          if (!pins.length) return '';
+          return pins.length === 1 ? `Pin ${pins[0]}` : `Pins ${pins.join(', ')}`;
+        }
+        function sizeText(lib) {
+          if (!lib || !lib.size_bytes) return '';
+          return `About ${(lib.size_bytes / 1024).toFixed(1)} KB on its own`;
+        }
+        function usedLibraries(code) {
+          const found = [];
+          const re = /use\s+odc::([a-z_][a-z0-9_]*)::/g;
+          let m;
+          while ((m = re.exec(code)) !== null) {
+            const lib = catalogById[m[1]];
+            if (lib && !found.includes(lib)) found.push(lib);
+          }
+          return found;
+        }
+        function isUsed(lib, code) {
+          return new RegExp('use\\s+odc::' + lib.id + '::').test(code);
+        }
+        // Pins the code drives directly (library attach() calls are the
+        // library's own declared pins, so they are not counted here).
+        function codePins(code) {
+          const pins = new Set();
+          const re = /(?:pin_output|pin_input|pin_set|pin_clear|pin_high|pin_low|pin_read)\s*\(\s*(\d{1,2})\s*\)/g;
+          let m;
+          while ((m = re.exec(code)) !== null) {
+            const p = parseInt(m[1], 10);
+            if (p !== 13) pins.add(p);
+          }
+          if (/\bLED\b/.test(code)) pins.add(19);
+          return pins;
+        }
+        // Plain-word pin conflicts for a candidate library, given the
+        // libraries already in the project and the pins the code uses.
+        function conflictMessages(candidate, code, used) {
+          const candPins = fixedPins(candidate);
+          if (!candPins.length) return [];
+          const takenBy = new Map();
+          used.forEach((l) => {
+            if (l.id !== candidate.id) fixedPins(l).forEach((p) => takenBy.set(p, l.name));
+          });
+          codePins(code).forEach((p) => { if (!takenBy.has(p)) takenBy.set(p, 'your code'); });
+          const msgs = [];
+          candPins.forEach((p) => {
+            if (!takenBy.has(p)) return;
+            const who = takenBy.get(p);
+            const free = FREE_PIN_CANDIDATES.find(
+              (fp) => !takenBy.has(fp) && !candPins.includes(fp));
+            msgs.push(
+              `${candidate.name} wants pin ${p}, but ${who} already uses pin ${p}. ` +
+              (free !== undefined
+                ? `Move one of them to a free pin — for example pin ${free} — before uploading.`
+                : 'There is no free pin left for both.'));
+          });
+          return msgs;
+        }
+        function cardHtml(lib, code, used, inProject) {
+          const meta = [pinsText(lib), sizeText(lib)].filter(Boolean).join(' · ');
+          const conflicts = inProject ? [] : conflictMessages(lib, code, used);
+          let actions = '';
+          if (!inProject) {
+            const already = isUsed(lib, code);
+            const ro = editorReadOnly();
+            actions = `<div class="lib-card-actions">
+              <button type="button" class="lib-add-btn" data-add="${esc(lib.id)}"${already || ro ? ' disabled' : ''}>${already ? 'Added ✓' : '+ Add to project'}</button>
+              ${lib.example ? `<button type="button" class="lib-try-btn" data-try="${esc(lib.id)}"${ro ? ' disabled' : ''}>Try the example</button>` : ''}
+            </div>`;
+          }
+          return `<div class="lib-card">
+            <div class="lib-card-head">
+              <span class="lib-card-name">${esc(lib.name)}</span>
+              <span class="lib-card-ver">v${esc(lib.version)}</span>
+              <span class="lib-shelf-tag">Official</span>
+            </div>
+            <div class="lib-card-desc">${esc(lib.description)}</div>
+            ${meta ? `<div class="lib-card-meta">${esc(meta)}</div>` : ''}
+            ${actions}
+          </div>` +
+            conflicts.map((c) => `<div class="lib-conflict">⚠ ${esc(c)}</div>`).join('');
+        }
+        function renderUsed() {
+          const code = codeText();
+          const used = usedLibraries(code);
+          if (!used.length) {
+            usedListEl.innerHTML = '<p class="lib-empty">No libraries yet. Add one below.</p>';
+          } else {
+            let html = used.map((lib) => cardHtml(lib, code, used, true)).join('');
+            // Conflicts between libraries already in the project / the code.
+            const seen = new Map();
+            const warnings = [];
+            used.forEach((lib) => {
+              fixedPins(lib).forEach((p) => {
+                if (seen.has(p) && seen.get(p) !== lib.id) {
+                  warnings.push(`${lib.name} and ${catalogById[seen.get(p)].name} both want pin ${p}. Move one of them to a free pin before uploading.`);
+                } else {
+                  seen.set(p, lib.id);
+                }
+              });
+            });
+            const cp = codePins(code);
+            used.forEach((lib) => {
+              fixedPins(lib).forEach((p) => {
+                if (cp.has(p)) {
+                  warnings.push(`${lib.name} wants pin ${p}, but your code already uses pin ${p}. Move one of them to a free pin before uploading.`);
+                }
+              });
+            });
+            html += warnings.map((w) => `<div class="lib-conflict">⚠ ${esc(w)}</div>`).join('');
+            usedListEl.innerHTML = html;
+          }
+          refreshSpace();
+        }
+        function renderGallery() {
+          const code = codeText();
+          const used = usedLibraries(code);
+          const q = (searchEl.value || '').trim().toLowerCase();
+          if (q) {
+            // One search across every shelf, in the user's own words.
+            // Filler words ("make a … turn") never block a match.
+            const STOP = ['a', 'an', 'the', 'make', 'making', 'i', 'want',
+              'to', 'my', 'it', 'please', 'can', 'you', 'do', 'me'];
+            const words = q.split(/\s+/).filter((w) => !STOP.includes(w));
+            const hits = catalog.filter((lib) => {
+              const hay = [lib.name, lib.description, lib.category]
+                .concat(lib.keywords || []).join(' ').toLowerCase();
+              return words.length === 0 || words.every((w) => hay.includes(w));
+            });
+            galleryEl.innerHTML = hits.length
+              ? hits.map((lib) => cardHtml(lib, code, used, false)).join('')
+              : `<p class="lib-empty">Nothing matches that yet.</p>
+                 <p class="lib-note">Try a word for what you want to do — like “motor” or “light”. Still nothing? Ask your agent to make it: what it creates arrives here as a card, ready to test.</p>`;
+            return;
+          }
+          if (activeShelf === 'official') {
+            galleryEl.innerHTML = catalog.length
+              ? catalog.map((lib) => cardHtml(lib, code, used, false)).join('')
+              : '<p class="lib-empty">The catalog could not be loaded.</p>';
+          } else if (activeShelf === 'mine') {
+            galleryEl.innerHTML = '<p class="lib-empty">Nothing here yet.</p><p class="lib-note">Libraries you save as your own will live on this shelf.</p>';
+          } else {
+            galleryEl.innerHTML = '<p class="lib-empty">Nothing here yet.</p><p class="lib-note">When your agent makes a library for you, it will show up here as a card — ready to run, then add.</p>';
+          }
+        }
+        function renderPanel() {
+          renderUsed();
+          renderGallery();
+        }
+        async function refreshSpace() {
+          if (!spaceEl || panel.hidden) return;
+          try {
+            if (typeof projectApiUrl !== 'function') { spaceEl.hidden = true; return; }
+            const r = await fetch(projectApiUrl(), { cache: 'no-store' });
+            if (!r.ok) { spaceEl.hidden = true; return; }
+            const data = await r.json();
+            const size = data && data.compilationStatus === 'success'
+              ? (data.binarySize || 0) : 0;
+            const compiledCode = data && (data.content || data.code);
+            if (!size || !compiledCode || compiledCode !== codeText()) {
+              spaceEl.hidden = true;
+              return;
+            }
+            spaceEl.hidden = false;
+            const pct = Math.min(100, Math.round((size / FLASH_BYTES) * 100));
+            spaceFillEl.style.width = pct + '%';
+            const over = size > FLASH_BYTES;
+            spaceFillEl.classList.toggle('is-over', over);
+            spaceTextEl.textContent = `${(size / 1024).toFixed(1)} KB of 16 KB — ` +
+              (over ? 'too big for the computer' : 'fits');
+          } catch (e) {
+            spaceEl.hidden = true;
+          }
+        }
+        function addToProject(lib) {
+          if (!editor || isUsed(lib, codeText())) return;
+          const model = editor.getModel();
+          if (!model) return;
+          const lines = editor.getValue().split('\n');
+          let afterLine = -1; // 0-based index of the `use odc::*;` line
+          for (let i = 0; i < lines.length; i++) {
+            if (/^\s*use\s+odc::\*;/.test(lines[i])) { afterLine = i; break; }
+          }
+          const lineCount = model.getLineCount();
+          if (afterLine >= 0 && afterLine + 2 <= lineCount) {
+            editor.executeEdits('libraries-panel', [{
+              range: new monaco.Range(afterLine + 2, 1, afterLine + 2, 1),
+              text: lib.use_line + '\n',
+              forceMoveMarkers: true
+            }]);
+          } else if (afterLine < 0) {
+            // No `use odc::*;` line (or an empty file): put it at the top.
+            editor.executeEdits('libraries-panel', [{
+              range: new monaco.Range(1, 1, 1, 1),
+              text: lib.use_line + '\n',
+              forceMoveMarkers: true
+            }]);
+          } else {
+            const lastLen = model.getLineContent(lineCount).length;
+            editor.executeEdits('libraries-panel', [{
+              range: new monaco.Range(lineCount, lastLen + 1, lineCount, lastLen + 1),
+              text: '\n' + lib.use_line + '\n',
+              forceMoveMarkers: true
+            }]);
+          }
+          editor.focus();
+          renderPanel();
+        }
+        function isTrivialCode(code) {
+          const t = (code || '').trim();
+          if (!t) return true;
+          if (t.startsWith('//! Example: blink the LED')) return true; // shipped default
+          return catalog.some((l) => l.example && l.example.code &&
+            l.example.code.trim() === t);
+        }
+        function tryExample(lib) {
+          if (!editor || !lib.example || !lib.example.code) return;
+          const current = editor.getValue();
+          if (!isTrivialCode(current) &&
+              !window.confirm(`Replace the code in the editor with the ${lib.name} example?`)) {
+            return;
+          }
+          editor.setValue(lib.example.code);
+          editor.focus();
+          renderPanel();
+        }
+        galleryEl.addEventListener('click', (ev) => {
+          const addBtn = ev.target.closest('[data-add]');
+          const tryBtn = ev.target.closest('[data-try]');
+          if (addBtn && catalogById[addBtn.getAttribute('data-add')]) {
+            addToProject(catalogById[addBtn.getAttribute('data-add')]);
+          } else if (tryBtn && catalogById[tryBtn.getAttribute('data-try')]) {
+            tryExample(catalogById[tryBtn.getAttribute('data-try')]);
+          }
+        });
+        searchEl.addEventListener('input', renderGallery);
+        panel.querySelectorAll('.lib-tab').forEach((tab) => {
+          tab.addEventListener('click', () => {
+            activeShelf = tab.getAttribute('data-shelf') || 'official';
+            panel.querySelectorAll('.lib-tab').forEach((t) =>
+              t.classList.toggle('is-active', t === tab));
+            renderGallery();
+          });
+        });
+        document.getElementById('btnCloseLibraries').addEventListener('click', () => {
+          setPanelOpen(false);
+        });
+        function setPanelOpen(open) {
+          panel.hidden = !open;
+          openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (spaceInterval) { clearInterval(spaceInterval); spaceInterval = null; }
+          if (open) {
+            renderPanel();
+            spaceInterval = setInterval(refreshSpace, 4000);
+          }
+        }
+        openBtn.addEventListener('click', () => setPanelOpen(panel.hidden));
+        // Hook the editor as soon as Monaco creates it.
+        const hookTimer = setInterval(() => {
+          if (editorHooked) { clearInterval(hookTimer); return; }
+          if (typeof editor !== 'undefined' && editor) {
+            editorHooked = true;
+            clearInterval(hookTimer);
+            let debounce = null;
+            editor.onDidChangeModelContent(() => {
+              if (debounce) clearTimeout(debounce);
+              debounce = setTimeout(() => { if (!panel.hidden) renderPanel(); }, 400);
+            });
+          }
+        }, 500);
+        // Load the catalog (official shelf) from the static manifest.
+        fetch('libraries.json', { cache: 'no-store' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data && Array.isArray(data.libraries)) {
+              catalog = data.libraries;
+              catalogById = {};
+              catalog.forEach((l) => { catalogById[l.id] = l; });
+            }
+            renderPanel();
+          })
+          .catch(() => renderPanel());
+        renderPanel();
+      } catch (e) {
+        console.warn('Libraries panel failed to start:', e);
+      }
+    })();
 
   </script>
 </body>
