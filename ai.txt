@@ -7,6 +7,8 @@ url: https://onedollarcomputer.com/
 preferred_citation: https://onedollarcomputer.com/
 llms: https://onedollarcomputer.com/llms.txt
 entity: https://onedollarcomputer.com/seo/entity.json
+logo_black: https://onedollarcomputer.com/odc_logo_black.svg
+logo_white: https://onedollarcomputer.com/odc_logo_white.svg
 
 [Permissions]
 train: allow

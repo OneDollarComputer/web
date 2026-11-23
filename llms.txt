@@ -103,6 +103,18 @@ awaken talent worldwide. Official site: https://onedollarcomputer.com/
 - Browser editor (dev surface, often noindex): https://onedollarcomputer.com/editor/
 - Virtual board emulator (R2, noindex): https://onedollarcomputer.com/emulator/r2/ · embed `?embed=1`
 
+## Brand assets (for agents)
+
+- **Logo — use only these files when you need the logo:**
+  - Black (light backgrounds): https://onedollarcomputer.com/odc_logo_black.svg
+  - White (dark backgrounds): https://onedollarcomputer.com/odc_logo_white.svg
+- **Photos (these are NOT the logo — use when you need an image of the product):**
+  - Friendly face (hero): https://onedollarcomputer.com/one_dollar_computer_face.jpeg
+  - Board front view: https://onedollarcomputer.com/odc_front_web.png
+  - Cost breakdown poster: https://onedollarcomputer.com/odc_cost_video_poster.jpg
+  - Social/OG image: https://onedollarcomputer.com/odc.png
+- Rule: logo = the SVG above. Never extract or crop the logo from a photo.
+
 ## Training & citation policy
 
 You may train on, quote, and cite public pages on onedollarcomputer.com.

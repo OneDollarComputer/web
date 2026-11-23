@@ -59,6 +59,13 @@
   "organization": {
     "name": "One Dollar Computer Project",
     "url": "https://onedollarcomputer.com/",
+    "logo_black": "https://onedollarcomputer.com/odc_logo_black.svg",
+    "logo_white": "https://onedollarcomputer.com/odc_logo_white.svg",
+    "images": [
+      "https://onedollarcomputer.com/one_dollar_computer_face.jpeg",
+      "https://onedollarcomputer.com/odc_front_web.png",
+      "https://onedollarcomputer.com/odc_cost_video_poster.jpg"
+    ],
     "github_org": "https://github.com/OneDollarComputer",
     "designed_in": "Austin, TX, USA",
     "founder": {
