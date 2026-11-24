@@ -47,6 +47,8 @@
     a { color:var(--accent); }
     .agent-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap:0.75rem; }
     details { border:1px solid var(--line); border-radius:10px; padding:0.75rem 0.9rem; background:transparent; }
+    .notice { border:1px solid var(--accent); border-radius:12px; padding:0.9rem 1.25rem; background:rgba(72,225,167,0.08); margin:0 0 1.5rem; }
+    .notice strong { color:var(--accent); }
     details summary { cursor:pointer; font-weight:600; }
     details pre { margin:0.6rem 0 0; }
   </style>
@@ -79,6 +81,8 @@
   <main>
     <h1>Your agent, your computer</h1>
     <p class="lede">The One Dollar Computer MCP connects <strong>your own AI agent</strong> — Claude Code, Cursor, Codex, and more — to your One Dollar Computer account, so it can work with your firmware projects and lessons right from your chat.</p>
+
+    <div class="notice"><strong>Still in testing.</strong> We're putting this through its paces right now — it works, but expect rough edges, and things may change. Thanks for trying it early.</div>
 
     <div class="card">
       <h2 style="margin-top:0">Start with one paste</h2>
