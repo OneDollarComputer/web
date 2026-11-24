@@ -87,7 +87,8 @@
     <div class="card">
       <h2 style="margin-top:0">Copy. Paste. Done.</h2>
       <p class="meta">Copy this link and paste it into your favorite agent — or just type it there:</p>
-      <pre id="agent-paste" style="font-size:1.25rem; text-align:center;">odc.rs/mcp</pre>
+      <pre id="agent-paste" title="Click to copy" style="font-size:1.25rem; text-align:center; cursor:pointer;">odc.rs/mcp</pre>
+      <p class="meta" id="copy-hint" style="text-align:center;">Click the link to copy it.</p>
       <p class="meta">That's it. Your agent reads the page and does the rest — it will only ask you to approve once, with your Google login.</p>
     </div>
 
@@ -178,5 +179,31 @@
 }</pre>
     </section>
   </main>
+<script>
+    (function () {
+      var el = document.getElementById("agent-paste");
+      var hint = document.getElementById("copy-hint");
+      if (!el) return;
+      el.addEventListener("click", async function () {
+        var text = "odc.rs/mcp";
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); } catch (e2) {}
+          ta.remove();
+        }
+        el.textContent = "Copied!";
+        if (hint) hint.textContent = "Now paste it into your agent.";
+        setTimeout(function () {
+          el.textContent = text;
+          if (hint) hint.textContent = "Click the link to copy it.";
+        }, 2000);
+      });
+    })();
+  </script>
 </body>
 </html>
