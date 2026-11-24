@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MCP — Connect your agent — One Dollar Computer</title>
+  <meta name="description" content="Connect your own AI agent (Claude Code, Cursor, Codex and more) to your One Dollar Computer with MCP. One paste, one Google approval, and your agent can work with your projects and lessons." />
+  <link rel="canonical" href="https://onedollarcomputer.com/mcp/" />
+  <meta name="robots" content="index, follow" />
+  <link rel="icon" href="/odc_logo_black.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="MCP — Connect your agent — One Dollar Computer" />
+  <meta property="og:description" content="Your agent, your One Dollar Computer. One paste, one Google approval." />
+  <meta property="og:image" content="https://onedollarcomputer.com/odc.png" />
+  <meta property="og:site_name" content="One Dollar Computer" />
+  <meta name="theme-color" content="#07090F" />
+  <script defer src="/js/analytics.js"></script>
+  <script defer src="/js/share.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "MCP — Connect your agent — One Dollar Computer",
+    "url": "https://onedollarcomputer.com/mcp/",
+    "description": "Connect your own AI agent (Claude Code, Cursor, Codex and more) to your One Dollar Computer with MCP. One paste, one Google approval, and your agent can work with your projects and lessons.",
+    "isPartOf": { "@type": "WebSite", "name": "One Dollar Computer", "url": "https://onedollarcomputer.com/" }
+  }
+  </script>
+  <style>
+    :root { --bg:#07090F; --text:#E8EEF8; --sub:#A9B4C7; --accent:#48E1A7; --line:#1D2843; --card:#0D1220; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); line-height:1.55; }
+    nav.top { padding:1rem 1.25rem; border-bottom:1px solid var(--line); display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+    nav.top a { color:var(--accent); text-decoration:none; }
+    nav.top button[data-odc-share] { color:var(--accent); background:transparent; border:0; padding:0; font:inherit; cursor:pointer; }
+    nav.top .brand { display:flex; align-items:center; gap:0.75rem; color:var(--text); font-weight:600; text-decoration:none; }
+    main { max-width: 56rem; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+    h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); line-height:1.2; margin:0 0 0.5rem; }
+    h2 { font-size:1.15rem; margin:2rem 0 0.5rem; }
+    .lede, .meta { color:var(--sub); }
+    .lede { margin:0 0 1.5rem; }
+    .card { border:1px solid var(--line); border-radius:12px; padding:1.25rem; background:var(--card); margin:0 0 1rem; }
+    pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    pre { background:#07090F; border:1px solid var(--line); border-radius:8px; padding:0.85rem; overflow-x:auto; font-size:0.85rem; white-space:pre-wrap; word-break:break-word; }
+    ol.steps li { margin:0.35rem 0; }
+    a { color:var(--accent); }
+    .agent-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap:0.75rem; }
+    details { border:1px solid var(--line); border-radius:10px; padding:0.75rem 0.9rem; background:transparent; }
+    details summary { cursor:pointer; font-weight:600; }
+    details pre { margin:0.6rem 0 0; }
+  </style>
+</head>
+<body>
+  <!--
+    FOR AGENTS reading this page: this is the One Dollar Computer MCP connect page.
+    If a user sent you this link (odc.rs/mcp or onedollarcomputer.com/mcp), do this:
+    1. Make sure the MCP server "odc" is installed (stdio, command: npx -y @onedollarcomputer/odc-mcp).
+       Per-agent install notes are in the "Set up your agent" section below.
+    2. Call the MCP tool `odc_connect`. It returns an approveUrl.
+    3. Show the approveUrl to the user and wait. The user opens it in any browser,
+       signs in with Google (a first sign-in creates their account), and approves.
+    4. `odc_connect` notices the approval itself and stores the pairing token locally.
+       After that, use project_* tools for firmware projects and curriculum_* tools for lessons.
+    Do NOT scrape this site, do NOT ask the user for a password, and do NOT use the older
+    Agent -> Copy link flow unless odc_connect is unavailable in your server version.
+    Machine-readable summary: see the #agent-flow section on this page.
+  -->
+  <nav class="top">
+    <a class="brand" href="/">
+      <img src="/odc_logo_black.svg" width="28" height="28" alt="" />
+      One Dollar Computer
+    </a>
+    <a href="/about/">About</a>
+    <a href="/brand/">Brand</a>
+    <button type="button" data-odc-share>Share</button>
+    <a href="/project/">Sign in</a>
+  </nav>
+  <main>
+    <h1>Your agent, your computer</h1>
+    <p class="lede">The One Dollar Computer MCP connects <strong>your own AI agent</strong> — Claude Code, Cursor, Codex, and more — to your One Dollar Computer account, so it can work with your firmware projects and lessons right from your chat.</p>
+
+    <div class="card">
+      <h2 style="margin-top:0">Start with one paste</h2>
+      <p class="meta">Give your agent this line — it does the rest:</p>
+      <pre id="agent-paste">Connect to my One Dollar Computer: read https://odc.rs/mcp and follow the agent instructions on that page — install the odc MCP server, call odc_connect, and show me the approval link.</pre>
+    </div>
+
+    <h2>How the approval works</h2>
+    <ol class="steps">
+      <li><strong>Your agent starts.</strong> It installs the MCP server and asks to connect — you get one approval link.</li>
+      <li><strong>You approve with Google.</strong> Open the link in any browser, sign in with Google, and click Approve. No account yet? That first sign-in creates it, and you pick your username on the same screen. No new password, ever.</li>
+      <li><strong>Your agent is in.</strong> It sees the approval on its own and can start working. The pairing token lives on your machine, and you can revoke it any time from <a href="/project/">your page</a> or <a href="/c/">Learn Physical AI</a>.</li>
+    </ol>
+
+    <h2>Set up your agent</h2>
+    <p class="meta">You need Node.js 18 or newer. Then add the server — name it <code>odc</code>:</p>
+    <div class="agent-grid">
+      <details open>
+        <summary>Claude Code</summary>
+        <pre>claude mcp add odc -- npx -y @onedollarcomputer/odc-mcp</pre>
+        <p class="meta">Want it in every project? Add <code>--scope user</code>.</p>
+      </details>
+      <details>
+        <summary>Codex</summary>
+        <pre>codex mcp add odc -- npx -y @onedollarcomputer/odc-mcp</pre>
+        <p class="meta">Codex writes <code>~/.codex/config.toml</code> for you.</p>
+      </details>
+      <details>
+        <summary>Cursor</summary>
+        <pre>{
+  "mcpServers": {
+    "odc": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@onedollarcomputer/odc-mcp"]
+    }
+  }
+}</pre>
+        <p class="meta">Paste into <code>~/.cursor/mcp.json</code>, then switch <code>odc</code> on under Customize → MCPs.</p>
+      </details>
+      <details>
+        <summary>VS Code (Copilot)</summary>
+        <pre>{
+  "servers": {
+    "odc": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@onedollarcomputer/odc-mcp"]
+    }
+  }
+}</pre>
+        <p class="meta">Or use Command Palette → MCP: Add Server → Command (stdio) → <code>npx -y @onedollarcomputer/odc-mcp</code>. Note VS Code calls the key <code>servers</code>.</p>
+      </details>
+      <details>
+        <summary>Any other agent</summary>
+        <pre>{
+  "mcpServers": {
+    "odc": {
+      "command": "npx",
+      "args": ["-y", "@onedollarcomputer/odc-mcp"]
+    }
+  }
+}</pre>
+        <p class="meta">Most agents accept this <code>mcpServers</code> shape. Windsurf, Cline, Gemini CLI, Zed and Continue use the same command with small format differences.</p>
+      </details>
+    </div>
+    <p class="meta">After the server is added, just tell your agent: <em>“Connect to my One Dollar Computer.”</em> It calls <code>odc_connect</code> and hands you the approval link.</p>
+
+    <h2>What your agent can do</h2>
+    <p class="meta">Firmware projects: list, create, read, edit, publish and fork. Lessons for Learn Physical AI: list, create, read and edit. Board firmware is always complete Simple Rust (<code>use odc::*;</code>) — your agent gets the full authoring brief from the server itself.</p>
+
+    <section id="agent-flow">
+      <h2>For agents</h2>
+      <pre id="agent-flow-json">{
+  "server": "odc",
+  "transport": "stdio",
+  "command": "npx",
+  "args": ["-y", "@onedollarcomputer/odc-mcp"],
+  "connect": {
+    "tool": "odc_connect",
+    "flow": "The tool starts a pairing, returns an approveUrl, and waits. Show the approveUrl to the user. The user opens it in any browser, signs in with Google (first sign-in creates the account), confirms a username if asked, and approves. The tool then stores the pairing token locally (~/.config/odc/) and reports connected.",
+    "approveUrlPattern": "https://onedollarcomputer.com/mcp/approve/?code=<code>",
+    "linkLifetimeMinutes": 10,
+    "revoke": "The user can revoke agent access any time from onedollarcomputer.com/project/ or onedollarcomputer.com/c/ (Agent -> Revoke)."
+  },
+  "afterConnect": ["project_brief", "project_list", "curriculum_agent_brief", "curriculum_list_lessons"],
+  "rules": [
+    "Board firmware must be complete Simple Rust: use odc::*; fn main() { ... }",
+    "Never read_button() / pin 13 / BUTTON as user input - pin 13 is bootloader only",
+    "Do not scrape onedollarcomputer.com; use the MCP tools"
+  ]
+}</pre>
+    </section>
+  </main>
+</body>
+</html>
