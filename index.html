@@ -502,6 +502,39 @@
       padding: 2px 6px
     }
 
+    /* Editor link in the top bar — outlined, so yellow stays Pre-Order's */
+    .editor-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 4px;
+      line-height: 1.2;
+      white-space: nowrap;
+      transition: background .2s ease, color .2s ease, border-color .2s ease
+    }
+
+    .editor-btn:hover {
+      background: #fff;
+      color: #111;
+      border-color: #fff
+    }
+
+    .editor-btn:focus-visible {
+      background: #fff;
+      color: #111;
+      outline: 2px solid #fff;
+      outline-offset: 3px
+    }
+
     /* Hide nav CTA while a page Pre-order button is on screen — keep the bar black */
     #site-nav.preorder-away .preorder-btn--nav {
       display: none !important
@@ -1154,6 +1187,7 @@
           <a href="#faq" class="nav-link">FAQ</a>
           <button type="button" class="nav-link" data-odc-share>Share</button>
         </div>
+        <a class="editor-btn editor-btn--nav" href="/editor/" aria-label="Open the Editor">Editor</a>
         <a class="preorder-btn preorder-btn--nav" href="https://shop.onedollarcomputer.com/preorder" aria-label="Pre-Order $1">Pre-Order <span class="preorder-btn__price">$1</span></a>
         <span class="odc-auth-slot">
           <a href="/project/" class="nav-link text-sm text-base-sub font-medium" data-odc-signin>Sign in</a>
