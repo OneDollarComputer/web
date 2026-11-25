@@ -411,6 +411,33 @@
       cursor: not-allowed;
     }
 
+    /* Busy: instant click feedback — an animated bar inside the Upload
+       button, so a click is never met with silence while WebHID pairs,
+       the code saves, the worker compiles or the board flashes. */
+    button.upload.busy {
+      position: relative;
+      overflow: hidden;
+      opacity: 1;
+      cursor: progress;
+    }
+
+    button.upload.busy::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3px;
+      width: 40%;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 2px;
+      animation: upload-busy-slide 1.1s ease-in-out infinite;
+    }
+
+    @keyframes upload-busy-slide {
+      0% { left: -40%; }
+      100% { left: 100%; }
+    }
+
     #status {
       font-size: 0.85rem;
       color: #9fbad1;
@@ -2111,7 +2138,57 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     function markCompilationNoticed(data, size) {
       const key = compilationNoticeKey(data, size);
       if (key) compileNoticeKey = key;
+      // A compile that ends without a following flash ends the busy state.
+      if (data && data.compilationStatus === 'error') setUploadBusy(false);
+      if (
+        data &&
+        data.compilationStatus === 'success' &&
+        !autoFlashAfterCompile &&
+        !flashInProgress
+      ) {
+        setUploadBusy(false);
+      }
     }
+
+    // Instant click feedback for Upload: from the first frame of the click
+    // the button shows activity (animated bar + Working… label), so there
+    // is never a silent gap while WebHID pairs, the code saves, the worker
+    // compiles or the board flashes. Busy reconciles from the flow's own
+    // flags: it stays on while a compile is awaited or a flash is running,
+    // and a 120 s safety net clears it if a flow dies without a trace.
+    let uploadBusyWanted = false;
+    let uploadBusySince = 0;
+    const uploadBtnLabel = btnUpload ? btnUpload.textContent : '⬆️ Upload';
+
+    function setUploadBusy(on) {
+      uploadBusyWanted = !!on;
+      uploadBusySince = on ? Date.now() : 0;
+      refreshUploadBusy();
+    }
+
+    function refreshUploadBusy() {
+      if (!btnUpload) return;
+      if (
+        uploadBusyWanted &&
+        !flashInProgress &&
+        uploadBusySince &&
+        Date.now() - uploadBusySince > 120000
+      ) {
+        uploadBusyWanted = false;
+        uploadBusySince = 0;
+      }
+      const busy = uploadBusyWanted || flashInProgress;
+      btnUpload.classList.toggle('busy', busy);
+      if (busy) {
+        btnUpload.textContent = flashInProgress ? '⬆️ Uploading…' : '⏳ Working…';
+        btnUpload.setAttribute('aria-busy', 'true');
+      } else if (btnUpload.textContent !== uploadBtnLabel) {
+        btnUpload.textContent = uploadBtnLabel;
+        btnUpload.removeAttribute('aria-busy');
+      }
+    }
+
+    setInterval(refreshUploadBusy, 200);
 
     function setUploadEnabled(enabled) {
       if (!btnUpload) return;
@@ -3145,6 +3222,7 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
         throw error;
       } finally {
         flashInProgress = false;
+        setUploadBusy(false);
         setUploadEnabled(true);
       }
     }
@@ -3499,6 +3577,10 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
     
     async function uploadCode() {
       if (!editor || flashInProgress) return;
+      // Feedback in the same frame as the click — before any await can
+      // leave the user staring at a silent, unchanged button.
+      setUploadBusy(true);
+      updateStatus('⏳ Starting…', '');
       flashStatusLocked = false;
       setUploadError(false);
       autoFlashAfterCompile = true;
@@ -3523,6 +3605,7 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
           autoFlashAfterCompile = false;
           await flashBinary(result.binary, result.binarySize || 0);
         } finally {
+          setUploadBusy(false);
           setUploadEnabled(true);
         }
         return;
@@ -3546,6 +3629,9 @@ Return: updated Rust code first, then the Magic Link, then a 3-bullet summary.`;
         autoFlashAfterCompile = false;
         throw e;
       } finally {
+        // If a compile is still awaited, the busy state stays on — the
+        // listener (or the flash that follows) clears it at the end.
+        if (!autoFlashAfterCompile && !flashInProgress) setUploadBusy(false);
         setUploadEnabled(true);
       }
     }
