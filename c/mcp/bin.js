@@ -121,7 +121,13 @@ async function api(method, apiPath, { token, body, firebaseIdToken } = {}) {
         data = { raw: text };
       }
       if (!res.ok) {
-        const err = new Error(data.error || res.statusText || `HTTP ${res.status}`);
+        let message = data.error || res.statusText || `HTTP ${res.status}`;
+        // Speak agent: a rejected token is a reconnect, not a mystery.
+        if (res.status === 401 && token) {
+          message =
+            "That connection is no longer valid (expired or revoked by the user). Call odc_connect to reconnect — the user approves again with Google.";
+        }
+        const err = new Error(message);
         err.status = res.status;
         err.data = data;
         // Try next host on network-ish failures only; 4xx from API is final
@@ -138,7 +144,7 @@ async function api(method, apiPath, { token, body, firebaseIdToken } = {}) {
       if (err && err.status && err.status < 500 && err.status !== 404) throw err;
     }
   }
-  throw lastErr || new Error("All curriculum API hosts failed");
+  throw lastErr || new Error("Could not reach the One Dollar Computer service — check the connection and try again in a moment.");
 }
 
 function textResult(obj) {
@@ -165,20 +171,40 @@ function loadProjectBrief() {
       "Firmware must be complete Simple Rust: use odc::*; fn main() { … }",
       "Never read_button() / pin 13 / BUTTON — bootloader only",
       "New projects are private; project_publish is irreversible",
-      "Pair once with curriculum_pair (Agent → Copy on /project/ or /c/)"
+      "Connect once with odc_connect (the user approves with Google); an Agent link from the site with curriculum_pair also works"
     ],
     aiDocs
   };
 }
 
-const server = new McpServer({
-  name: "odc-curriculum",
-  version: "0.3.1"
-});
+const server = new McpServer(
+  {
+    name: "odc-curriculum",
+    version: "0.4.0"
+  },
+  {
+    instructions:
+      "One Dollar Computer MCP: work with the user's firmware projects (Simple Rust) and curriculum lessons on their One Dollar Computer account. " +
+      "Start by checking curriculum_status. If it says paired: false, call odc_connect and show the user the approveUrl — they open it in their own browser, sign in with Google, and approve. Never ask the user for a password, and never fetch the approveUrl yourself. " +
+      "Firmware rules: complete Simple Rust programs (use odc::*; fn main), pins by their printed numbers 0–19, LED is pin 19, never pin 13 or read_button() (bootloader only). " +
+      "project_publish is irreversible — confirm with the user before calling it. odc_compile needs no pairing. " +
+      "If a call answers that the connection is no longer valid, reconnect with odc_connect."
+  }
+);
+
+// One friendly, consistent answer for every not-connected call: agents
+// should always know the exact next step instead of guessing.
+function notPaired() {
+  return textResult({
+    ok: false,
+    error: "Not connected yet.",
+    next: "Call odc_connect — it returns an approval link to show the user (they sign in with Google and approve; a first sign-in creates their account). If the user already gave you an Agent link from the website, call curriculum_pair with it instead."
+  });
+}
 
 server.tool(
   "curriculum_pair",
-  "Connect to ODC (curriculum lessons AND firmware projects). Pass the Agent link from /c/ or /project/ (while signed in). REQUIRED: call this tool — do NOT fetch the URL as a webpage, do NOT scrape onedollarcomputer.com, do NOT create local files. After pairing: for lessons use curriculum_agent_brief; for firmware projects use project_brief then project_get / project_update. Board firmware must be Simple Rust (use odc::*;).",
+  "Connect with an Agent link the user copied from the website (the manual alternative — most users should just use odc_connect, which needs no link). Pass the full link or its code. Do NOT fetch the link as a webpage and do NOT scrape the site. After pairing: curriculum_agent_brief for lessons, project_brief for firmware projects.",
   {
     connect_url_or_code: z.string().describe("Full Agent link or the connect code")
   },
@@ -253,7 +279,7 @@ server.tool(
   "odc_connect",
   "Connect this agent to the user's One Dollar Computer account — the EASY first-time flow (no link to copy from the site). Call this tool, then show the user the approveUrl from the result: they open it in any browser, sign in with Google (a first sign-in creates their account), and approve. This tool waits for the approval and stores the pairing token itself. Do NOT fetch the approveUrl as a webpage. After connecting: for lessons use curriculum_agent_brief; for firmware projects use project_brief then project_get / project_update. Board firmware must be Simple Rust (use odc::*;).",
   {
-    wait_seconds: z.number().optional().describe("How long to wait for the user to approve (default 300, max 600). If the wait ends first, the result is status pending with the approveUrl — show it to the user and call odc_connect again later is NOT needed; the same tool can be called again to keep waiting only while the link is fresh (10 minutes).")
+    wait_seconds: z.number().optional().describe("How long to wait for the user to approve (default 300, max 600). If the wait ends first, the result is status pending with the approveUrl — show it to the user and call odc_connect again later is NOT needed; the same tool can be called again to keep waiting only while the link is fresh (30 minutes).")
   },
   async ({ wait_seconds }) => {
     const waitMs = Math.min(Math.max(Number(wait_seconds ?? 300) || 0, 0), 600) * 1000;
@@ -314,7 +340,7 @@ server.tool(
       status: "pending",
       approveUrl,
       message:
-        "Not approved yet. Show the user this approveUrl: they open it in any browser, sign in with Google, and approve. The link stays fresh for 10 minutes from the start of this call."
+        "Not approved yet. Show the user this approveUrl: they open it in any browser, sign in with Google, and approve. The link stays fresh for 30 minutes from the start of this call."
     });
   }
 );
@@ -490,16 +516,20 @@ server.tool(
 server.registerTool(
   "curriculum_status",
   {
-    description: "Show whether an agent token is stored and the API base URL."
+    description: "Check the connection state: whether this agent is connected to a One Dollar Computer account, and which API it talks to. Call this first when unsure — it never changes anything."
   },
   async () => {
     const token = getToken();
-    return textResult({
+    const out = {
       paired: !!token,
       api: DEFAULT_API,
       tokenPath: TOKEN_PATH,
       tokenPreview: token ? `${token.slice(0, 16)}…` : null
-    });
+    };
+    if (!token) {
+      out.next = "Call odc_connect — it returns an approval link to show the user (they sign in with Google and approve).";
+    }
+    return textResult(out);
   }
 );
 
@@ -507,7 +537,7 @@ server.registerTool(
   "curriculum_agent_brief",
   {
     description:
-      "Return the curriculum authoring contract: HTML5 teaching UI is free; board firmware must be Simple Rust (use odc::*;). Call after curriculum_pair before writing lessons."
+      "Return the curriculum authoring contract: HTML5 teaching UI is free; board firmware must be Simple Rust (use odc::*;). Call after connecting (odc_connect or curriculum_pair) before writing lessons."
   },
   async () => textResult({
     docsUrl: "https://onedollarcomputer.com/c/AGENT_LESSONS.md",
@@ -526,9 +556,7 @@ server.registerTool(
   async () => {
     const token = getToken();
     if (!token) {
-      return textResult({
-        error: "Not paired. Ask the user for a Connect agent link, then call curriculum_pair."
-      });
+      return notPaired();
     }
     const data = await api("GET", "/lessons", { token });
     return textResult(data);
@@ -554,7 +582,7 @@ server.tool(
   async (args) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const body = { title: args.title };
     if (args.overview !== undefined) body.overview = args.overview;
@@ -578,7 +606,7 @@ server.tool(
   async ({ lesson_id }) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const data = await api("GET", `/lessons/${encodeURIComponent(lesson_id)}`, { token });
     return textResult(data);
@@ -616,7 +644,7 @@ server.tool(
   async (args) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const body = {};
     if (args.title !== undefined) body.title = args.title;
@@ -645,7 +673,7 @@ server.registerTool(
   "project_brief",
   {
     description:
-      "Firmware project authoring contract (Simple Rust, pin 13 warning, publish rules). Call after curriculum_pair before project_create / project_update."
+      "Firmware project authoring contract (Simple Rust, pin 13 warning, publish rules). Call after connecting (odc_connect or curriculum_pair) before project_create / project_update."
   },
   async () => textResult(loadProjectBrief())
 );
@@ -658,7 +686,7 @@ server.registerTool(
   async () => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first (Agent → Copy on /project/)." });
+      return notPaired();
     }
     const data = await api("GET", "/projects", { token });
     return textResult(data);
@@ -678,7 +706,7 @@ server.registerTool(
   async (args) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const body = { name: args.name };
     if (args.code !== undefined) body.code = args.code;
@@ -698,7 +726,7 @@ server.registerTool(
   async ({ project_id }) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const data = await api("GET", `/projects/${encodeURIComponent(project_id)}`, { token });
     return textResult(data);
@@ -721,7 +749,7 @@ server.registerTool(
   async (args) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const body = {};
     if (args.name !== undefined) body.name = args.name;
@@ -748,7 +776,7 @@ server.registerTool(
   async ({ project_id }) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const data = await api("POST", `/projects/${encodeURIComponent(project_id)}/publish`, {
       token,
@@ -770,7 +798,7 @@ server.registerTool(
   async ({ project_id }) => {
     const token = getToken();
     if (!token) {
-      return textResult({ error: "Not paired. Use curriculum_pair first." });
+      return notPaired();
     }
     const data = await api("POST", `/projects/${encodeURIComponent(project_id)}/fork`, {
       token,
