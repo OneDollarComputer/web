@@ -56,14 +56,29 @@
 <body>
   <!--
     FOR AGENTS reading this page: this is the One Dollar Computer MCP connect page.
-    If a user sent you this link (odc.rs/mcp or onedollarcomputer.com/mcp), do this:
+    If a user sent you this link (odc.rs/mcp or onedollarcomputer.com/mcp), first check
+    which kind of agent you are:
+
+    A. LOCAL agent — you run on the user's own computer and can run shell commands
+       (Claude Code, Codex CLI, Cursor, and similar):
     1. Make sure the MCP server "odc" is installed (stdio, command: npx -y @onedollarcomputer/odc-mcp).
        Per-agent install notes are in the "Set up your agent" section below.
+       (Codex CLI: codex mcp add odc -- npx -y @onedollarcomputer/odc-mcp, then restart Codex.)
     2. Call the MCP tool `odc_connect`. It returns an approveUrl.
     3. Show the approveUrl to the user and wait. The user opens it in any browser,
        signs in with Google (a first sign-in creates their account), and approves.
     4. `odc_connect` notices the approval itself and stores the pairing token locally.
        After that, use project_* tools for firmware projects and curriculum_* tools for lessons.
+
+    B. CLOUD agent — you run in a hosted sandbox, cannot run commands on the user's
+       computer, and cannot install packages there (hosted Codex, hosted chat agents):
+       You cannot connect this MCP from where you run — it is a program that lives on
+       the user's own computer, and a remote MCP endpoint is not available yet.
+       Do NOT claim you tested it, and do NOT improvise a workaround. Tell the user,
+       in the user's own language, exactly this: "This MCP runs on your own computer.
+       Open a local agent there (Claude Code, Codex CLI, or Cursor) and give it this
+       same link — odc.rs/mcp — it will connect in about a minute."
+
     Do NOT scrape this site, do NOT ask the user for a password, and do NOT use the older
     Agent -> Copy link flow unless odc_connect is unavailable in your server version.
     Machine-readable summary: see the #agent-flow section on this page.
@@ -105,6 +120,7 @@
       <li>Install the MCP server <code>odc</code> from the official npm package <code>@onedollarcomputer/odc-mcp</code> — nothing else, from nowhere else.</li>
       <li>Call <code>odc_connect</code> and show you the approval link it returns.</li>
       <li>Wait. Nothing connects until you approve.</li>
+      <li>If the agent runs in the cloud and cannot install programs on your computer, it must say so plainly and point you to a local agent with this same link — never claim it tested what it could not run.</li>
     </ol>
     <p class="meta">What the agent gets — and what it doesn't:</p>
     <ul>
@@ -190,7 +206,8 @@
     "tool": "odc_connect",
     "flow": "The tool starts a pairing, returns an approveUrl, and waits. Show the approveUrl to the user. The user opens it in any browser, signs in with Google (first sign-in creates the account), confirms a username if asked, and approves. The tool then stores the pairing token locally (~/.config/odc/) and reports connected.",
     "approveUrlPattern": "https://onedollarcomputer.com/mcp/approve/?code=<code>",
-    "linkLifetimeMinutes": 10,
+    "linkLifetimeMinutes": 30,
+    "environments": "Local agents only: the server is a stdio program that runs on the user's own computer. Cloud agents that cannot run local commands cannot install it; they should tell the user to open this link from a local agent (Claude Code, Codex CLI, Cursor). A remote MCP endpoint is not available yet.",
     "revoke": "The user can revoke agent access any time from onedollarcomputer.com/project/ or onedollarcomputer.com/c/ (Agent -> Revoke)."
   },
   "afterConnect": ["project_brief", "project_list", "curriculum_agent_brief", "curriculum_list_lessons"],
