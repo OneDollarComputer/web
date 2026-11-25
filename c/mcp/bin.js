@@ -35,7 +35,7 @@ const API_ORIGIN = readApiOrigin();
 // Function below died with the Oct 2026 billing closure (500/503). NOTE: this
 // is a cloudflared quick-tunnel URL and CHANGES when that tunnel restarts;
 // read the current one from /data/odc-api/tunnel-api.log on the box.
-const MARITIME_API = "https://reaction-icons-lined-delays.trycloudflare.com";
+const MARITIME_API = "https://executives-loop-seattle-aware.trycloudflare.com";
 
 const DEFAULT_API =
   process.env.ODC_CURRICULUM_API ||
@@ -173,7 +173,7 @@ function loadProjectBrief() {
 
 const server = new McpServer({
   name: "odc-curriculum",
-  version: "0.3.0"
+  version: "0.3.1"
 });
 
 server.tool(
