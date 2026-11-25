@@ -863,6 +863,78 @@
       font-size: 0.9rem;
     }
     .libraries-panel[hidden] { display: none; }
+    /* ─── Learn Rust panel ─── */
+    .learn-intro { color: #c9d1d9; margin: 0 0 0.5rem; line-height: 1.45; }
+    .learn-progress { color: #9fbad1; font-size: 0.82rem; margin: 0 0 0.75rem; }
+    .learn-lesson {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+    }
+    .learn-lesson-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #e6edf3;
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .learn-lesson-head:hover { background: #161b22; }
+    .learn-lesson-num { color: #8b949e; font-size: 0.8rem; flex: none; }
+    .learn-lesson-title { font-weight: 600; flex: 1; }
+    .learn-done-mark { color: #3fb950; flex: none; }
+    .learn-lesson-body { padding: 0 0.75rem 0.75rem; }
+    .learn-lesson-body p { color: #c9d1d9; line-height: 1.45; margin: 0 0 0.5rem; }
+    .learn-code {
+      background: #010409;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      overflow-x: auto;
+      margin: 0 0 0.55rem;
+      color: #e6edf3;
+    }
+    .learn-try {
+      border-left: 3px solid #d29922;
+      background: #161b22;
+      padding: 0.5rem 0.65rem;
+      color: #c9d1d9;
+      line-height: 1.45;
+      margin: 0 0 0.6rem;
+    }
+    .learn-try strong { color: #e6edf3; }
+    .learn-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .learn-open-btn {
+      background: #238636;
+      border: 1px solid #2ea043;
+      color: #fff;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .learn-open-btn:disabled { background: transparent; border-color: #30363d; color: #8b949e; cursor: default; font-weight: 400; }
+    .learn-done-btn {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .learn-done-btn.is-done { color: #3fb950; border-color: #3fb950; }
+    .learn-book { color: #9fbad1; font-size: 0.82rem; }
     .lib-panel-head {
       display: flex;
       align-items: center;
@@ -1025,6 +1097,7 @@
       <button type="button" class="secondary" id="btnEditorPublish" hidden>Publish</button>
       <span id="aiSessionBadge" class="ai-session-badge"></span>
       <button type="button" class="secondary" id="btnLibraries" aria-expanded="false">Libraries</button>
+      <button type="button" class="secondary" id="btnLearnRust" aria-expanded="false">🦀 Learn Rust</button>
       <button type="button" class="secondary" id="btnShare" data-odc-share>Share</button>
       <div class="user-menu" id="userMenu">
         <a class="user-signin" id="btnEditorSignIn" href="/project/">Sign in</a>
@@ -1074,6 +1147,15 @@
         </div>
         <div id="libGallery"></div>
       </section>
+    </aside>
+    <aside id="learnPanel" class="libraries-panel learn-panel" hidden aria-label="Learn Rust">
+      <div class="lib-panel-head">
+        <h2>🦀 Learn Rust</h2>
+        <button type="button" id="btnCloseLearn" class="lib-close" aria-label="Close Learn Rust panel">×</button>
+      </div>
+      <p id="learnIntro" class="learn-intro"></p>
+      <p id="learnProgress" class="learn-progress" hidden></p>
+      <div id="learnList"></div>
     </aside>
   </div>
 
@@ -4810,6 +4892,147 @@ fn main() {
         renderPanel();
       } catch (e) {
         console.warn('Libraries panel failed to start:', e);
+      }
+    })();
+
+    // ─── Learn Rust panel ──────────────────────────────────────────
+    // Self-contained block: reads editor/learn-rust.json and shows the
+    // ten lessons one board at a time. "Open in editor" loads the
+    // lesson's program (it compiles — every example is verified
+    // against the real compiler before publishing). Done marks are
+    // kept on this device only (localStorage). Wrapped so a panel
+    // failure can never break the editor's own flow.
+    (function initLearnPanel() {
+      try {
+        const panel = document.getElementById('learnPanel');
+        const openBtn = document.getElementById('btnLearnRust');
+        if (!panel || !openBtn) return;
+        const introEl = document.getElementById('learnIntro');
+        const progressEl = document.getElementById('learnProgress');
+        const listEl = document.getElementById('learnList');
+        const DONE_KEY = 'odcLearnRustDone';
+
+        let lessons = [];
+        let openId = null;
+
+        function esc(s) {
+          return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        }
+        function doneSet() {
+          try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); }
+          catch (e) { return new Set(); }
+        }
+        function saveDone(set) {
+          try { localStorage.setItem(DONE_KEY, JSON.stringify(Array.from(set))); } catch (e) { /* private mode */ }
+        }
+        function editorReadOnly() {
+          try {
+            return !!(editor && monaco && editor.getOption(monaco.editor.EditorOption.readOnly));
+          } catch (e) { return false; }
+        }
+        function setPanelOpen(open) {
+          panel.hidden = !open;
+          openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) {
+            const lib = document.getElementById('librariesPanel');
+            if (lib && !lib.hidden) {
+              lib.hidden = true;
+              const lb = document.getElementById('btnLibraries');
+              if (lb) lb.setAttribute('aria-expanded', 'false');
+            }
+          }
+        }
+
+        function renderPanel() {
+          const done = doneSet();
+          if (!lessons.length) {
+            listEl.innerHTML = '<p class="lib-note">The lessons could not be loaded. Check your connection and reopen this panel.</p>';
+            progressEl.hidden = true;
+            return;
+          }
+          progressEl.hidden = false;
+          progressEl.textContent = done.size
+            ? `${done.size} of ${lessons.length} lessons done on this device.`
+            : 'One lesson at a time. Read it, run it, change it.';
+          listEl.innerHTML = lessons.map((lesson, i) => {
+            const isDone = done.has(lesson.id);
+            const isOpen = openId === lesson.id;
+            const body = isOpen ? `
+              <div class="learn-lesson-body">
+                ${lesson.concept.map((p) => `<p>${esc(p)}</p>`).join('')}
+                <pre class="learn-code">${esc(lesson.code)}</pre>
+                <div class="learn-try"><strong>Try this:</strong> ${esc(lesson.try)}</div>
+                <div class="learn-actions">
+                  <button type="button" class="learn-open-btn" data-open="${esc(lesson.id)}"${editorReadOnly() ? ' disabled' : ''}>Open in editor</button>
+                  <button type="button" class="learn-done-btn${isDone ? ' is-done' : ''}" data-done="${esc(lesson.id)}">${isDone ? 'Done ✓' : 'Mark as done'}</button>
+                  <a class="learn-book" href="${esc(lesson.book.url)}" target="_blank" rel="noopener">Rust Book: ${esc(lesson.book.chapter)} ↗</a>
+                </div>
+              </div>` : '';
+            return `
+            <div class="learn-lesson">
+              <button type="button" class="learn-lesson-head" data-toggle="${esc(lesson.id)}" aria-expanded="${isOpen ? 'true' : 'false'}">
+                <span class="learn-lesson-num">${i + 1}.</span>
+                <span class="learn-lesson-title">${esc(lesson.title)}</span>
+                ${isDone ? '<span class="learn-done-mark" aria-label="Done">✓</span>' : ''}
+              </button>
+              ${body}
+            </div>`;
+          }).join('');
+        }
+
+        listEl.addEventListener('click', (ev) => {
+          const toggle = ev.target.closest('[data-toggle]');
+          if (toggle) {
+            const id = toggle.getAttribute('data-toggle');
+            openId = (openId === id) ? null : id;
+            renderPanel();
+            return;
+          }
+          const openButton = ev.target.closest('[data-open]');
+          if (openButton) {
+            const lesson = lessons.find((l) => l.id === openButton.getAttribute('data-open'));
+            if (!lesson || typeof editor === 'undefined' || !editor) return;
+            const current = editor.getValue();
+            if (current.trim() && current !== lesson.code &&
+                !window.confirm(`Replace the code in the editor with the lesson "${lesson.title}"?`)) {
+              return;
+            }
+            editor.setValue(lesson.code);
+            editor.focus();
+            setPanelOpen(false);
+            return;
+          }
+          const doneButton = ev.target.closest('[data-done]');
+          if (doneButton) {
+            const id = doneButton.getAttribute('data-done');
+            const done = doneSet();
+            if (done.has(id)) done.delete(id); else done.add(id);
+            saveDone(done);
+            renderPanel();
+          }
+        });
+
+        openBtn.addEventListener('click', () => setPanelOpen(panel.hidden));
+        document.getElementById('btnCloseLearn').addEventListener('click', () => setPanelOpen(false));
+        const libBtn = document.getElementById('btnLibraries');
+        if (libBtn) libBtn.addEventListener('click', () => { if (!panel.hidden) setPanelOpen(false); });
+
+        fetch('learn-rust.json', { cache: 'no-store' })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error('learn-rust.json'))))
+          .then((data) => {
+            lessons = Array.isArray(data.lessons) ? data.lessons : [];
+            if (data.intro) introEl.textContent = data.intro;
+            const done = doneSet();
+            const firstOpen = lessons.find((l) => !done.has(l.id)) || lessons[0];
+            openId = firstOpen ? firstOpen.id : null;
+            renderPanel();
+          })
+          .catch(() => renderPanel());
+        renderPanel();
+      } catch (e) {
+        console.warn('Learn Rust panel failed to start:', e);
       }
     })();
 
