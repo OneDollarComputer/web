@@ -9,22 +9,41 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const API_ORIGIN = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "api-origin.json"), "utf8")
-).url;
+// api-origin.json ships inside the npm package; the repo layout keeps it one
+// level up. Resolve either, and never crash at startup if it is missing.
+function readApiOrigin() {
+  for (const p of [
+    path.join(__dirname, "api-origin.json"),
+    path.join(__dirname, "..", "api-origin.json"),
+  ]) {
+    try {
+      return JSON.parse(fs.readFileSync(p, "utf8")).url;
+    } catch {}
+  }
+  return "https://api.onedollarcomputer.com";
+}
+const API_ORIGIN = readApiOrigin();
+
+// Maritime agent box port of curriculumAgent (2026-11-23) — the Google Cloud
+// Function below died with the Oct 2026 billing closure (500/503). NOTE: this
+// is a cloudflared quick-tunnel URL and CHANGES when that tunnel restarts;
+// read the current one from /data/odc-api/tunnel-api.log on the box.
+const MARITIME_API = "https://reaction-icons-lined-delays.trycloudflare.com";
 
 const DEFAULT_API =
   process.env.ODC_CURRICULUM_API ||
   process.env.ODC_CURRICULUM_API_FALLBACK ||
-  "https://curriculumagent-mhrupl2ima-uc.a.run.app";
+  MARITIME_API;
 
 const API_FALLBACKS = [
+  MARITIME_API,
   DEFAULT_API,
   "https://curriculumagent-mhrupl2ima-uc.a.run.app",
   "https://odc-files-api.web.app",
@@ -38,14 +57,18 @@ const RTDB_URL =
 
 const TOKEN_PATH = path.join(os.homedir(), ".config", "odc", "curriculum-agent.json");
 
-const AGENT_LESSONS_PATH = path.join(__dirname, "..", "AGENT_LESSONS.md");
+const AGENT_LESSONS_PATHS = [
+  path.join(__dirname, "AGENT_LESSONS.md"),
+  path.join(__dirname, "..", "AGENT_LESSONS.md"),
+];
 
 function loadAgentLessonsBrief() {
-  try {
-    return fs.readFileSync(AGENT_LESSONS_PATH, "utf8");
-  } catch {
-    return "See https://onedollarcomputer.com/c/AGENT_LESSONS.md (HTML free; firmware must be Simple Rust).";
+  for (const p of AGENT_LESSONS_PATHS) {
+    try {
+      return fs.readFileSync(p, "utf8");
+    } catch {}
   }
+  return "See https://onedollarcomputer.com/c/AGENT_LESSONS.md (HTML free; firmware must be Simple Rust).";
 }
 
 function loadStore() {
@@ -150,7 +173,7 @@ function loadProjectBrief() {
 
 const server = new McpServer({
   name: "odc-curriculum",
-  version: "0.2.0"
+  version: "0.3.0"
 });
 
 server.tool(
@@ -222,6 +245,244 @@ server.tool(
       status: last,
       message: "Could not connect. Ask the instructor to copy a fresh Agent link from /c/ (signed in), then paste it here.",
       connectUrl
+    });
+  }
+);
+
+server.tool(
+  "odc_connect",
+  "Connect this agent to the user's One Dollar Computer account — the EASY first-time flow (no link to copy from the site). Call this tool, then show the user the approveUrl from the result: they open it in any browser, sign in with Google (a first sign-in creates their account), and approve. This tool waits for the approval and stores the pairing token itself. Do NOT fetch the approveUrl as a webpage. After connecting: for lessons use curriculum_agent_brief; for firmware projects use project_brief then project_get / project_update. Board firmware must be Simple Rust (use odc::*;).",
+  {
+    wait_seconds: z.number().optional().describe("How long to wait for the user to approve (default 300, max 600). If the wait ends first, the result is status pending with the approveUrl — show it to the user and call odc_connect again later is NOT needed; the same tool can be called again to keep waiting only while the link is fresh (10 minutes).")
+  },
+  async ({ wait_seconds }) => {
+    const waitMs = Math.min(Math.max(Number(wait_seconds ?? 300) || 0, 0), 600) * 1000;
+    const verifier = crypto.randomBytes(32).toString("base64url");
+    const verifierHash = crypto.createHash("sha256").update(verifier).digest("hex");
+
+    let start;
+    try {
+      start = await api("POST", "/pair/agent-start", { body: { verifierHash } });
+    } catch (err) {
+      return textResult({ ok: false, error: `Could not start the connection: ${err.message}` });
+    }
+    const { code, approveUrl } = start;
+    if (!code || !approveUrl) {
+      return textResult({ ok: false, error: "Connection start did not return a code and approval link.", raw: start });
+    }
+
+    const deadline = Date.now() + waitMs;
+    let last = "pending";
+    for (;;) {
+      let st = null;
+      try {
+        st = await api(
+          "GET",
+          `/pair/agent-status?code=${encodeURIComponent(code)}&verifier=${encodeURIComponent(verifier)}`
+        );
+      } catch (err) {
+        st = { status: "error", error: err.message };
+      }
+      last = st.status || last;
+      if (st.token) {
+        saveStore({
+          token: st.token,
+          api: DEFAULT_API,
+          pairedAt: new Date().toISOString()
+        });
+        return textResult({
+          ok: true,
+          status: "connected",
+          approveUrl,
+          message:
+            "Connected. Call curriculum_agent_brief (lessons) or project_brief (firmware). Same token: project_list / project_create / project_update / project_publish. HTML5 teaching UI is free; board firmware must be complete Simple Rust (use odc::*;).",
+          brief: "curriculum_agent_brief | project_brief",
+          create: "curriculum_create_lesson | project_create",
+          docs: "https://onedollarcomputer.com/c/AGENT_LESSONS.md",
+          projectDocs: "https://onedollarcomputer.com/editor/AI_DOCS.txt"
+        });
+      }
+      if (st.status === "denied" || st.status === "expired" || st.status === "unknown") {
+        return textResult({ ok: false, status: st.status, approveUrl });
+      }
+      if (Date.now() >= deadline) break;
+      await new Promise((r) => setTimeout(r, Math.min(1500, Math.max(deadline - Date.now(), 0))));
+      if (Date.now() >= deadline) break;
+    }
+    return textResult({
+      ok: false,
+      status: "pending",
+      approveUrl,
+      message:
+        "Not approved yet. Show the user this approveUrl: they open it in any browser, sign in with Google, and approve. The link stays fresh for 10 minutes from the start of this call."
+    });
+  }
+);
+
+const BUILDS_DIR = path.join(os.homedir(), ".config", "odc", "builds");
+
+async function rtdb(method, rtdbPath, body) {
+  const res = await fetch(`${RTDB_URL}${rtdbPath}`, {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    const err = new Error(`RTDB ${method} ${rtdbPath}: HTTP ${res.status} ${text.slice(0, 300)}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+// Same hash the web editor and the compile workers use: SHA-1 of the
+// comment-stripped, whitespace-collapsed source (editor getCodeHash /
+// worker code_hash). Lets the worker serve identical code from cache.
+function codeHash(source) {
+  const cleaned = String(source)
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return crypto.createHash("sha1").update(cleaned, "utf8").digest("hex");
+}
+
+server.tool(
+  "odc_compile",
+  "Compile complete Simple Rust firmware (use odc::*;) for the One Dollar Computer on the cloud compile service — the same queue the web editor uses. Returns the compiled binary saved as a local .bin file (ready for odc_flash when available, or the web editor's Upload). No pairing needed: compilation is stateless. If project_id is given, the code is written to that editor project first (like pressing Compile in the editor); otherwise a throwaway project id is used. Compile errors are returned word-for-word from the compiler — show them to the user and fix the code. Never use pin 13 / read_button() (bootloader only); LED is pin 19.",
+  {
+    source: z.string().describe("Complete Simple Rust program: use odc::*; fn main() { … }"),
+    project_id: z.string().optional().describe("Editor project id to compile in place (optional)"),
+    timeout_seconds: z.number().optional().describe("Max seconds to wait for the compile (default 180, max 300)"),
+    save_to: z.string().optional().describe("Local path for the .bin (default ~/.config/odc/builds/<project_id>.bin)")
+  },
+  async ({ source, project_id, timeout_seconds, save_to }) => {
+    if (!source || !source.trim()) {
+      return textResult({ ok: false, error: "No code to compile." });
+    }
+    if (source.length > 65536) {
+      return textResult({ ok: false, error: "Code is too large (max 65536 characters)." });
+    }
+    const id =
+      project_id ||
+      `mcp${Date.now().toString(36)}${crypto.randomBytes(3).toString("hex")}`;
+    const hash = codeHash(source);
+    const submittedAt = Date.now();
+    const nowIso = new Date(submittedAt).toISOString();
+    const codeNode = {
+      content: source,
+      binaryHash: hash,
+      language: "rust",
+      lastModified: nowIso,
+      timestamp: submittedAt,
+      size: source.length,
+      compilationStatus: "pending",
+      compilationRequested: true,
+      compilationRequestedAt: nowIso
+    };
+    try {
+      await rtdb("PUT", `/projects/${encodeURIComponent(id)}/code.json`, codeNode);
+      await rtdb("PUT", `/compileQueue/${encodeURIComponent(id)}.json`, {
+        requestedAt: nowIso,
+        binaryHash: hash
+      });
+    } catch (err) {
+      return textResult({ ok: false, project_id: id, error: `Could not submit the compile: ${err.message}` });
+    }
+
+    const deadline = Date.now() + Math.min(Math.max(Number(timeout_seconds ?? 180) || 180, 10), 300) * 1000;
+    let lastStatus = "pending";
+    let resubmitted = false;
+    let submittedMs = submittedAt;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 2000));
+      let node = null;
+      try {
+        node = await rtdb("GET", `/projects/${encodeURIComponent(id)}/code.json`);
+      } catch {
+        /* transient — keep waiting */
+      }
+      if (!node) continue;
+      lastStatus = node.compilationStatus || lastStatus;
+      const updatedMs = Date.parse(node.compilationUpdatedAt || "") || 0;
+      const fresh = updatedMs >= submittedMs - 5000;
+      if (!fresh) continue;
+      // Known two-worker race: a worker that loses a job mid-flight can
+      // overwrite the real result with "worker error (job dropped)".
+      // That is not a compile verdict — resubmit once and keep waiting.
+      if (
+        node.compilationStatus === "error" &&
+        String(node.compilationError || "").includes("job dropped") &&
+        !resubmitted
+      ) {
+        resubmitted = true;
+        submittedMs = Date.now();
+        const retryIso = new Date(submittedMs).toISOString();
+        try {
+          await rtdb("PUT", `/projects/${encodeURIComponent(id)}/code.json`, {
+            ...codeNode,
+            lastModified: retryIso,
+            timestamp: submittedMs,
+            compilationRequestedAt: retryIso
+          });
+          await rtdb("PUT", `/compileQueue/${encodeURIComponent(id)}.json`, {
+            requestedAt: retryIso,
+            binaryHash: hash
+          });
+        } catch {
+          /* fall through — the loop will time out with a clear message */
+        }
+        continue;
+      }
+      if (node.compilationStatus === "success" && node.binary) {
+        const raw = Buffer.from(node.binary, "base64");
+        const outPath = save_to || path.join(BUILDS_DIR, `${id}.bin`);
+        try {
+          fs.mkdirSync(path.dirname(outPath), { recursive: true });
+          fs.writeFileSync(outPath, raw);
+        } catch (err) {
+          return textResult({
+            ok: true,
+            project_id: id,
+            binarySize: raw.length,
+            binaryHash: node.binaryHash || hash,
+            binaryBase64: node.binary,
+            warning: `Compiled OK but could not save the .bin locally: ${err.message}`,
+            editorUrl: `https://onedollarcomputer.com/editor/?projectID=${encodeURIComponent(id)}`
+          });
+        }
+        return textResult({
+          ok: true,
+          project_id: id,
+          binarySize: raw.length,
+          binaryHash: node.binaryHash || hash,
+          binaryFile: outPath,
+          fromCache: !!(node.compilationResult && node.compilationResult.cache),
+          message: `Compiled OK — ${raw.length} bytes. Binary saved to ${outPath}. Load it onto the computer with odc_flash when available, or open the editor project and press Upload.`,
+          editorUrl: `https://onedollarcomputer.com/editor/?projectID=${encodeURIComponent(id)}`
+        });
+      }
+      if (node.compilationStatus === "error") {
+        return textResult({
+          ok: false,
+          project_id: id,
+          error: String(node.compilationError || "Compile failed").slice(0, 4000),
+          editorUrl: `https://onedollarcomputer.com/editor/?projectID=${encodeURIComponent(id)}`
+        });
+      }
+    }
+    return textResult({
+      ok: false,
+      project_id: id,
+      status: lastStatus,
+      error: "Compile did not finish in time. The job stays queued — try odc_compile again in a moment (identical code is served from cache)."
     });
   }
 );

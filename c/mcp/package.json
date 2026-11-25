@@ -1,8 +1,7 @@
 {
   "name": "@onedollarcomputer/odc-mcp",
-  "version": "0.2.0",
-  "private": true,
-  "description": "MCP server for One Dollar Computer — curriculum lessons and firmware projects",
+  "version": "0.3.0",
+  "description": "MCP server for One Dollar Computer \u2014 curriculum lessons and firmware projects",
   "type": "module",
   "bin": {
     "odc-mcp": "./bin.js"
@@ -13,5 +12,14 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "zod": "^3.24.2"
+  },
+  "files": [
+    "bin.js",
+    "api-origin.json",
+    "AGENT_LESSONS.md",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
