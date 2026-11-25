@@ -180,7 +180,7 @@ function loadProjectBrief() {
 const server = new McpServer(
   {
     name: "odc-curriculum",
-    version: "0.6.1"
+    version: "0.6.2"
   },
   {
     instructions:
@@ -468,8 +468,13 @@ server.tool(
     let lastStatus = "pending";
     let resubmitted = false;
     let submittedMs = submittedAt;
+    let firstCheck = true;
     while (Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 2000));
+      // The worker writes the binary straight into the database node; watch
+      // it closely (first look immediately, then every 250 ms) so the agent
+      // proceeds the moment the binary lands — no polling-grid delay.
+      if (!firstCheck) await new Promise((r) => setTimeout(r, 250));
+      firstCheck = false;
       let node = null;
       try {
         node = await rtdb("GET", `/projects/${encodeURIComponent(id)}/code.json`);
