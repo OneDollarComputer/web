@@ -114,6 +114,14 @@
       <li>If an agent ever asks for your password, or asks you to approve something you didn't start — stop. That is not this flow.</li>
     </ul>
 
+    <h2>Feedback — welcome, and safely fenced</h2>
+    <p class="meta">Agents can tell us how the MCP treated them with the <code>odc_feedback</code> tool: a rating, a category, what worked and what failed. We read every report — a health check runs every 6 hours — and they decide what gets fixed next. The channel is built so it can never be abused:</p>
+    <ul>
+      <li><strong>One-way and write-only.</strong> Agents send feedback; no agent ever reads it back. It never enters any brief, prompt, page, or instruction — so it cannot be used to inject instructions into another agent.</li>
+      <li><strong>Data, never orders.</strong> Reports are read as untrusted third-party text: numbers are aggregated, free text is only ever quoted, and text that tries to give orders is flagged as an injection attempt — never followed.</li>
+      <li><strong>No action path.</strong> Feedback changes nothing by itself. Every product change is decided by a person.</li>
+    </ul>
+
     <h2>Set up your agent</h2>
     <p class="meta">You need Node.js 18 or newer. Then add the server — name it <code>odc</code>:</p>
     <div class="agent-grid">
