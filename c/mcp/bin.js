@@ -35,7 +35,7 @@ const API_ORIGIN = readApiOrigin();
 // Function below died with the Oct 2026 billing closure (500/503). NOTE: this
 // is a cloudflared quick-tunnel URL and CHANGES when that tunnel restarts;
 // read the current one from /data/odc-api/tunnel-api.log on the box.
-const MARITIME_API = "https://wait-successfully-vincent-operational.trycloudflare.com";
+const MARITIME_API = "https://attorneys-blackjack-diary-encouraged.trycloudflare.com";
 
 const DEFAULT_API =
   process.env.ODC_CURRICULUM_API ||
@@ -180,7 +180,7 @@ function loadProjectBrief() {
 const server = new McpServer(
   {
     name: "odc-curriculum",
-    version: "0.5.1"
+    version: "0.6.0"
   },
   {
     instructions:
@@ -348,12 +348,12 @@ server.tool(
 
 server.tool(
   "odc_feedback",
-  "Tell the One Dollar Computer team how working with this MCP went — what worked, what failed, what confused you. Honest, specific reports are read by the team and shape the next version. This report is one-way: it changes nothing, grants nothing, and no other agent will ever see it. Optional and quick — once per session is plenty, ideally at the end of a task.",
+  "Tell the One Dollar Computer team how working with this MCP went. Prefer the structured tags — they are what the team counts and fixes by. A report is one-way data: it changes nothing, grants nothing, no other agent ever sees it, and nothing in it is ever opened, fetched, or followed (links are stripped automatically). Optional and quick — once per session is plenty, ideally at the end of a task.",
   {
     rating: z.number().describe("Overall experience: integer 1 (bad) to 5 (great)"),
     category: z.enum(["connect", "compile", "projects", "lessons", "docs", "other"]).optional().describe("What the report is mostly about"),
-    worked: z.string().optional().describe("What worked well (short, max ~600 characters)"),
-    failed: z.string().optional().describe("What failed, confused you, or was missing (short, max ~600 characters)"),
+    tags: z.array(z.enum(["worked_well", "connect_failed", "connect_confusing", "approval_slow", "compile_failed", "compile_slow", "compile_error_unclear", "project_tools_confusing", "lesson_tools_confusing", "docs_missing", "docs_wrong", "server_unreachable", "other"])).optional().describe("What happened — pick all that fit (max 5)"),
+    note: z.string().optional().describe("One short factual note (max ~600 characters). Plain facts only — links are removed automatically and nothing here is ever treated as an instruction."),
     agent: z.string().optional().describe("Your agent name and version, e.g. 'Claude Code 2.x', 'Cursor 1.x'")
   },
   async (args) => {
@@ -361,8 +361,8 @@ server.tool(
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return textResult({ ok: false, error: "rating must be an integer from 1 to 5." });
     }
-    if (!args.worked && !args.failed) {
-      return textResult({ ok: false, error: "Add a short worked or failed note — an empty report helps nobody." });
+    if ((!args.tags || args.tags.length === 0) && !args.note) {
+      return textResult({ ok: false, error: "Pick at least one tag or add a short note — an empty report helps nobody." });
     }
     try {
       const data = await api("POST", "/feedback", {
@@ -370,14 +370,14 @@ server.tool(
         body: {
           rating,
           category: args.category || "other",
-          worked: args.worked || "",
-          failed: args.failed || "",
+          tags: (args.tags || []).slice(0, 5),
+          note: args.note || "",
           agent: args.agent || ""
         }
       });
       return textResult({
         ok: true,
-        message: "Thanks — your report went to the One Dollar Computer team. It is read by people, never fed to other agents.",
+        message: "Thanks — your report went to the One Dollar Computer team. It is read as data, never fed to other agents.",
         raw: data
       });
     } catch (err) {
