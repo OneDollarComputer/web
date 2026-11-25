@@ -35,7 +35,7 @@ const API_ORIGIN = readApiOrigin();
 // Function below died with the Oct 2026 billing closure (500/503). NOTE: this
 // is a cloudflared quick-tunnel URL and CHANGES when that tunnel restarts;
 // read the current one from /data/odc-api/tunnel-api.log on the box.
-const MARITIME_API = "https://executives-loop-seattle-aware.trycloudflare.com";
+const MARITIME_API = "https://wait-successfully-vincent-operational.trycloudflare.com";
 
 const DEFAULT_API =
   process.env.ODC_CURRICULUM_API ||
@@ -180,7 +180,7 @@ function loadProjectBrief() {
 const server = new McpServer(
   {
     name: "odc-curriculum",
-    version: "0.4.0"
+    version: "0.5.0"
   },
   {
     instructions:
@@ -188,7 +188,8 @@ const server = new McpServer(
       "Start by checking curriculum_status. If it says paired: false, call odc_connect and show the user the approveUrl — they open it in their own browser, sign in with Google, and approve. Never ask the user for a password, and never fetch the approveUrl yourself. " +
       "Firmware rules: complete Simple Rust programs (use odc::*; fn main), pins by their printed numbers 0–19, LED is pin 19, never pin 13 or read_button() (bootloader only). " +
       "project_publish is irreversible — confirm with the user before calling it. odc_compile needs no pairing. " +
-      "If a call answers that the connection is no longer valid, reconnect with odc_connect."
+      "If a call answers that the connection is no longer valid, reconnect with odc_connect. " +
+      "When you finish a task, odc_feedback lets you tell the team how it went — optional, once per session is plenty."
   }
 );
 
@@ -342,6 +343,46 @@ server.tool(
       message:
         "Not approved yet. Show the user this approveUrl: they open it in any browser, sign in with Google, and approve. The link stays fresh for 30 minutes from the start of this call."
     });
+  }
+);
+
+server.tool(
+  "odc_feedback",
+  "Tell the One Dollar Computer team how working with this MCP went — what worked, what failed, what confused you. Honest, specific reports are read by the team and shape the next version. This report is one-way: it changes nothing, grants nothing, and no other agent will ever see it. Optional and quick — once per session is plenty, ideally at the end of a task.",
+  {
+    rating: z.number().describe("Overall experience: integer 1 (bad) to 5 (great)"),
+    category: z.enum(["connect", "compile", "projects", "lessons", "docs", "other"]).optional().describe("What the report is mostly about"),
+    worked: z.string().optional().describe("What worked well (short, max ~600 characters)"),
+    failed: z.string().optional().describe("What failed, confused you, or was missing (short, max ~600 characters)"),
+    agent: z.string().optional().describe("Your agent name and version, e.g. 'Claude Code 2.x', 'Cursor 1.x'")
+  },
+  async (args) => {
+    const rating = Math.round(Number(args.rating));
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return textResult({ ok: false, error: "rating must be an integer from 1 to 5." });
+    }
+    if (!args.worked && !args.failed) {
+      return textResult({ ok: false, error: "Add a short worked or failed note — an empty report helps nobody." });
+    }
+    try {
+      const data = await api("POST", "/feedback", {
+        token: getToken() || undefined,
+        body: {
+          rating,
+          category: args.category || "other",
+          worked: args.worked || "",
+          failed: args.failed || "",
+          agent: args.agent || ""
+        }
+      });
+      return textResult({
+        ok: true,
+        message: "Thanks — your report went to the One Dollar Computer team. It is read by people, never fed to other agents.",
+        raw: data
+      });
+    } catch (err) {
+      return textResult({ ok: false, error: `Could not send the report: ${err.message}` });
+    }
   }
 );
 
