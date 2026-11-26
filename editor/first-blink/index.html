@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your first blink — One Dollar Computer</title>
+<meta name="description" content="Just registered? Make your One Dollar Computer blink for the first time: five simple steps, two minutes, one light that obeys you." />
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #30363d;
+    --text: #e6edf3; --muted: #c9d1d9; --dim: #8b949e; --accent: #9fbad1;
+    --green: #238636; --green-line: #2ea043; --yellow: #d29922;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 2.5rem 1.25rem 3.5rem; }
+  .kicker { color: var(--accent); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.5rem; }
+  h1 { font-size: clamp(2rem, 5.5vw, 3.2rem); line-height: 1.1; margin: 0 0 0.75rem; }
+  .promise { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; max-width: 34rem; }
+
+  /* ── The blinking stage ── */
+  .stage {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1.5rem; display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem;
+    align-items: center; margin-bottom: 2.5rem;
+  }
+  @media (max-width: 640px) { .stage { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  .board {
+    width: 180px; height: 120px; border-radius: 10px; position: relative;
+    background: #14532d; border: 1px solid #2ea043;
+    box-shadow: inset 0 0 0 4px rgba(0,0,0,0.15);
+  }
+  .board::before, .board::after {
+    content: ""; position: absolute; top: 10px; bottom: 10px; width: 10px;
+    background-image: radial-gradient(circle, #d4d4d4 2.2px, transparent 2.6px);
+    background-size: 10px 14px; background-repeat: repeat-y;
+  }
+  .board::before { left: 8px; } .board::after { right: 8px; }
+  .board-label { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; color: #bbf7d0; font-size: 0.62rem; letter-spacing: 0.14em; }
+  .led {
+    position: absolute; top: 34px; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #3f6212; border: 2px solid rgba(255,255,255,0.25);
+    transition: background 60ms linear, box-shadow 60ms linear;
+  }
+  .led.on { background: #facc15; box-shadow: 0 0 34px 10px rgba(250, 204, 21, 0.55); border-color: #fde68a; }
+  .led-pin { position: absolute; top: 66px; left: 50%; transform: translateX(-50%); color: #bbf7d0; font-size: 0.62rem; letter-spacing: 0.1em; }
+  .stage h2 { margin: 0 0 0.4rem; font-size: 1.25rem; }
+  .stage p { color: var(--muted); margin: 0 0 0.9rem; }
+  .speed { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .speed label { color: var(--dim); font-size: 0.9rem; }
+  .chip {
+    background: transparent; color: var(--text); border: 1px solid var(--line);
+    border-radius: 999px; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.9rem;
+  }
+  .chip.is-active { border-color: var(--yellow); color: #facc15; }
+  .chip:hover { border-color: var(--accent); }
+  .speed input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--yellow); }
+  .ms-read { font-variant-numeric: tabular-nums; color: var(--text); min-width: 5.5rem; }
+
+  /* ── Steps ── */
+  .steps { display: grid; gap: 1rem; margin-bottom: 2.5rem; }
+  .step {
+    display: grid; grid-template-columns: 52px 1fr; gap: 1rem; align-items: start;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem 1.25rem;
+  }
+  .step-num {
+    width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--green); border: 1px solid var(--green-line); color: #fff;
+    font-weight: 700; font-size: 1.15rem;
+  }
+  .step h3 { margin: 0.35rem 0 0.3rem; font-size: 1.1rem; }
+  .step p { margin: 0; color: var(--muted); }
+  .step p + p { margin-top: 0.4rem; }
+  code, .codeblock { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .step code { background: #010409; border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3rem; font-size: 0.92em; }
+  .codeblock {
+    background: #010409; border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.9rem 1rem; font-size: 0.88rem; line-height: 1.55; overflow-x: auto; margin: 0.6rem 0 0;
+    white-space: pre;
+  }
+  .codeblock .num { color: #facc15; font-weight: 700; }
+  .btn {
+    display: inline-block; background: var(--green); border: 1px solid var(--green-line); color: #fff;
+    font-weight: 600; border-radius: 8px; padding: 0.55rem 1.1rem; text-decoration: none; margin-top: 0.7rem;
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .btn.ghost { background: transparent; border-color: var(--line); color: var(--text); }
+
+  .alt {
+    border-left: 3px solid var(--yellow); background: var(--panel);
+    padding: 1rem 1.25rem; border-radius: 0 12px 12px 0; margin-bottom: 2.5rem;
+  }
+  .alt h3 { margin: 0 0 0.3rem; font-size: 1.05rem; }
+  .alt p { margin: 0; color: var(--muted); }
+  .next { text-align: center; color: var(--muted); }
+  .next a { color: var(--accent); }
+  footer { text-align: center; color: var(--dim); font-size: 0.85rem; margin-top: 3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">New here? Start here.</p>
+  <h1>Your first blink</h1>
+  <p class="promise">Five steps. About two minutes. At the end, a light on your
+  One Dollar Computer blinks — because <em>you</em> told it to. That is programming.</p>
+
+  <section class="stage" aria-label="Try the blink speed">
+    <div class="board" aria-hidden="true">
+      <div class="led" id="led"></div>
+      <div class="led-pin">PIN 19 · LED</div>
+      <div class="board-label">ONE DOLLAR COMPUTER</div>
+    </div>
+    <div>
+      <h2>This is what you are about to make</h2>
+      <p>The light blinks on, waits, off, waits. The wait is a number in your
+      program — <strong>delay(200)</strong> means 200 milliseconds. Drag the slider
+      and watch: the number <em>is</em> the speed.</p>
+      <div class="speed">
+        <button type="button" class="chip" data-ms="100">100 · fast</button>
+        <button type="button" class="chip is-active" data-ms="200">200 · the classic</button>
+        <button type="button" class="chip" data-ms="1000">1000 · slow</button>
+        <input type="range" id="speed" min="50" max="1500" step="50" value="200" aria-label="Blink delay in milliseconds" />
+        <span class="ms-read"><span id="msRead">200</span> ms</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="steps">
+    <article class="step">
+      <div class="step-num" aria-hidden="true">1</div>
+      <div>
+        <h3>Open the Editor</h3>
+        <p>Your first program is already written and waiting for you — the blink.
+        You do not have to type anything yet.</p>
+        <a class="btn" href="/editor/">Open the Editor</a>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="step-num" aria-hidden="true">2</div>
+      <div>
+        <h3>Plug in your computer</h3>
+        <p>Connect your One Dollar Computer to this computer with a USB cable.
+        No drivers, no installation — the browser does the talking.</p>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="step-num" aria-hidden="true">3</div>
+      <div>
+        <h3>Press Upload</h3>
+        <p>Upload does everything: it compiles your program and sends it to the
+        board. The first time, the browser may ask which device to use — pick
+        your One Dollar Computer.</p>
+        <p>This is the program it sends:</p>
+        <div class="codeblock">use odc::*;
+
+fn main() {
+    pin_output(LED);
+    loop {
+        pin_set(LED);     // light on
+        delay(<span class="num" data-delay>200</span>);      // wait
+        pin_clear(LED);   // light off
+        delay(<span class="num" data-delay>200</span>);      // wait
+    }
+}</div>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="step-num" aria-hidden="true">4</div>
+      <div>
+        <h3>Press the button on the board</h3>
+        <p>When the editor asks, press the physical button on your One Dollar
+        Computer. That press tells it: “receive my program.” It may take a
+        couple of presses — keep going until the editor finds it.</p>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="step-num" aria-hidden="true">5</div>
+      <div>
+        <h3>It blinks. That was you.</h3>
+        <p>The LED turns on and off, <span data-delay>200</span> milliseconds each way —
+        exactly what the program says. Now make it yours: change
+        <code>delay(200)</code> to <code>delay(100)</code> and press Upload again.
+        Faster. Change it to <code>delay(1000)</code>. Slower. You are not
+        watching a demo — you are giving orders to a computer, and it obeys.</p>
+      </div>
+    </article>
+  </div>
+
+  <section class="alt">
+    <h3>No board yet? Watch it on screen</h3>
+    <p>Open the Editor and choose <strong>Lab → Simulate</strong>. A virtual
+    One Dollar Computer runs the same program in your browser, LED and all —
+    everything in the five steps works the same way when your board arrives.</p>
+  </section>
+
+  <p class="next">Ready for more? In the Editor, press
+  <a href="/editor/">🦀 Learn Rust</a> — ten tiny lessons, starting with the
+  program you just ran.</p>
+
+  <footer>One Dollar Computer — the computer that costs a dollar, and the first one that is truly yours.</footer>
+</div>
+
+<script>
+  (function () {
+    var led = document.getElementById('led');
+    var slider = document.getElementById('speed');
+    var msRead = document.getElementById('msRead');
+    var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+    var delaySpans = Array.prototype.slice.call(document.querySelectorAll('[data-delay]'));
+    var ms = 200, on = false, timer = null;
+
+    function tick() {
+      on = !on;
+      led.classList.toggle('on', on);
+      timer = setTimeout(tick, ms);
+    }
+    function setMs(v) {
+      ms = Math.max(50, Math.min(1500, v | 0));
+      msRead.textContent = ms;
+      slider.value = ms;
+      delaySpans.forEach(function (s) { s.textContent = ms; });
+      chips.forEach(function (c) { c.classList.toggle('is-active', +c.getAttribute('data-ms') === ms); });
+      clearTimeout(timer);
+      timer = setTimeout(tick, ms);
+    }
+    slider.addEventListener('input', function () { setMs(+slider.value); });
+    chips.forEach(function (c) {
+      c.addEventListener('click', function () { setMs(+c.getAttribute('data-ms')); });
+    });
+    tick();
+  })();
+</script>
+</body>
+</html>
