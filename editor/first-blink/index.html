@@ -9,7 +9,7 @@
   :root {
     --bg: #0d1117; --panel: #161b22; --line: #30363d;
     --text: #e6edf3; --muted: #9aa7b4; --green: #238636; --green-line: #2ea043;
-    --yellow: #facc15;
+    --led: #34ff82;
   }
   * { box-sizing: border-box; }
   body {
@@ -21,31 +21,92 @@
   h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.05; margin: 0 0 0.6rem; letter-spacing: -0.01em; }
   .promise { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
 
+  /* ── The living board ── */
+  .board-zone { text-align: center; margin-bottom: 2.75rem; }
   .board-wrap {
-    position: relative; width: fit-content; margin: 0 auto 0.9rem;
+    position: relative; width: fit-content; margin: 0 auto;
     border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
     background: #010409; line-height: 0;
   }
   .board-wrap img { display: block; height: min(520px, 72vh); width: auto; max-width: 100%; }
-  .led-glow {
+  .board-wrap.shake { animation: shake 90ms linear 2; }
+  @keyframes shake { 25% { transform: translateX(0.6px); } 75% { transform: translateX(-0.6px); } }
+  .led-glow, .led-after {
     position: absolute; left: 30.7%; top: 44.4%; width: 22%; aspect-ratio: 1;
     transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
     background: radial-gradient(circle, rgba(215, 255, 226, 0.95) 0%, rgba(52, 255, 130, 0.5) 32%, rgba(52, 255, 130, 0) 68%);
-    opacity: 0; transition: opacity 70ms linear;
+    opacity: 0;
   }
+  .led-glow { transition: opacity 70ms linear; }
   .led-glow.on { opacity: 1; }
-  .speed { justify-content: center; }
-  .speed { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .led-glow.half { opacity: 0.45; transition: opacity 240ms ease; }
+  .led-glow.peek { opacity: 0.75; }
+  .led-glow.sag { transition: opacity 480ms ease-in-out; }
+  .led-after { transition: opacity 700ms ease-out; }
+  .led-after.on { opacity: 0.5; }
+  .btn-hotspot {
+    position: absolute; left: 48.6%; top: 36.7%; width: 15%; aspect-ratio: 1;
+    transform: translate(-50%, -50%); border-radius: 50%;
+    background: transparent; border: none; cursor: pointer; padding: 0;
+  }
+  .btn-ring {
+    position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+    border: 2px solid rgba(230, 237, 243, 0);
+  }
+  .btn-ring.press { animation: press 420ms ease-out; }
+  @keyframes press { 0% { border-color: rgba(230,237,243,0.85); transform: scale(0.82); } 100% { border-color: rgba(230,237,243,0); transform: scale(1.12); } }
+
+  /* Ghost rehearsals: the dialogs you are about to meet, shown first as ghosts */
+  .ghost {
+    position: absolute; z-index: 3; opacity: 0; pointer-events: none;
+    background: rgba(28, 33, 43, 0.88); backdrop-filter: blur(2px);
+    border: 1px solid rgba(255,255,255,0.22); border-radius: 10px;
+    color: var(--text); text-align: left; line-height: 1.35;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.5);
+    transition: opacity 350ms ease;
+  }
+  .ghost.show { opacity: 1; }
+  .ghost-mac { top: 6%; right: 5%; width: 62%; padding: 0.65rem 0.75rem; font-size: 0.78rem; }
+  .ghost-mac .g-title { font-weight: 600; margin-bottom: 0.15rem; }
+  .ghost-mac .g-sub { color: var(--muted); }
+  .ghost-mac .g-btns { margin-top: 0.5rem; display: flex; gap: 0.4rem; }
+  .ghost-mac .g-btn { border: 1px solid var(--line); border-radius: 6px; padding: 0.12rem 0.55rem; font-size: 0.75rem; color: var(--muted); }
+  .ghost-mac .g-btn.primary { background: #0a64d8; border-color: #0a64d8; color: #fff; }
+  .ghost-picker { left: 50%; top: 12%; transform: translateX(-50%); width: 74%; padding: 0.55rem; }
+  .ghost-picker .g-head { font-size: 0.72rem; color: var(--muted); padding: 0.1rem 0.35rem 0.45rem; }
+  .ghost-picker .g-row { padding: 0.42rem 0.55rem; border-radius: 6px; font-size: 0.86rem; color: var(--muted); display: flex; justify-content: space-between; gap: 0.5rem; }
+  .ghost-picker .g-row small { color: #6e7b8a; font-size: 0.72rem; }
+  .ghost-picker .g-row.pick { background: #0a64d8; color: #fff; }
+  .ghost-picker .g-row.pick small { color: #cfe6ff; }
+  .ghost-picker .g-cursor { position: absolute; right: 12%; bottom: -8px; font-size: 1rem; opacity: 0; transition: opacity 200ms ease, transform 500ms ease; }
+  .ghost-picker.show .g-cursor { opacity: 1; transform: translate(-6px, -14px); }
+
+  .board-caption { color: var(--muted); font-size: 0.98rem; margin: 0.8rem 0 1rem; min-height: 1.45em; }
+  .board-caption strong { color: var(--text); font-weight: 600; }
+  .upload-btn {
+    background: var(--green); border: 1px solid var(--green-line); color: #fff;
+    font-weight: 700; font-size: 1.05rem; border-radius: 10px;
+    padding: 0.7rem 2.2rem; cursor: pointer; letter-spacing: 0.02em;
+    transition: transform 90ms ease, filter 150ms ease;
+  }
+  .upload-btn:hover { filter: brightness(1.12); }
+  .upload-btn:active { transform: scale(0.95); }
+  .upload-btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+  .speed { display: flex; align-items: center; justify-content: center; gap: 0.55rem; flex-wrap: wrap; margin-top: 1.1rem; opacity: 0.4; transition: opacity 400ms ease; }
+  .speed.live { opacity: 1; }
   .speed .label { color: var(--muted); font-size: 0.95rem; margin-right: 0.2rem; }
+  .speed code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); }
   .chip {
     background: transparent; color: var(--text); border: 1px solid var(--line);
     border-radius: 999px; padding: 0.4rem 0.95rem; cursor: pointer; font-size: 0.95rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
-  .chip.is-active { border-color: #34ff82; color: #34ff82; }
+  .chip.is-active { border-color: var(--led); color: var(--led); }
   .chip:hover { border-color: var(--text); }
-  .hint { color: var(--muted); font-size: 0.88rem; margin: 0 0 2.75rem; min-height: 1.3em; }
+  .end-line { color: var(--text); font-size: 1.05rem; margin: 1.15rem 0 0; opacity: 0; transition: opacity 600ms ease; }
+  .end-line.show { opacity: 1; }
 
+  /* ── Steps ── */
   .steps { display: grid; gap: 0; margin-bottom: 2.75rem; }
   .step { display: grid; grid-template-columns: 46px 1fr; gap: 1rem; padding: 1.05rem 0; border-top: 1px solid var(--line); align-items: baseline; }
   .step:last-child { border-bottom: 1px solid var(--line); }
@@ -66,19 +127,39 @@
 <body>
 <div class="wrap">
   <h1>Your first blink</h1>
-  <p class="promise">Five steps. Two minutes. This is the board — and the light you are about to command:</p>
+  <p class="promise">Five steps. Two minutes. This is your board — watch what it does:</p>
 
-  <div class="board-wrap">
-    <img src="/emulator/r2/board.png" alt="The One Dollar Computer" />
-    <div class="led-glow" id="ledGlow"></div>
-  </div>
-  <div class="speed" role="group" aria-label="Blink speed">
-    <span class="label">The number in <code>delay(…)</code> is the speed:</span>
-    <button type="button" class="chip" data-ms="100">100 · fast</button>
-    <button type="button" class="chip is-active" data-ms="200">200</button>
-    <button type="button" class="chip" data-ms="1000">1000 · slow</button>
-  </div>
-  <p class="hint">The real board, and its light — blinking exactly where it blinks in your hand.</p>
+  <section class="board-zone" aria-label="Your board, live">
+    <div class="board-wrap" id="boardWrap">
+      <img src="/emulator/r2/board.png" alt="The One Dollar Computer" />
+      <div class="led-after" id="ledAfter"></div>
+      <div class="led-glow" id="ledGlow"></div>
+      <button type="button" class="btn-hotspot" id="btnHotspot" aria-label="The board's button — try pressing it">
+        <span class="btn-ring" id="btnRing"></span>
+      </button>
+      <div class="ghost ghost-mac" id="ghostMac" aria-hidden="true">
+        <div class="g-title">Allow One Dollar Computer to connect?</div>
+        <div class="g-sub">On a Mac, this appears when you plug in. You will say Allow.</div>
+        <div class="g-btns"><span class="g-btn">Don't Allow</span><span class="g-btn primary">Allow</span></div>
+      </div>
+      <div class="ghost ghost-picker" id="ghostPicker" aria-hidden="true">
+        <div class="g-head">Connect a device — this list appears the first time you Upload:</div>
+        <div class="g-row"><span>USB Serial Device</span><small>not yours</small></div>
+        <div class="g-row pick"><span>One Dollar Computer</span><small>← this one, it's yours</small></div>
+        <div class="g-row"><span>USB Composite Device</span><small>not yours</small></div>
+        <span class="g-cursor">👆</span>
+      </div>
+    </div>
+    <p class="board-caption" id="boardCaption"><strong>Dark = ready.</strong></p>
+    <button type="button" class="upload-btn" id="uploadBtn">Upload</button>
+    <div class="speed" id="speedRow" role="group" aria-label="Blink speed">
+      <span class="label">The number in <code>delay(…)</code> is the speed:</span>
+      <button type="button" class="chip" data-ms="100">100 · fast</button>
+      <button type="button" class="chip is-active" data-ms="200">200</button>
+      <button type="button" class="chip" data-ms="1000">1000 · slow</button>
+    </div>
+    <p class="end-line" id="endLine">You just told a $1 computer what to do. It will now do that forever.</p>
+  </section>
 
   <div class="steps">
     <article class="step">
@@ -92,22 +173,22 @@
     <article class="step">
       <div class="step-num" aria-hidden="true">2</div>
       <div>
-        <h3>Plug in your board</h3>
-        <p>USB cable. No drivers, nothing to install.</p>
+        <h3>Plug it in</h3>
+        <p>USB cable. On a Mac, click <strong>Allow</strong> — you just saw it above. On Windows, nothing appears. That's normal too.</p>
       </div>
     </article>
     <article class="step">
       <div class="step-num" aria-hidden="true">3</div>
       <div>
-        <h3>Press Upload</h3>
-        <p>First time, the browser asks which device — pick your One Dollar Computer.</p>
+        <h3>Look at the light</h3>
+        <p>Dark means ready — like the board above. If yours is blinking an old program, press its button once and it goes dark.</p>
       </div>
     </article>
     <article class="step">
       <div class="step-num" aria-hidden="true">4</div>
       <div>
-        <h3>Press the board's button</h3>
-        <p>When the editor asks. A few presses is normal — that press says “receive my program.”</p>
+        <h3>Press Upload</h3>
+        <p>First time, the browser shows a list — pick <strong>One Dollar Computer</strong>. You rehearsed that above too.</p>
       </div>
     </article>
     <article class="step">
@@ -130,22 +211,129 @@
 <script>
   (function () {
     var glow = document.getElementById('ledGlow');
+    var after = document.getElementById('ledAfter');
+    var wrap = document.getElementById('boardWrap');
+    var caption = document.getElementById('boardCaption');
+    var uploadBtn = document.getElementById('uploadBtn');
+    var speedRow = document.getElementById('speedRow');
+    var endLine = document.getElementById('endLine');
+    var ghostMac = document.getElementById('ghostMac');
+    var ghostPicker = document.getElementById('ghostPicker');
+    var ring = document.getElementById('btnRing');
     var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
-    var ms = 200, on = false, timer = null;
-    function tick() {
-      on = !on;
-      glow.classList.toggle('on', on);
-      timer = setTimeout(tick, ms);
+
+    var ms = 200;
+    var running = false;      // blinking for real
+    var visitedFrantic = false;
+    var timers = [];
+    function later(fn, t) { timers.push(setTimeout(fn, t)); }
+    function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+    function setGlow(cls) { glow.className = 'led-glow' + (cls ? ' ' + cls : ''); }
+
+    /* ── Playing dead: dark, with one sheepish peek every few seconds ── */
+    function peekLoop() {
+      if (running) return;
+      later(function () {
+        if (running) return;
+        setGlow('peek');
+        later(function () { if (!running) setGlow(''); }, 130);
+        peekLoop();
+      }, 4600 + Math.random() * 2600);
     }
+
+    /* ── Mac dialog ghost: shown once, the first time the board is touched ── */
+    var macShown = false;
+    function showMacGhost() {
+      if (macShown || running) return;
+      macShown = true;
+      ghostMac.classList.add('show');
+      later(function () { ghostMac.classList.remove('show'); }, 3400);
+    }
+    wrap.addEventListener('pointerenter', showMacGhost);
+    wrap.addEventListener('pointerdown', showMacGhost);
+
+    /* ── The board's own button, on the photo: press it and it peeks ── */
+    document.getElementById('btnHotspot').addEventListener('click', function () {
+      ring.classList.remove('press'); void ring.offsetWidth; ring.classList.add('press');
+      if (!running) {
+        clearTimers(); setGlow('peek');
+        later(function () { setGlow(''); peekLoop(); }, 160);
+      }
+    });
+
+    /* ── Blinking, with the gags: frantic afterglow+shake, sleepy sag, relieved blink ── */
+    var on = false, relievedPending = false;
+    function scheduleTick(delay) {
+      later(function tick() {
+        on = !on;
+        var d = ms;
+        if (on && relievedPending) { d = 1300; relievedPending = false; }
+        glow.className = 'led-glow' + (on ? ' on' : '') + (ms >= 1000 ? ' sag' : '');
+        if (ms <= 100) {
+          after.classList.toggle('on', on);
+          wrap.classList.toggle('shake', on);
+        } else {
+          after.classList.remove('on'); wrap.classList.remove('shake');
+        }
+        scheduleTick(d);
+      }, delay);
+    }
+    function startBlinking() {
+      running = true; on = false;
+      clearTimers();
+      setGlow('half'); // anticipation hold — the breath before the peak
+      later(function () { scheduleTick(60); }, 260);
+    }
+
+    /* ── Upload: rehearse the picker (first time only), flicker, hold, blink ── */
+    var uploadedOnce = false;
+    uploadBtn.addEventListener('click', function () {
+      if (uploadBtn.disabled) return;
+      uploadBtn.disabled = true;
+      clearTimers(); setGlow('');
+      var begin = function () {
+        caption.innerHTML = 'Sending your program…';
+        var flicks = 0;
+        (function flick() {
+          setGlow(Math.random() > 0.45 ? 'on' : '');
+          if (++flicks < 9) later(flick, 60 + Math.random() * 110);
+          else {
+            startBlinking();
+            caption.innerHTML = '<strong>It blinks.</strong> That was you.';
+            speedRow.classList.add('live');
+            endLine.classList.add('show');
+            uploadBtn.textContent = 'Upload again';
+            uploadBtn.disabled = false;
+          }
+        })();
+      };
+      if (!uploadedOnce) {
+        uploadedOnce = true;
+        caption.innerHTML = 'First time? The browser shows a list. You already know which one is yours:';
+        ghostPicker.classList.add('show');
+        later(function () { ghostPicker.classList.remove('show'); begin(); }, 2100);
+      } else {
+        begin();
+      }
+    });
+
+    /* ── Speed chips: the number is the speed ── */
     chips.forEach(function (c) {
       c.addEventListener('click', function () {
         chips.forEach(function (x) { x.classList.toggle('is-active', x === c); });
-        ms = +c.getAttribute('data-ms');
-        clearTimeout(timer);
-        timer = setTimeout(tick, ms);
+        var next = +c.getAttribute('data-ms');
+        if (next <= 100) visitedFrantic = true;
+        if (running && visitedFrantic && next > 100) relievedPending = true;
+        ms = next;
+        if (!running) {
+          // still dark: answer the tap with a peek at the chosen rhythm
+          clearTimers(); setGlow('peek');
+          later(function () { setGlow(''); peekLoop(); }, 140);
+        }
       });
     });
-    tick();
+
+    peekLoop();
   })();
 </script>
 </body>
