@@ -65,7 +65,15 @@
     box-shadow: 0 14px 34px rgba(0,0,0,0.5);
     transition: opacity 350ms ease;
   }
-  .ghost.show { opacity: 1; }
+  .ghost.show { opacity: 1; pointer-events: auto; }
+  .ghost.nope { animation: nope 320ms ease; }
+  @keyframes nope { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-3px); } }
+  .ghost-picker.nope { animation-name: nopeC; }
+  @keyframes nopeC { 20% { transform: translateX(calc(-50% - 4px)); } 45% { transform: translateX(calc(-50% + 4px)); } 70% { transform: translateX(calc(-50% - 3px)); } }
+  .ghost-mac .g-btn.primary, .ghost-picker .g-row.pick { cursor: pointer; }
+  .ghost-mac button.g-btn { font: inherit; background: transparent; }
+  .ghost-mac button.g-btn.primary { background: #0a64d8; }
+  .ghost-picker .g-row.pick { width: 100%; font: inherit; text-align: left; background: #0a64d8; border: none; }
   .ghost-mac { top: 6%; right: 5%; width: 62%; padding: 0.65rem 0.75rem; font-size: 0.78rem; }
   .ghost-mac .g-title { font-weight: 600; margin-bottom: 0.15rem; }
   .ghost-mac .g-sub { color: var(--muted); }
@@ -140,13 +148,13 @@
       <div class="ghost ghost-mac" id="ghostMac" aria-hidden="true">
         <div class="g-title">Allow One Dollar Computer to connect?</div>
         <div class="g-sub">On a Mac, this appears when you plug in. You will say Allow.</div>
-        <div class="g-btns"><span class="g-btn">Don't Allow</span><span class="g-btn primary">Allow</span></div>
+        <div class="g-btns"><span class="g-btn" id="ghostMacDeny">Don't Allow</span><button type="button" class="g-btn primary" id="ghostMacAllow">Allow</button></div>
       </div>
       <div class="ghost ghost-picker" id="ghostPicker" aria-hidden="true">
         <div class="g-head">Connect a device — this list appears the first time you Upload:</div>
-        <div class="g-row"><span>USB Serial Device</span><small>not yours</small></div>
-        <div class="g-row pick"><span>One Dollar Computer</span><small>← this one, it's yours</small></div>
-        <div class="g-row"><span>USB Composite Device</span><small>not yours</small></div>
+        <div class="g-row wrong"><span>USB Serial Device</span><small>not yours</small></div>
+        <button type="button" class="g-row pick" id="ghostPickRow"><span>One Dollar Computer</span><small>← this one, it's yours</small></button>
+        <div class="g-row wrong"><span>USB Composite Device</span><small>not yours</small></div>
         <span class="g-cursor">👆</span>
       </div>
     </div>
@@ -241,16 +249,34 @@
       }, 4600 + Math.random() * 2600);
     }
 
-    /* ── Mac dialog ghost: shown once, the first time the board is touched ── */
-    var macShown = false;
+    /* ── Rehearsals: the scary dialogs appear here first, as ghosts,
+       and they stay until the user taps the right thing — nobody has
+       to read fast. Each is rehearsed exactly once, like real life. ── */
+    var macRehearsed = false, pickerRehearsed = false;
+    var macWaiter = null, pickerWaiter = null;
+    function nope(el) {
+      el.classList.remove('nope'); void el.offsetWidth; el.classList.add('nope');
+    }
     function showMacGhost() {
-      if (macShown || running) return;
-      macShown = true;
+      if (macRehearsed || running) return;
       ghostMac.classList.add('show');
-      later(function () { ghostMac.classList.remove('show'); }, 3400);
     }
     wrap.addEventListener('pointerenter', showMacGhost);
     wrap.addEventListener('pointerdown', showMacGhost);
+    document.getElementById('ghostMacAllow').addEventListener('click', function () {
+      macRehearsed = true;
+      ghostMac.classList.remove('show');
+      if (macWaiter) { var w = macWaiter; macWaiter = null; w(); }
+    });
+    document.getElementById('ghostMacDeny').addEventListener('click', function () { nope(ghostMac); });
+    document.getElementById('ghostPickRow').addEventListener('click', function () {
+      pickerRehearsed = true;
+      ghostPicker.classList.remove('show');
+      if (pickerWaiter) { var w = pickerWaiter; pickerWaiter = null; w(); }
+    });
+    Array.prototype.forEach.call(ghostPicker.querySelectorAll('.g-row.wrong'), function (row) {
+      row.addEventListener('click', function () { nope(ghostPicker); });
+    });
 
     /* ── The board's own button, on the photo: press it and it peeks ── */
     document.getElementById('btnHotspot').addEventListener('click', function () {
@@ -285,8 +311,8 @@
       later(function () { scheduleTick(60); }, 260);
     }
 
-    /* ── Upload: rehearse the picker (first time only), flicker, hold, blink ── */
-    var uploadedOnce = false;
+    /* ── Upload: first time, walk the rehearsals in order (Mac Allow,
+       then the picker) at the user's own pace; then flicker, hold, blink ── */
     uploadBtn.addEventListener('click', function () {
       if (uploadBtn.disabled) return;
       uploadBtn.disabled = true;
@@ -307,14 +333,19 @@
           }
         })();
       };
-      if (!uploadedOnce) {
-        uploadedOnce = true;
-        caption.innerHTML = 'First time? The browser shows a list. You already know which one is yours:';
+      var pickerStep = function () {
+        if (pickerRehearsed) { begin(); return; }
+        caption.innerHTML = 'Then the browser asks which device. Tap yours:';
         ghostPicker.classList.add('show');
-        later(function () { ghostPicker.classList.remove('show'); begin(); }, 2100);
-      } else {
-        begin();
-      }
+        pickerWaiter = begin;
+      };
+      var macStep = function () {
+        if (macRehearsed) { pickerStep(); return; }
+        caption.innerHTML = 'First, on a Mac this appears. Tap Allow:';
+        ghostMac.classList.add('show');
+        macWaiter = pickerStep;
+      };
+      macStep();
     });
 
     /* ── Speed chips: the number is the speed ── */
