@@ -865,6 +865,9 @@
     }
     .libraries-panel[hidden] { display: none; }
     /* ─── First blink guide: closable panel + the "?" button that stays ─── */
+    .fb-panel { display: flex; flex-direction: column; overflow-y: hidden; }
+    .fb-panel .lib-panel-head { flex: none; padding-bottom: 0.6rem; margin-bottom: 0.8rem; border-bottom: 1px solid #30363d; }
+    .fb-scroll { overflow-y: auto; flex: 1; min-height: 0; }
     .fb-fab {
       position: fixed; right: 18px; bottom: 18px; z-index: 60;
       width: 52px; height: 52px; border-radius: 50%;
@@ -1196,6 +1199,7 @@
         <h2>Make it blink</h2>
         <button type="button" id="btnCloseFb" class="lib-close" aria-label="Close the first blink guide">×</button>
       </div>
+      <div class="fb-scroll">
       <p class="learn-intro">New here? Six steps, two minutes. Close this whenever you're ready — the green <strong>?</strong> below brings it back if you get lost.</p>
       <div class="fb-step">
         <div class="fb-num" aria-hidden="true">1</div>
@@ -1271,6 +1275,7 @@
             <img src="first-blink/img/step-led-lit.png" alt="The light on the board, lit green" />
           </figure>
         </div>
+      </div>
       </div>
     </aside>
   </div>
