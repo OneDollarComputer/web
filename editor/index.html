@@ -1278,7 +1278,7 @@
   <button type="button" id="fbFab" class="fb-fab" aria-label="Open the first blink guide" title="Lost? Open your first blink guide">?</button>
 
   <div class="footer">
-    <b>OneDollarComputer</b> — Upload compiles and flashes. Press the ODC button when asked. · New here? <a href="/editor/first-blink/">Your first blink →</a>
+    <b>OneDollarComputer</b> — Upload compiles and flashes. Press the ODC button when asked. · New here? <a href="/editor/#first-blink" id="fbFooterLink">Your first blink →</a>
   </div>
 
   <div id="flashGate" aria-hidden="true">
@@ -5179,6 +5179,9 @@ fn main() {
       }
       fab.addEventListener('click', function () { panel.hidden ? open() : close(); });
       if (closeBtn) closeBtn.addEventListener('click', close);
+      var footerLink = document.getElementById('fbFooterLink');
+      if (footerLink) footerLink.addEventListener('click', function (e) { e.preventDefault(); open(); });
+      if (location.hash === '#first-blink') open(); // the old guide URL lands here
       // If a sibling panel opens, the guide steps aside.
       siblings.forEach(function (p) {
         new MutationObserver(function () { if (!p.hidden) panel.hidden = true; })
