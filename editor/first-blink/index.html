@@ -116,10 +116,11 @@
 
   /* ── Steps ── */
   .steps { display: grid; gap: 0; margin-bottom: 2.75rem; }
-  .step { display: grid; grid-template-columns: 46px 1fr; gap: 1rem; padding: 1.05rem 0; border-top: 1px solid var(--line); align-items: baseline; }
+  .step { display: grid; grid-template-columns: 104px 1fr; gap: 1.25rem; padding: 1.5rem 0; border-top: 1px solid var(--line); align-items: center; }
   .step:last-child { border-bottom: 1px solid var(--line); }
-  .step-num { font-size: 1.5rem; font-weight: 700; color: var(--green-line); font-variant-numeric: tabular-nums; }
-  .step h3 { margin: 0 0 0.15rem; font-size: 1.12rem; }
+  .step-num { font-size: 4.6rem; font-weight: 800; line-height: 0.9; color: var(--green-line); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+  .step h3 { margin: 0 0 0.25rem; font-size: 1.35rem; }
+  @media (max-width: 520px) { .step { grid-template-columns: 74px 1fr; } .step-num { font-size: 3.4rem; } }
   .step p { margin: 0; color: var(--muted); }
   .step code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); font-size: 0.95em; }
   .btn {
