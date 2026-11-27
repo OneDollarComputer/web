@@ -864,6 +864,39 @@
       font-size: 0.9rem;
     }
     .libraries-panel[hidden] { display: none; }
+    /* ─── First blink guide: closable panel + the "?" button that stays ─── */
+    .fb-fab {
+      position: fixed; right: 18px; bottom: 18px; z-index: 60;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #238636; border: 1px solid #2ea043; color: #fff;
+      font-size: 1.5rem; font-weight: 700; cursor: pointer; line-height: 1;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+    }
+    .fb-fab::after {
+      content: ""; position: absolute; inset: -1px; border-radius: 50%;
+      border: 2px solid rgba(46, 160, 67, 0.55);
+      animation: fbPulse 2.6s ease-out infinite; pointer-events: none;
+    }
+    @keyframes fbPulse { 0% { transform: scale(1); opacity: 0.8; } 70% { transform: scale(1.45); opacity: 0; } 100% { transform: scale(1.45); opacity: 0; } }
+    .fb-fab.bounce { animation: fbBounce 0.6s ease; }
+    @keyframes fbBounce { 30% { transform: translateY(-9px); } 60% { transform: translateY(2px); } }
+    .fb-step { display: grid; grid-template-columns: 32px 1fr; gap: 0.6rem; padding: 0.8rem 0; border-top: 1px solid #30363d; }
+    .fb-step:first-of-type { border-top: none; padding-top: 0.2rem; }
+    .fb-num { font-size: 1.65rem; font-weight: 800; color: #2ea043; line-height: 1; }
+    .fb-step h3 { margin: 0 0 0.15rem; font-size: 0.98rem; }
+    .fb-step p { margin: 0; color: #9aa7b4; font-size: 0.86rem; line-height: 1.45; }
+    .fb-step figure { margin: 0.55rem 0 0; }
+    .fb-step figure img { width: 100%; border: 1px solid #30363d; border-radius: 8px; display: block; }
+    .fb-step .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.55rem; }
+    .fb-step .duo figure { margin: 0; }
+    .fb-fig-label { color: #9aa7b4; font-size: 0.72rem; text-align: center; margin-top: 0.25rem; }
+    .fb-fineprint { font-size: 0.74rem !important; color: #6e7b8a !important; margin-top: 0.5rem !important; }
+    .fb-picker { margin-top: 0.55rem; background: rgba(28, 33, 43, 0.92); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 8px; padding: 0.45rem; }
+    .fb-picker .g-head { font-size: 0.7rem; color: #9aa7b4; padding: 0.05rem 0.3rem 0.4rem; }
+    .fb-picker .g-row { padding: 0.36rem 0.5rem; border-radius: 6px; font-size: 0.8rem; color: #9aa7b4; display: flex; justify-content: space-between; gap: 0.5rem; }
+    .fb-picker .g-row small { color: #6e7b8a; font-size: 0.68rem; }
+    .fb-picker .g-row.pick { background: #0a64d8; color: #fff; }
+    .fb-picker .g-row.pick small { color: #cfe6ff; }
     /* ─── Learn Rust panel ─── */
     .learn-intro { color: #c9d1d9; margin: 0 0 0.5rem; line-height: 1.45; }
     .learn-progress { color: #9fbad1; font-size: 0.82rem; margin: 0 0 0.75rem; }
@@ -1158,7 +1191,91 @@
       <p id="learnProgress" class="learn-progress" hidden></p>
       <div id="learnList"></div>
     </aside>
+    <aside id="fbPanel" class="libraries-panel fb-panel" hidden aria-label="Your first blink guide">
+      <div class="lib-panel-head">
+        <h2>Your first blink</h2>
+        <button type="button" id="btnCloseFb" class="lib-close" aria-label="Close the first blink guide">×</button>
+      </div>
+      <p class="learn-intro">Six steps, two minutes. Lost? Start here — close this whenever you're ready.</p>
+      <div class="fb-step">
+        <div class="fb-num" aria-hidden="true">1</div>
+        <div>
+          <h3>You're in the Editor</h3>
+          <p>Your program is already here, in the code on your left. Nothing to type.</p>
+        </div>
+      </div>
+      <div class="fb-step">
+        <div class="fb-num" aria-hidden="true">2</div>
+        <div>
+          <h3>Plug in the USB</h3>
+          <p>One end in your computer, the other in your One Dollar Computer. Mac: click <strong>Allow</strong>. Windows: nothing appears — normal.</p>
+          <div class="duo">
+            <figure>
+              <img src="first-blink/img/step-usb-laptop.webp" alt="A hand plugging a USB cable into a laptop" />
+              <figcaption class="fb-fig-label">in the computer</figcaption>
+            </figure>
+            <figure>
+              <img src="first-blink/img/step-usb-board.png" alt="The USB socket on the One Dollar Computer, close up" />
+              <figcaption class="fb-fig-label">in your One Dollar Computer</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+      <div class="fb-step">
+        <div class="fb-num" aria-hidden="true">3</div>
+        <div>
+          <h3>Look at the light</h3>
+          <p>Dark means ready. Blinking means a program is already inside — next step fixes that.</p>
+          <div class="duo">
+            <figure>
+              <img src="first-blink/img/step-led-dark.png" alt="The light on the board, dark" />
+              <figcaption class="fb-fig-label">dark = ready</figcaption>
+            </figure>
+            <figure>
+              <img src="first-blink/img/step-led-lit.png" alt="The light on the board, lit green" />
+              <figcaption class="fb-fig-label">blinking = has a program</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+      <div class="fb-step">
+        <div class="fb-num" aria-hidden="true">4</div>
+        <div>
+          <h3>Press the button</h3>
+          <p>One press, and the light goes dark. Now it can receive your program.</p>
+          <figure>
+            <img src="first-blink/img/step-button.png" alt="The button on the board, close up" />
+          </figure>
+          <p class="fb-fineprint">Still not working? Unplug the USB, hold the button down, and plug it back in while holding. That forces the bootloader — even if a program was saved wrong.</p>
+        </div>
+      </div>
+      <div class="fb-step">
+        <div class="fb-num" aria-hidden="true">5</div>
+        <div>
+          <h3>Press Upload</h3>
+          <p>First time, the browser shows a list — pick <strong>One Dollar Computer</strong>.</p>
+          <div class="fb-picker" aria-hidden="true">
+            <div class="g-head">Connect a device:</div>
+            <div class="g-row"><span>USB Serial Device</span><small>not yours</small></div>
+            <div class="g-row pick"><span>One Dollar Computer</span><small>← yours</small></div>
+            <div class="g-row"><span>USB Composite Device</span><small>not yours</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="fb-step">
+        <div class="fb-num" aria-hidden="true">6</div>
+        <div>
+          <h3>It blinks</h3>
+          <p>Change <code>delay(200)</code> to <code>delay(100)</code> and Upload again. Faster. You just programmed.</p>
+          <figure>
+            <img src="first-blink/img/step-led-lit.png" alt="The light on the board, lit green" />
+          </figure>
+        </div>
+      </div>
+    </aside>
   </div>
+
+  <button type="button" id="fbFab" class="fb-fab" aria-label="Open the first blink guide" title="Lost? Open your first blink guide">?</button>
 
   <div class="footer">
     <b>OneDollarComputer</b> — Upload compiles and flashes. Press the ODC button when asked. · New here? <a href="/editor/first-blink/">Your first blink →</a>
@@ -5037,6 +5154,37 @@ fn main() {
       }
     })();
 
+  </script>
+  <script>
+    // ─── First blink guide: closable panel; the "?" button stays behind,
+    // pulsing gently, so a lost user can always come back to the guide.
+    (function () {
+      var fab = document.getElementById('fbFab');
+      var panel = document.getElementById('fbPanel');
+      var closeBtn = document.getElementById('btnCloseFb');
+      if (!fab || !panel) return;
+      var siblings = ['librariesPanel', 'learnPanel']
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      function open() {
+        siblings.forEach(function (p) { p.hidden = true; });
+        panel.hidden = false;
+      }
+      function close() {
+        if (panel.hidden) return;
+        panel.hidden = true;
+        fab.classList.remove('bounce');
+        void fab.offsetWidth;
+        fab.classList.add('bounce'); // one little hop: "I'm still here"
+      }
+      fab.addEventListener('click', function () { panel.hidden ? open() : close(); });
+      if (closeBtn) closeBtn.addEventListener('click', close);
+      // If a sibling panel opens, the guide steps aside.
+      siblings.forEach(function (p) {
+        new MutationObserver(function () { if (!p.hidden) panel.hidden = true; })
+          .observe(p, { attributes: true, attributeFilter: ['hidden'] });
+      });
+    })();
   </script>
 </body>
 
