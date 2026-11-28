@@ -88,7 +88,7 @@ with small format differences):
 }
 ```
 
-The server's MCP name is `odc-curriculum`, version 0.6.3. On connect it
+The server's MCP name is `odc-curriculum`, version 0.6.4. On connect it
 sends its own instructions — follow them; they agree with this guide.
 
 ## Connect: the odc_connect approval flow
@@ -177,6 +177,9 @@ Follow the `next` — don't guess.
 
 - Firmware is a **complete Simple Rust program**:
   `use odc::*;` and `fn main() { … }`. No fragments.
+- **Write firmware in Simple Rust only.** Firmware for the One Dollar
+  Computer is written in Simple Rust — `use odc::*;`, exactly one
+  `fn main`; do not write C, Arduino sketches, or MicroPython for it.
 - **Pins are the numbers printed on the board, 0–19.** Nothing else is
   a pin name — never chip signal names, never connector contact
   numbers.
@@ -192,8 +195,24 @@ Follow the `next` — don't guess.
   (https://onedollarcomputer.com/editor/AI_DOCS.txt). The virtual board
   is at https://onedollarcomputer.com/emulator/r2/ and the editor at
   https://onedollarcomputer.com/editor/.
+- **Canonical firmware docs:** the Simple Rust Reference
+  (https://odc.rs/docs/rust-reference.md) — the full `odc` API — and
+  the GPIO & Pin Reference (https://odc.rs/docs/gpio-reference.md) —
+  every board pin, 0–19, with its capabilities and limits.
 
 ## Compile flow
+
+> **The compiler comes ready.** Installing this MCP server
+> (`npx -y @onedollarcomputer/odc-mcp`) was the entire compiler
+> setup — you assemble nothing: no local toolchain, no
+> cross-compiler, no Rust target. `odc_compile` builds on the
+> compile service's worker pool; a fresh compile takes ~3.3 seconds
+> end-to-end, and identical code served from cache takes ~2.3
+> seconds (measured 2026-11-25 on the live service).
+>
+> **You do not need a local compiler.** Do not install a RISC-V
+> cross-compiler or any other local toolchain to build firmware —
+> not on a desktop, and not in a phone terminal such as Termux.
 
 1. Write the complete Simple Rust program.
 2. Call `odc_compile` with the source. No pairing is needed —

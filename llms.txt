@@ -34,6 +34,9 @@ Aliases for Physical AI: `Physical AI`, `Learn Physical AI`, `physicalai`, `Phys
 - **Physical Lab pose projects:** https://onedollarcomputer.com/physical/cloud/ — Google sign-in; assembly pose JSON at RTDB `users/{uid}/physicalPoses/{id}` (owner-only; see `/physical/README.md`)
 - **MCP — connect your agent:** https://onedollarcomputer.com/mcp/ (short link: `odc.rs/mcp`) — connect your own AI agent (Claude Code, Cursor, Codex…) via the `odc` MCP server (`npx -y @onedollarcomputer/odc-mcp`, npm package `@onedollarcomputer/odc-mcp`, Node.js 18+); the agent calls `odc_connect`, the user approves once with Google, and the agent can work with their projects and lessons. Install one-liners — Claude Code: `claude mcp add odc -- npx -y @onedollarcomputer/odc-mcp` · Codex CLI: `codex mcp add odc -- npx -y @onedollarcomputer/odc-mcp` (then restart Codex) · Cursor: add the `mcpServers` stdio entry to `~/.cursor/mcp.json` (full JSON on the /mcp page)
 - **MCP agent guide (for agents to fetch and follow):** https://onedollarcomputer.com/mcp/agent-guide.md — end-to-end: prerequisites (local agents only; cloud agents cannot install a stdio MCP), install per agent, the `odc_connect` approval flow, all 17 tools, firmware rules, the compile flow, feedback, the Termux-on-Android path, and error recovery
+- **Simple Rust reference (official):** https://odc.rs/docs/rust-reference.md — the full `odc` API (pins, LED, delay, servo), program shape, and the one-step compile path (install the npm package, call `odc_compile` — no local toolchain)
+- **GPIO & pin reference (official):** https://odc.rs/docs/gpio-reference.md — board pins 0–19 with capabilities and limits, the pin 13 bootloader warning, and the port wiring table
+- **Per-agent connection guides:** https://odc.rs/mcp/agents/ — Claude Code, Codex, Cursor, Cline, Windsurf, Gemini CLI, VS Code, Zed, Continue
 - **Learn Physical AI (teachers):** https://onedollarcomputer.com/c/ — public Physical AI activities; authors create curriculum; share `?lesson=id`; **Agent links** (`?connect=code`) are for MCP `curriculum_pair` only (see `/c/llms.txt`)
 - **Physical AI lesson rules:** https://onedollarcomputer.com/c/AGENT_LESSONS.md
 - **Agent instructions:** https://onedollarcomputer.com/AGENTS.md
@@ -60,7 +63,7 @@ Aliases for Physical AI: `Physical AI`, `Learn Physical AI`, `physicalai`, `Phys
 - **Do not** expose MCU chip names or pad names (`PD6`, `PA1`, …) to beginners — chip layer is private
 - **Pin numbering (the only numbering):** always refer to a pin by the number printed on the board (**0–19**) — never chip pad names, never a connector contact number as a pin's name. The port prints contacts 1-8 (RJ45 order) only to land a standard RJ45 cable; those contacts are the same board pins, with the correspondence printed beside the port (contact 2 = pin 6). In code and docs, always say "pin 6", never "RJ45-2"
 - **Machine-readable spec:** https://onedollarcomputer.com/specification/v1.004.yaml
-- **Firmware coding rules for AIs:** https://onedollarcomputer.com/editor/AI_DOCS.txt
+- **Firmware coding rules for AIs:** canonical — the Simple Rust Reference, https://odc.rs/docs/rust-reference.md ; the editor's compact version is https://onedollarcomputer.com/editor/AI_DOCS.txt
 - **⚠ Physical button (pin 13) = bootloader only — can break HID if misused:** https://onedollarcomputer.com/docs/BUTTON.md
 - **Physical AI lesson rules:** https://onedollarcomputer.com/c/AGENT_LESSONS.md
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-09-17",
+  "updated": "2026-11-27",
   "base": "https://onedollarcomputer.com",
   "notes": "Source of truth for sitemap.xml. Add entries here, then run: python3 seo/generate_sitemap.py",
   "entries": [
@@ -129,6 +129,90 @@
       "changefreq": "weekly",
       "priority": 0.7,
       "lastmod": "2026-11-23"
+    },
+    {
+      "path": "/mcp/agent-guide.md",
+      "changefreq": "weekly",
+      "priority": 0.8,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/docs/rust-reference.md",
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/docs/gpio-reference.md",
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/",
+      "changefreq": "monthly",
+      "priority": 0.6,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/general.md",
+      "changefreq": "monthly",
+      "priority": 0.6,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/claude-code.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/codex.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/cursor.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/cline.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/windsurf.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/gemini-cli.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/vscode.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/zed.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
+    },
+    {
+      "path": "/mcp/agents/continue.md",
+      "changefreq": "monthly",
+      "priority": 0.5,
+      "lastmod": "2026-11-27"
     }
   ]
 }
