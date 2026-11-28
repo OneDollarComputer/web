@@ -180,7 +180,7 @@ function loadProjectBrief() {
 const server = new McpServer(
   {
     name: "odc-curriculum",
-    version: "0.6.3"
+    version: "0.6.4"
   },
   {
     instructions:
